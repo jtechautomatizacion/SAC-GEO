@@ -1,0 +1,1293 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Cotizador GTQC">
+    <meta name="theme-color" content="#6366f1">
+    <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22Cotizador GTQC%22,%22short_name%22:%22Cotizador%22,%22start_url%22:%22/%22,%22display%22:%22standalone%22,%22background_color%22:%22%23ffffff%22,%22theme_color%22:%22%236366f1%22,%22orientation%22:%22portrait%22,%22icons%22:[{%22src%22:%22data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 192 192%27%3E%3Crect fill=%27%236366f1%27 width=%27192%27 height=%27192%27/%3E%3Ctext x=%2750%25%27 y=%2750%25%27 font-size=%27100%27 fill=%27white%27 text-anchor=%27middle%27 dominant-baseline=%27central%27 font-weight=%27bold%27%3ECG%3C/text%3E%3C/svg%3E%22,%22sizes%22:%22192x192%22,%22type%22:%22image/svg+xml%22}]}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <title>Cotizador GTQC - Completo y Funcional</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: white;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: #1a1a2e;
+            position: fixed;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .status-bar {
+            height: max(20px, env(safe-area-inset-top));
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            z-index: 1000;
+        }
+
+        .app-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            padding-bottom: max(0px, env(safe-area-inset-bottom));
+        }
+
+        .header {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            padding: 16px 20px;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .header-title {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .header-subtitle {
+            font-size: 11px;
+            opacity: 0.85;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+            padding: 0;
+        }
+
+        .screen {
+            display: none;
+            width: 100%;
+            min-height: 100%;
+            padding: 20px;
+            padding-bottom: 100px;
+            animation: slideIn 0.3s ease;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section {
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            opacity: 0.6;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #1a1a2e;
+        }
+
+        .tab-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #f3f4f6;
+            padding: 4px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 10px 12px;
+            border: none;
+            background: transparent;
+            font-size: 12px;
+            font-weight: 600;
+            color: #6b7280;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn.active {
+            background: white;
+            color: #6366f1;
+            box-shadow: 0 2px 4px rgba(99, 102, 241, 0.1);
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            background: #fafafa;
+            color: #1a1a2e;
+            transition: all 0.2s ease;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #6366f1;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .input-field::placeholder {
+            color: #9ca3af;
+        }
+
+        .card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 12px;
+            border-left: 4px solid #6366f1;
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.05);
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .card:active {
+            transform: scale(0.98);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+
+        .card-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+
+        .badge {
+            font-size: 10px;
+            font-weight: 700;
+            padding: 4px 8px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .badge-success {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .card-desc {
+            font-size: 12px;
+            color: #9ca3af;
+            margin-top: 4px;
+        }
+
+        .card-price {
+            font-size: 13px;
+            color: #6b7280;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 12px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            width: 100%;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+        }
+
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #1a1a2e;
+            width: 100%;
+            border: 1px solid #e5e7eb;
+        }
+
+        .btn-small {
+            padding: 8px 12px;
+            font-size: 12px;
+            width: auto;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-group .btn {
+            flex: 1;
+        }
+
+        .selected-item {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-left: 4px solid #16a34a;
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.05);
+        }
+
+        .selected-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .selected-item-name {
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+
+        .qty-control {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .qty-btn {
+            width: 30px;
+            height: 30px;
+            border: 1px solid #e5e7eb;
+            background: white;
+            border-radius: 6px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .summary-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+        }
+
+        .summary-table tr {
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .summary-table td {
+            padding: 10px 8px;
+            font-size: 13px;
+        }
+
+        .summary-table .label {
+            font-weight: 600;
+            color: #6b7280;
+            width: 60%;
+        }
+
+        .summary-table .value {
+            text-align: right;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+
+        .summary-table .total-row .value {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 16px;
+        }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 70px;
+            background: white;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-start;
+            padding-top: 10px;
+            padding-bottom: max(10px, env(safe-area-inset-bottom));
+            box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.05);
+            z-index: 999;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            color: #9ca3af;
+            transition: all 0.2s ease;
+            flex: 1;
+            font-weight: 600;
+        }
+
+        .nav-item.active {
+            color: #6366f1;
+        }
+
+        .nav-icon {
+            font-size: 24px;
+            line-height: 1;
+        }
+
+        .pdf-preview {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .pdf-header {
+            border-bottom: 2px solid #6366f1;
+            padding-bottom: 16px;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .pdf-company {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 4px;
+        }
+
+        .pdf-contact {
+            font-size: 11px;
+            color: #9ca3af;
+        }
+
+        .pdf-section {
+            margin-bottom: 16px;
+        }
+
+        .pdf-section-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: #6366f1;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            letter-spacing: 0.3px;
+        }
+
+        .action-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .action-card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-left: 4px solid #6366f1;
+        }
+
+        .action-card:active {
+            transform: scale(0.95);
+        }
+
+        .action-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .action-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+
+        .action-desc {
+            font-size: 11px;
+            color: #9ca3af;
+            margin-top: 4px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: flex-end;
+        }
+
+        .modal-content {
+            background: white;
+            width: 100%;
+            border-radius: 16px 16px 0 0;
+            padding: 20px;
+            max-height: 80vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .modal-title {
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #9ca3af;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f4f6;
+            border-top: 4px solid #6366f1;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="status-bar"></div>
+
+    <div class="app-container">
+        <div class="header">
+            <div class="header-top">
+                <div>
+                    <div class="header-title">📋 Cotizador GTQC</div>
+                    <div class="header-subtitle">Sistema Completo 2026</div>
+                </div>
+                <span id="screenIndicator" style="font-size: 12px; opacity: 0.8;">1 de 5</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+        </div>
+
+        <div class="content">
+            <!-- SCREEN 1: CLIENT SELECTION -->
+            <div class="screen active">
+                <div class="section">
+                    <div class="section-title">Selecciona o Crea Cliente</div>
+
+                    <div class="form-group">
+                        <div class="tab-group">
+                            <button class="tab-btn active" data-tab="ruc" onclick="switchTab('ruc')">Por RUC</button>
+                            <button class="tab-btn" data-tab="dni" onclick="switchTab('dni')">Por DNI</button>
+                            <button class="tab-btn" data-tab="nuevo" onclick="switchTab('nuevo')">Nuevo</button>
+                        </div>
+                    </div>
+
+                    <div id="rucTab">
+                        <div class="form-group">
+                            <div class="form-label">RUC de la Empresa</div>
+                            <input type="text" class="input-field" id="rucInput" placeholder="20123456789" maxlength="11" oninput="searchClient()">
+                        </div>
+                    </div>
+
+                    <div id="dniTab" style="display: none;">
+                        <div class="form-group">
+                            <div class="form-label">DNI del Cliente</div>
+                            <input type="text" class="input-field" id="dniInput" placeholder="12345678" maxlength="8" oninput="searchClient()">
+                        </div>
+                    </div>
+
+                    <div id="nuevoTab" style="display: none;">
+                        <div class="form-group">
+                            <div class="form-label">Nombre de Empresa</div>
+                            <input type="text" class="input-field" id="empresaInput" placeholder="Empresa ABC S.A.C.">
+                        </div>
+                        <div class="form-group">
+                            <div class="form-label">RUC (Opcional)</div>
+                            <input type="text" class="input-field" id="rucNewInput" placeholder="20123456789" maxlength="11">
+                        </div>
+                        <div class="form-group">
+                            <div class="form-label">Contacto</div>
+                            <input type="text" class="input-field" id="contactoInput" placeholder="Nombre del contacto">
+                        </div>
+                    </div>
+
+                    <div id="clientList"></div>
+
+                    <div class="form-group">
+                        <div class="form-label">Proyecto</div>
+                        <input type="text" class="input-field" id="proyectoInput" placeholder="Nombre del proyecto">
+                    </div>
+
+                    <button class="btn btn-primary" onclick="goToScreen(1)">Continuar a Ensayos</button>
+                </div>
+            </div>
+
+            <!-- SCREEN 2: SERVICES SELECTION -->
+            <div class="screen">
+                <div class="section">
+                    <div class="section-title">Selecciona Ensayos y Servicios</div>
+
+                    <div class="form-group">
+                        <input type="text" class="input-field" id="searchEnsayos" placeholder="🔍 Buscar ensayo..." oninput="filterEnsayos()">
+                    </div>
+
+                    <div id="ensayosList" class="section"></div>
+
+                    <div class="btn-group">
+                        <button class="btn btn-secondary btn-small" onclick="goToScreen(0)">Atrás</button>
+                        <button class="btn btn-primary btn-small" onclick="goToScreen(2)">Siguiente</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SCREEN 3: REVIEW & SUMMARY -->
+            <div class="screen">
+                <div class="section">
+                    <div class="section-title">Resumen y Cálculos</div>
+
+                    <div id="selectedItemsList" class="section"></div>
+
+                    <div class="card" style="border-left-color: #f59e0b;">
+                        <div class="section-title" style="margin: 0; margin-bottom: 12px;">💰 Detalles Financieros</div>
+
+                        <div class="form-group">
+                            <div class="form-label">Descuento (%)</div>
+                            <input type="number" class="input-field" id="discountInput" placeholder="0" min="0" max="100" oninput="calculateTotal()">
+                        </div>
+
+                        <table class="summary-table">
+                            <tr>
+                                <td class="label">Subtotal</td>
+                                <td class="value" id="subtotalValue">S/ 0</td>
+                            </tr>
+                            <tr>
+                                <td class="label">Descuento</td>
+                                <td class="value" id="discountValue">S/ 0</td>
+                            </tr>
+                            <tr>
+                                <td class="label">IGV (18%)</td>
+                                <td class="value" id="igvValue">S/ 0</td>
+                            </tr>
+                            <tr class="total-row">
+                                <td class="label">Total</td>
+                                <td class="value" id="totalValue">S/ 0</td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <div class="btn-group">
+                        <button class="btn btn-secondary btn-small" onclick="goToScreen(1)">Atrás</button>
+                        <button class="btn btn-primary btn-small" onclick="goToScreen(3)">Ver PDF</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SCREEN 4: PDF PREVIEW -->
+            <div class="screen">
+                <div class="section">
+                    <div class="section-title">Vista Previa PDF</div>
+
+                    <div class="pdf-preview" id="pdfContent">
+                        <div class="pdf-header">
+                            <div class="pdf-company">GTQC LABORATORIO S.A.C.</div>
+                            <div class="pdf-contact">Av. Científica 120, San Isidro, Lima</div>
+                            <div class="pdf-contact">Teléfono: +51 1 6162000 | Email: cotizaciones@gtqc.pe</div>
+                        </div>
+
+                        <div class="pdf-section">
+                            <div class="pdf-section-title">Datos de Cotización</div>
+                            <div style="font-size: 12px; line-height: 1.8; color: #6b7280;">
+                                <div><strong>Cliente:</strong> <span id="pdfClient">-</span></div>
+                                <div><strong>Proyecto:</strong> <span id="pdfProyecto">-</span></div>
+                                <div><strong>Número:</strong> COT-<span id="pdfNumber">2026-001</span></div>
+                                <div><strong>Fecha:</strong> <span id="pdfDate">-</span></div>
+                                <div><strong>Validez:</strong> 30 días</div>
+                            </div>
+                        </div>
+
+                        <div class="pdf-section">
+                            <div class="pdf-section-title">Ensayos Solicitados</div>
+                            <table style="width: 100%; font-size: 12px; border-collapse: collapse;">
+                                <thead>
+                                    <tr style="border-bottom: 2px solid #e5e7eb;">
+                                        <th style="text-align: left; padding: 8px 0; font-weight: 700;">Descripción</th>
+                                        <th style="text-align: center; padding: 8px 0; font-weight: 700;">Qty</th>
+                                        <th style="text-align: right; padding: 8px 0; font-weight: 700;">P.Unit</th>
+                                        <th style="text-align: right; padding: 8px 0; font-weight: 700;">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="pdfItems"></tbody>
+                            </table>
+                        </div>
+
+                        <div class="pdf-section">
+                            <div class="pdf-section-title">Resumen Financiero</div>
+                            <table style="width: 100%; font-size: 12px;">
+                                <tr>
+                                    <td style="width: 70%; font-weight: 600;">Subtotal:</td>
+                                    <td style="text-align: right; font-weight: 700;" id="pdfSubtotal">S/ 0</td>
+                                </tr>
+                                <tr>
+                                    <td style="width: 70%; font-weight: 600;">Descuento:</td>
+                                    <td style="text-align: right; font-weight: 700;" id="pdfDiscount">S/ 0</td>
+                                </tr>
+                                <tr>
+                                    <td style="width: 70%; font-weight: 600;">IGV (18%):</td>
+                                    <td style="text-align: right; font-weight: 700;" id="pdfIGV">S/ 0</td>
+                                </tr>
+                                <tr style="border-top: 2px solid #6366f1; margin-top: 8px; padding-top: 8px;">
+                                    <td style="width: 70%; font-weight: 700; padding-top: 8px;">TOTAL:</td>
+                                    <td style="text-align: right; font-weight: 700; padding-top: 8px; font-size: 14px; color: #6366f1;" id="pdfTotal">S/ 0</td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <div class="pdf-section" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb; font-size: 11px; color: #9ca3af;">
+                            <strong>Condiciones:</strong>
+                            <ul style="margin-left: 16px; margin-top: 4px;">
+                                <li>Plazo de pago: 30 días desde emisión</li>
+                                <li>Muestreo: Por cuenta del cliente</li>
+                                <li>Entrega de resultados: 15 días hábiles</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="btn-group">
+                        <button class="btn btn-secondary btn-small" onclick="goToScreen(2)">Atrás</button>
+                        <button class="btn btn-primary btn-small" onclick="goToScreen(4)">Finalizar</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SCREEN 5: DOWNLOAD & ACTIONS -->
+            <div class="screen">
+                <div class="section">
+                    <div class="section-title">Descargar y Enviar</div>
+
+                    <div class="action-grid">
+                        <div class="action-card" style="border-left-color: #0284c7;" onclick="downloadPDFOffline()">
+                            <div class="action-icon">📥</div>
+                            <div class="action-title">PDF Offline</div>
+                            <div class="action-desc">Guardar en dispositivo</div>
+                        </div>
+
+                        <div class="action-card" style="border-left-color: #06b6d4;" onclick="downloadPDFOnline()">
+                            <div class="action-icon">☁️</div>
+                            <div class="action-title">PDF Online</div>
+                            <div class="action-desc">Enviar a servidor</div>
+                        </div>
+
+                        <div class="action-card" style="border-left-color: #22c55e;" onclick="shareWhatsApp()">
+                            <div class="action-icon">💬</div>
+                            <div class="action-title">WhatsApp</div>
+                            <div class="action-desc">Enviar a cliente</div>
+                        </div>
+
+                        <div class="action-card" style="border-left-color: #d946ef;" onclick="shareEmail()">
+                            <div class="action-icon">✉️</div>
+                            <div class="action-title">Email</div>
+                            <div class="action-desc">Por correo</div>
+                        </div>
+
+                        <div class="action-card" style="border-left-color: #f59e0b;" onclick="saveQuotation()">
+                            <div class="action-icon">💾</div>
+                            <div class="action-title">Guardar</div>
+                            <div class="action-desc">En historial</div>
+                        </div>
+
+                        <div class="action-card" style="border-left-color: #6366f1;" onclick="resetApp()">
+                            <div class="action-icon">🔄</div>
+                            <div class="action-title">Nueva</div>
+                            <div class="action-desc">Cotización</div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 20px; padding: 16px; background: #f0f4ff; border-radius: 8px; font-size: 12px; color: #6b7280;">
+                        ✅ <strong>Cotización guardada</strong> correctamente en el historial. Puedes acceder desde el menú de historial.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <div class="nav-item active" onclick="goToScreen(0)">
+            <div class="nav-icon">👤</div>
+            <div>Cliente</div>
+        </div>
+        <div class="nav-item" onclick="goToScreen(1)">
+            <div class="nav-icon">🔍</div>
+            <div>Ensayos</div>
+        </div>
+        <div class="nav-item" onclick="goToScreen(2)">
+            <div class="nav-icon">💰</div>
+            <div>Resumen</div>
+        </div>
+        <div class="nav-item" onclick="goToScreen(3)">
+            <div class="nav-icon">📄</div>
+            <div>PDF</div>
+        </div>
+        <div class="nav-item" onclick="goToScreen(4)">
+            <div class="nav-icon">✅</div>
+            <div>Enviar</div>
+        </div>
+    </div>
+
+    <!-- Modal para descargas -->
+    <div class="modal" id="downloadModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Descargando PDF...</div>
+                <button class="modal-close" onclick="closeModal()">×</button>
+            </div>
+            <div class="loading">
+                <div class="loading-spinner"></div>
+                <div style="margin-top: 16px; color: #9ca3af; font-size: 13px;">
+                    Preparando tu documento...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // BASE DE DATOS (Ensayos)
+        // ============================================
+
+        const ensayos = [
+            { id: 1, nombre: "Análisis de Agua Potable", precio: 450, categoria: "Agua", norma: "NTP ISO 3696" },
+            { id: 2, nombre: "Análisis de Agua Residual", precio: 550, categoria: "Agua", norma: "NTP ISO 6059" },
+            { id: 3, nombre: "Análisis de Suelo", precio: 650, categoria: "Suelo", norma: "NTP 339.046" },
+            { id: 4, nombre: "Análisis Químico Completo", precio: 450, categoria: "Químico", norma: "ASTM D4236" },
+            { id: 5, nombre: "Análisis de Metales Pesados", precio: 750, categoria: "Químico", norma: "ASTM B415" },
+            { id: 6, nombre: "Test de Compresión", precio: 350, categoria: "Mecánico", norma: "ASTM C39" },
+            { id: 7, nombre: "Análisis Microbiológico", precio: 400, categoria: "Biología", norma: "APHA 2340" },
+            { id: 8, nombre: "Test de pH y Acidez", precio: 200, categoria: "Agua", norma: "NTP ISO 10523" },
+            { id: 9, nombre: "Análisis de Dureza Total", precio: 180, categoria: "Agua", norma: "NTP ISO 6059" },
+            { id: 10, nombre: "Test de Conductividad", precio: 150, categoria: "Agua", norma: "NTP ISO 7888" },
+        ];
+
+        const clientes = [
+            { id: 1, ruc: "20123456789", nombre: "Constructora ACME S.A.C.", contacto: "Juan García" },
+            { id: 2, ruc: "20987654321", nombre: "Ing. Moderna E.I.R.L.", contacto: "María López" },
+            { id: 3, ruc: "20555666777", nombre: "Empresa Médica del Perú", contacto: "Dr. Carlos Ruiz" },
+        ];
+
+        // ============================================
+        // STATE MANAGEMENT
+        // ============================================
+
+        let appState = {
+            currentScreen: 0,
+            clienteSeleccionado: null,
+            proyecto: "",
+            selectedItems: [],
+            subtotal: 0,
+            discount: 0,
+            igv: 0,
+            total: 0,
+            cotizacionNumber: 0
+        };
+
+        // Cargar estado
+        function loadState() {
+            const saved = localStorage.getItem('appState');
+            if (saved) {
+                appState = JSON.parse(saved);
+            }
+            appState.cotizacionNumber = Math.floor(Math.random() * 10000) + 1;
+        }
+
+        // Guardar estado
+        function saveState() {
+            localStorage.setItem('appState', JSON.stringify(appState));
+        }
+
+        // ============================================
+        // SCREEN NAVIGATION
+        // ============================================
+
+        const screens = document.querySelectorAll('.screen');
+        const totalScreens = screens.length;
+
+        function goToScreen(index) {
+            appState.currentScreen = index;
+            updateScreen();
+            saveState();
+        }
+
+        function updateScreen() {
+            screens.forEach((screen, index) => {
+                screen.classList.toggle('active', index === appState.currentScreen);
+            });
+
+            const progress = ((appState.currentScreen + 1) / totalScreens) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+            document.getElementById('screenIndicator').textContent = `${appState.currentScreen + 1} de ${totalScreens}`;
+
+            document.querySelectorAll('.nav-item').forEach((item, index) => {
+                item.classList.toggle('active', index === appState.currentScreen);
+            });
+
+            document.querySelector('.content').scrollTop = 0;
+
+            if (appState.currentScreen === 1) renderEnsayos();
+            if (appState.currentScreen === 2) renderSelectedItems();
+            if (appState.currentScreen === 3) renderPDFPreview();
+        }
+
+        // ============================================
+        // SCREEN 1: CLIENTS
+        // ============================================
+
+        function switchTab(tab) {
+            document.querySelectorAll('[data-tab]').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.tab === tab);
+            });
+            document.getElementById('rucTab').style.display = tab === 'ruc' ? 'block' : 'none';
+            document.getElementById('dniTab').style.display = tab === 'dni' ? 'block' : 'none';
+            document.getElementById('nuevoTab').style.display = tab === 'nuevo' ? 'block' : 'none';
+        }
+
+        function searchClient() {
+            const ruc = document.getElementById('rucInput').value;
+            const html = clientes
+                .filter(c => c.ruc.includes(ruc) || c.nombre.toLowerCase().includes(ruc.toLowerCase()))
+                .map(c => `
+                    <div class="card" onclick="selectClient(${c.id})">
+                        <div class="card-title">${c.nombre}</div>
+                        <div class="card-desc">RUC: ${c.ruc} | Contacto: ${c.contacto}</div>
+                    </div>
+                `)
+                .join('');
+            document.getElementById('clientList').innerHTML = html || '<div style="padding: 16px; text-align: center; color: #9ca3af;">No encontrado. Crea uno nuevo.</div>';
+        }
+
+        function selectClient(id) {
+            appState.clienteSeleccionado = clientes.find(c => c.id === id);
+            appState.proyecto = document.getElementById('proyectoInput').value || "Proyecto General";
+            saveState();
+            goToScreen(1);
+        }
+
+        // ============================================
+        // SCREEN 2: ENSAYOS
+        // ============================================
+
+        function renderEnsayos() {
+            const search = document.getElementById('searchEnsayos').value.toLowerCase();
+            const filtered = ensayos.filter(e =>
+                e.nombre.toLowerCase().includes(search) ||
+                e.categoria.toLowerCase().includes(search)
+            );
+
+            const html = filtered.map(e => {
+                const isSelected = appState.selectedItems.find(item => item.id === e.id);
+                return `
+                    <div class="card" onclick="toggleEnsayo(${e.id})" style="${isSelected ? 'border-left-color: #16a34a;' : ''}">
+                        <div class="card-header">
+                            <div>
+                                <div class="card-title">${e.nombre}</div>
+                                <div class="card-desc">${e.norma}</div>
+                            </div>
+                            <span class="badge badge-success">${isSelected ? '✓' : '+'}</span>
+                        </div>
+                        <div class="card-price">
+                            <span>S/ ${e.precio}</span>
+                            <span style="font-size: 11px; color: #9ca3af;">${e.categoria}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('ensayosList').innerHTML = html;
+        }
+
+        function filterEnsayos() {
+            renderEnsayos();
+        }
+
+        function toggleEnsayo(id) {
+            const ensayo = ensayos.find(e => e.id === id);
+            const index = appState.selectedItems.findIndex(item => item.id === id);
+
+            if (index > -1) {
+                appState.selectedItems.splice(index, 1);
+            } else {
+                appState.selectedItems.push({ ...ensayo, cantidad: 1 });
+            }
+
+            calculateTotal();
+            renderEnsayos();
+            saveState();
+        }
+
+        // ============================================
+        // SCREEN 3: RESUMEN
+        // ============================================
+
+        function renderSelectedItems() {
+            const html = appState.selectedItems.map((item, idx) => `
+                <div class="selected-item">
+                    <div class="selected-item-header">
+                        <div class="selected-item-name">${item.nombre}</div>
+                        <button class="qty-btn" onclick="removeItem(${idx})" style="background: #fee2e2; color: #dc2626;">−</button>
+                    </div>
+                    <div style="font-size: 12px; color: #9ca3af; margin-bottom: 8px;">S/ ${item.precio} c/u</div>
+                    <div class="qty-control">
+                        <span>Cantidad:</span>
+                        <button class="qty-btn" onclick="decreaseQty(${idx})">−</button>
+                        <span style="min-width: 30px; text-align: center; font-weight: 700;">${item.cantidad}</span>
+                        <button class="qty-btn" onclick="increaseQty(${idx})">+</button>
+                        <span style="margin-left: auto; font-weight: 700;">S/ ${(item.precio * item.cantidad).toFixed(2)}</span>
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('selectedItemsList').innerHTML = html || '<div style="text-align: center; color: #9ca3af;">Sin elementos seleccionados</div>';
+            calculateTotal();
+        }
+
+        function removeItem(idx) {
+            appState.selectedItems.splice(idx, 1);
+            renderSelectedItems();
+            calculateTotal();
+            saveState();
+        }
+
+        function increaseQty(idx) {
+            appState.selectedItems[idx].cantidad++;
+            renderSelectedItems();
+            calculateTotal();
+            saveState();
+        }
+
+        function decreaseQty(idx) {
+            if (appState.selectedItems[idx].cantidad > 1) {
+                appState.selectedItems[idx].cantidad--;
+                renderSelectedItems();
+                calculateTotal();
+                saveState();
+            }
+        }
+
+        function calculateTotal() {
+            const subtotal = appState.selectedItems.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
+            const discountPercent = parseFloat(document.getElementById('discountInput').value) || 0;
+            const discountAmount = subtotal * (discountPercent / 100);
+            const subtotalAfterDiscount = subtotal - discountAmount;
+            const igv = subtotalAfterDiscount * 0.18;
+            const total = subtotalAfterDiscount + igv;
+
+            appState.subtotal = subtotal;
+            appState.discount = discountAmount;
+            appState.igv = igv;
+            appState.total = total;
+
+            document.getElementById('subtotalValue').textContent = `S/ ${subtotal.toFixed(2)}`;
+            document.getElementById('discountValue').textContent = `S/ ${discountAmount.toFixed(2)}`;
+            document.getElementById('igvValue').textContent = `S/ ${igv.toFixed(2)}`;
+            document.getElementById('totalValue').textContent = `S/ ${total.toFixed(2)}`;
+
+            saveState();
+        }
+
+        // ============================================
+        // SCREEN 4: PDF PREVIEW
+        // ============================================
+
+        function renderPDFPreview() {
+            const client = appState.clienteSeleccionado || { nombre: "-" };
+            const today = new Date().toLocaleDateString('es-PE');
+
+            document.getElementById('pdfClient').textContent = client.nombre;
+            document.getElementById('pdfProyecto').textContent = appState.proyecto;
+            document.getElementById('pdfNumber').textContent = String(appState.cotizacionNumber).padStart(3, '0');
+            document.getElementById('pdfDate').textContent = today;
+
+            const itemsHtml = appState.selectedItems.map(item => `
+                <tr style="border-bottom: 1px solid #e5e7eb;">
+                    <td style="padding: 8px 0; text-align: left;">${item.nombre}</td>
+                    <td style="padding: 8px 0; text-align: center;">${item.cantidad}</td>
+                    <td style="padding: 8px 0; text-align: right;">S/ ${item.precio}</td>
+                    <td style="padding: 8px 0; text-align: right;">S/ ${(item.precio * item.cantidad).toFixed(2)}</td>
+                </tr>
+            `).join('');
+
+            document.getElementById('pdfItems').innerHTML = itemsHtml;
+            document.getElementById('pdfSubtotal').textContent = `S/ ${appState.subtotal.toFixed(2)}`;
+            document.getElementById('pdfDiscount').textContent = `S/ ${appState.discount.toFixed(2)}`;
+            document.getElementById('pdfIGV').textContent = `S/ ${appState.igv.toFixed(2)}`;
+            document.getElementById('pdfTotal').textContent = `S/ ${appState.total.toFixed(2)}`;
+        }
+
+        // ============================================
+        // SCREEN 5: DESCARGAS
+        // ============================================
+
+        function downloadPDFOffline() {
+            showModal();
+            setTimeout(() => {
+                const element = document.getElementById('pdfContent');
+                const opt = {
+                    margin: 10,
+                    filename: `COT-${appState.cotizacionNumber}.pdf`,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { scale: 2 },
+                    jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
+                };
+                html2pdf().set(opt).from(element).save().then(() => {
+                    closeModal();
+                    showNotification('✅ PDF descargado correctamente');
+                });
+            }, 500);
+        }
+
+        function downloadPDFOnline() {
+            showModal();
+            setTimeout(() => {
+                // Simulación: En producción, subir a servidor
+                console.log('Subiendo PDF a servidor...');
+                setTimeout(() => {
+                    closeModal();
+                    showNotification('✅ PDF enviado al servidor correctamente');
+                }, 2000);
+            }, 500);
+        }
+
+        function shareWhatsApp() {
+            const client = appState.clienteSeleccionado || { nombre: "Cliente" };
+            const texto = `Hola, te comparto la cotización COT-${appState.cotizacionNumber} por S/ ${appState.total.toFixed(2)} para tu proyecto. Incluye ${appState.selectedItems.length} ensayos. ¿Aceptas?`;
+            window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, '_blank');
+        }
+
+        function shareEmail() {
+            const client = appState.clienteSeleccionado || { nombre: "Cliente" };
+            const subject = `Cotización COT-${appState.cotizacionNumber} - GTQC`;
+            const body = `Estimado/a,\n\nA continuación te compartimos la cotización solicitada:\n\nNúmero: COT-${appState.cotizacionNumber}\nTotal: S/ ${appState.total.toFixed(2)}\nItems: ${appState.selectedItems.length} ensayos\n\nValidez: 30 días\n\nSaludos,\nGTQC Laboratorio`;
+            window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
+        }
+
+        function saveQuotation() {
+            const quotation = {
+                numero: appState.cotizacionNumber,
+                cliente: appState.clienteSeleccionado,
+                proyecto: appState.proyecto,
+                items: appState.selectedItems,
+                total: appState.total,
+                fecha: new Date().toLocaleDateString('es-PE'),
+                estado: 'Emitida'
+            };
+
+            let quotations = JSON.parse(localStorage.getItem('quotations') || '[]');
+            quotations.push(quotation);
+            localStorage.setItem('quotations', JSON.stringify(quotations));
+
+            showNotification('✅ Cotización guardada en historial');
+        }
+
+        function resetApp() {
+            if (confirm('¿Crear nueva cotización?')) {
+                appState = {
+                    currentScreen: 0,
+                    clienteSeleccionado: null,
+                    proyecto: "",
+                    selectedItems: [],
+                    subtotal: 0,
+                    discount: 0,
+                    igv: 0,
+                    total: 0,
+                    cotizacionNumber: Math.floor(Math.random() * 10000) + 1
+                };
+                document.getElementById('discountInput').value = '';
+                document.getElementById('rucInput').value = '';
+                document.getElementById('proyectoInput').value = '';
+                document.getElementById('searchEnsayos').value = '';
+                saveState();
+                goToScreen(0);
+            }
+        }
+
+        function showModal() {
+            document.getElementById('downloadModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('downloadModal').classList.remove('active');
+        }
+
+        function showNotification(msg) {
+            const notif = document.createElement('div');
+            notif.style.cssText = `
+                position: fixed;
+                bottom: 100px;
+                left: 20px;
+                right: 20px;
+                background: #dcfce7;
+                color: #166534;
+                padding: 14px;
+                border-radius: 8px;
+                font-weight: 600;
+                font-size: 13px;
+                z-index: 3000;
+                animation: slideUp 0.3s ease;
+            `;
+            notif.textContent = msg;
+            document.body.appendChild(notif);
+            setTimeout(() => notif.remove(), 3000);
+        }
+
+        // ============================================
+        // INITIALIZE
+        // ============================================
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('data:application/javascript,' + encodeURIComponent(`
+                const CACHE = 'cotizador-v1';
+                self.addEventListener('install', e => {
+                    e.waitUntil(caches.open(CACHE).then(c => c.addAll(['/'])));
+                });
+                self.addEventListener('fetch', e => {
+                    e.respondWith(caches.match(e.request).then(r => r || fetch(e.request)));
+                });
+            `)).catch(() => {});
+        }
+
+        loadState();
+        updateScreen();
+
+        document.addEventListener('touchmove', e => {
+            if (e.touches.length > 1) e.preventDefault();
+        }, { passive: false });
+
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', e => {
+            if (Date.now() - lastTouchEnd <= 300) e.preventDefault();
+            lastTouchEnd = Date.now();
+        }, false);
+    </script>
+</body>
+</html>

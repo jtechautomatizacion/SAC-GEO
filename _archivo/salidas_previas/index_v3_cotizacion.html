@@ -1,0 +1,1625 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PWA Cotización - Sistema Completo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        /* PHONE FRAME */
+        .phone-frame {
+            width: 390px;
+            height: 844px;
+            border: 14px solid #1e293b;
+            border-radius: 48px;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.8), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+            overflow: hidden;
+            background: #ffffff;
+            position: relative;
+        }
+
+        .phone-frame::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 150px;
+            height: 28px;
+            background: #0f172a;
+            border-radius: 0 0 28px 28px;
+            z-index: 50;
+        }
+
+        .phone-content {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            background: #ffffff;
+            overflow: hidden;
+        }
+
+        /* STATUS BAR */
+        .status-bar {
+            height: 44px;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 16px 0;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        /* MAIN HEADER */
+        .main-header {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            padding: 20px;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .header-title h1 {
+            font-size: 22px;
+            font-weight: 800;
+            margin-bottom: 2px;
+        }
+
+        .header-title p {
+            font-size: 12px;
+            opacity: 0.85;
+        }
+
+        .sync-indicator {
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* PROGRESS STEPPER */
+        .progress-stepper {
+            display: flex;
+            gap: 4px;
+            margin-top: 12px;
+        }
+
+        .stepper-segment {
+            flex: 1;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 2px;
+        }
+
+        .stepper-segment.active {
+            background: white;
+        }
+
+        /* MAIN CONTENT */
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: none;
+        }
+
+        .main-content.active {
+            display: block;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .subsection-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #6366f1;
+            margin: 20px 0 12px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        /* FORMS */
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #475569;
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            background: #f8fafc;
+            transition: all 0.2s;
+        }
+
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: #6366f1;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .form-input.success {
+            border-color: #10b981;
+            background: #f0fdf4;
+        }
+
+        .form-input.error {
+            border-color: #ef4444;
+            background: #fef2f2;
+        }
+
+        .error-message {
+            color: #ef4444;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+
+        /* BUTTONS */
+        .btn {
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-secondary {
+            background: #f1f5f9;
+            color: #475569;
+            border: 1px solid #e2e8f0;
+            width: 100%;
+        }
+
+        .btn-secondary:hover {
+            background: #e2e8f0;
+        }
+
+        .btn-small {
+            padding: 8px 12px;
+            font-size: 12px;
+            width: auto;
+        }
+
+        .btn-danger {
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 6px 10px;
+            font-size: 12px;
+            width: auto;
+        }
+
+        .btn-danger:hover {
+            background: #fecaca;
+        }
+
+        .btn-success {
+            background: #dcfce7;
+            color: #16a34a;
+            padding: 6px 10px;
+            font-size: 12px;
+            width: auto;
+        }
+
+        /* SELECTOR TABS */
+        .selector-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .selector-tab {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+
+        .selector-tab.active {
+            border-color: #6366f1;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+            color: #6366f1;
+        }
+
+        /* ESSAY CARDS */
+        .essay-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 12px;
+            transition: all 0.2s;
+        }
+
+        .essay-card:hover {
+            border-color: #6366f1;
+            background: #f0f4ff;
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.1);
+        }
+
+        .essay-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .essay-name {
+            font-weight: 700;
+            color: #1e293b;
+            font-size: 14px;
+        }
+
+        .essay-code {
+            font-size: 11px;
+            color: #64748b;
+        }
+
+        .essay-norm {
+            font-size: 11px;
+            color: #94a3b8;
+            margin-top: 2px;
+        }
+
+        .essay-price {
+            font-size: 13px;
+            font-weight: 600;
+            color: #6366f1;
+        }
+
+        .essay-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .qty-control {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .qty-btn {
+            background: #e2e8f0;
+            border: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 12px;
+            transition: all 0.2s;
+            color: #475569;
+        }
+
+        .qty-btn:hover {
+            background: #cbd5e1;
+        }
+
+        .qty-input {
+            width: 40px;
+            padding: 4px;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .essay-subtotal {
+            font-weight: 700;
+            color: #1e293b;
+            font-size: 13px;
+        }
+
+        /* PACKAGE CARDS */
+        .package-card {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
+            border: 2px solid #dbeafe;
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 12px;
+            transition: all 0.2s;
+        }
+
+        .package-card:hover {
+            border-color: #6366f1;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+        }
+
+        .package-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .package-name {
+            font-weight: 700;
+            color: #0c2340;
+            font-size: 14px;
+        }
+
+        .package-price {
+            font-size: 13px;
+            font-weight: 600;
+            color: #0c2340;
+        }
+
+        .package-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #dbeafe;
+        }
+
+        .package-subtotal {
+            font-weight: 700;
+            color: #0c2340;
+            font-size: 13px;
+        }
+
+        .included-services {
+            background: white;
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 10px;
+            font-size: 12px;
+            display: none;
+        }
+
+        .included-services.show {
+            display: block;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-10px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .service-item {
+            padding: 6px 0;
+            border-bottom: 1px solid #e2e8f0;
+            color: #475569;
+        }
+
+        .service-item:last-child {
+            border-bottom: none;
+        }
+
+        .service-item::before {
+            content: '✓ ';
+            color: #6366f1;
+            font-weight: 700;
+        }
+
+        /* ALERT */
+        .alert {
+            padding: 12px 14px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 13px;
+            display: none;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        .alert.show {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .alert-success {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+
+        /* TOTALS BOX */
+        .totals-box {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            padding: 16px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+
+        .total-final {
+            font-size: 18px;
+            font-weight: 800;
+            border-top: 1px solid rgba(255, 255, 255, 0.3);
+            padding-top: 10px;
+            margin-top: 10px;
+        }
+
+        /* MODAL */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 100;
+            align-items: flex-end;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            width: 100%;
+            max-height: 80vh;
+            border-radius: 24px 24px 0 0;
+            padding: 20px;
+            overflow-y: auto;
+            animation: slideUp 0.4s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(100%);
+            }
+            to {
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            font-size: 18px;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #64748b;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+
+        .search-result {
+            padding: 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .search-result:hover {
+            background: #f1f5f9;
+            border-color: #6366f1;
+        }
+
+        .search-result.active {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+            border-color: #6366f1;
+        }
+
+        .result-name {
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 4px;
+        }
+
+        .result-details {
+            font-size: 12px;
+            color: #64748b;
+            margin-bottom: 4px;
+        }
+
+        .result-price {
+            font-weight: 600;
+            color: #6366f1;
+            font-size: 13px;
+        }
+
+        /* BOTTOM ACTION BAR */
+        .bottom-bar {
+            padding: 12px 20px 20px;
+            background: white;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        .bottom-bar .btn {
+            margin: 0;
+        }
+
+        /* SCROLLBAR */
+        .phone-content::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .phone-content::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+
+        .phone-content::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+
+        .phone-content::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .input-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .input-row.full {
+            grid-template-columns: 1fr;
+        }
+
+        .download-option {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .download-option:hover {
+            background: #f8fafc;
+            border-color: #6366f1;
+        }
+
+        .download-option.active {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+            border-color: #6366f1;
+        }
+
+        .download-title {
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 4px;
+        }
+
+        .download-desc {
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        .cotizacion-info {
+            background: #f1f5f9;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 16px;
+            font-size: 12px;
+        }
+
+        .cotizacion-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            color: #475569;
+        }
+
+        .cotizacion-row strong {
+            color: #1e293b;
+        }
+    </style>
+</head>
+<body>
+    <div class="phone-frame">
+        <div class="phone-content">
+            <!-- STATUS BAR -->
+            <div class="status-bar">
+                <span>9:41</span>
+                <div style="display: flex; gap: 4px;">
+                    <span><i class="fas fa-signal"></i></span>
+                    <span><i class="fas fa-wifi"></i></span>
+                    <span><i class="fas fa-battery-full"></i></span>
+                </div>
+            </div>
+
+            <!-- HEADER -->
+            <div class="main-header">
+                <div class="header-top">
+                    <div class="header-title">
+                        <h1>Cotización</h1>
+                        <p id="headerSubtitle">Cliente</p>
+                    </div>
+                    <div class="sync-indicator"></div>
+                </div>
+                <div class="progress-stepper" id="progressStepper">
+                    <div class="stepper-segment active"></div>
+                    <div class="stepper-segment"></div>
+                    <div class="stepper-segment"></div>
+                    <div class="stepper-segment"></div>
+                </div>
+            </div>
+
+            <!-- ALERTAS -->
+            <div id="alert" class="alert"></div>
+
+            <!-- SECCIÓN 1: DATOS DEL CLIENTE -->
+            <div class="main-content active" id="section1">
+                <div class="section-title">
+                    <i class="fas fa-id-card"></i> Identificación
+                </div>
+
+                <div class="selector-tabs">
+                    <div class="selector-tab active" onclick="setClientType('ruc')">
+                        <i class="fas fa-building"></i> RUC
+                    </div>
+                    <div class="selector-tab" onclick="setClientType('dni')">
+                        <i class="fas fa-user"></i> DNI
+                    </div>
+                </div>
+
+                <!-- TAB RUC -->
+                <div id="tabRuc" style="display: block;">
+                    <div class="form-group">
+                        <label class="form-label">Número de RUC <span style="color: #ef4444;">*</span></label>
+                        <input type="text" class="form-input" id="rucInput" placeholder="Ej: 20123456789" maxlength="11" oninput="searchRuc()">
+                        <div id="rucError" class="error-message"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Razón Social</label>
+                        <input type="text" class="form-input" id="empresaRuc" placeholder="Auto-completado" readonly>
+                    </div>
+                </div>
+
+                <!-- TAB DNI -->
+                <div id="tabDni" style="display: none;">
+                    <div class="input-row">
+                        <div class="form-group">
+                            <label class="form-label">Apellidos <span style="color: #ef4444;">*</span></label>
+                            <input type="text" class="form-input" id="apellidos" placeholder="Apellidos">
+                            <div id="apellidosError" class="error-message"></div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Nombres <span style="color: #ef4444;">*</span></label>
+                            <input type="text" class="form-input" id="nombres" placeholder="Nombres">
+                            <div id="nombresError" class="error-message"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Empresa <span style="color: #ef4444;">*</span></label>
+                        <input type="text" class="form-input" id="empresaDni" placeholder="Nombre de empresa">
+                        <div id="empresaDniError" class="error-message"></div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Email <span style="color: #ef4444;">*</span></label>
+                    <input type="email" class="form-input" id="email" placeholder="cliente@empresa.com">
+                    <div id="emailError" class="error-message"></div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Proyecto <span style="color: #ef4444;">*</span></label>
+                    <input type="text" class="form-input" id="proyecto" placeholder="Nombre del proyecto">
+                    <div id="proyectoError" class="error-message"></div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Validez de la Cotización (días) <span style="color: #ef4444;">*</span></label>
+                    <input type="number" class="form-input" id="validez" value="30" min="1" max="365">
+                    <div id="validezError" class="error-message"></div>
+                </div>
+            </div>
+
+            <!-- SECCIÓN 2: DETALLE DE COTIZACIÓN -->
+            <div class="main-content" id="section2">
+                <div class="section-title">
+                    <i class="fas fa-file-contract"></i> Detalle de Cotización
+                </div>
+
+                <!-- INFORMACIÓN DE COTIZACIÓN -->
+                <div class="cotizacion-info">
+                    <div class="cotizacion-row">
+                        <strong>N° Cotización:</strong>
+                        <span id="cotizacionNum">COT-001</span>
+                    </div>
+                    <div class="cotizacion-row">
+                        <strong>Cliente:</strong>
+                        <span id="cotizacionCliente">-</span>
+                    </div>
+                    <div class="cotizacion-row">
+                        <strong>Proyecto:</strong>
+                        <span id="cotizacionProyecto">-</span>
+                    </div>
+                </div>
+
+                <!-- ENSAYOS INDIVIDUALES -->
+                <div class="subsection-title">
+                    <i class="fas fa-flask"></i> Ensayos Individuales
+                </div>
+
+                <button class="btn btn-secondary" style="margin-bottom: 12px; width: 100%; background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0;" onclick="openSearchModal('essay')">
+                    <i class="fas fa-plus"></i> Agregar Ensayo
+                </button>
+
+                <div id="essaysContainer">
+                    <div style="text-align: center; color: #94a3b8; padding: 20px 8px;">
+                        <i class="fas fa-inbox"></i> Sin ensayos agregados
+                    </div>
+                </div>
+
+                <!-- PAQUETES -->
+                <div class="subsection-title">
+                    <i class="fas fa-cube"></i> Paquetes
+                </div>
+
+                <button class="btn btn-secondary" style="margin-bottom: 12px; width: 100%; background: #fef3c7; color: #92400e; border: 1px solid #fcd34d;" onclick="openSearchModal('package')">
+                    <i class="fas fa-plus"></i> Agregar Paquete
+                </button>
+
+                <div id="packagesContainer">
+                    <div style="text-align: center; color: #94a3b8; padding: 20px 8px;">
+                        <i class="fas fa-inbox"></i> Sin paquetes agregados
+                    </div>
+                </div>
+
+                <!-- TOTALES -->
+                <div class="totals-box">
+                    <div class="total-row">
+                        <span>Subtotal:</span>
+                        <span id="subtotalS2">S/ 0.00</span>
+                    </div>
+                    <div class="total-row">
+                        <span>IGV (18%):</span>
+                        <span id="igvS2">S/ 0.00</span>
+                    </div>
+                    <div class="total-row total-final">
+                        <span>Total:</span>
+                        <span id="totalS2">S/ 0.00</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECCIÓN 3: DESCUENTOS -->
+            <div class="main-content" id="section3">
+                <div class="section-title">
+                    <i class="fas fa-percent"></i> Descuentos
+                </div>
+
+                <div style="background: #f8fafc; padding: 12px; border-radius: 8px; margin-bottom: 16px; font-size: 12px;">
+                    <div style="margin-bottom: 8px;"><strong>Subtotal:</strong> <span id="resumenSubtotal">S/ 0.00</span></div>
+                    <div><strong>Total antes descuento:</strong> <span id="resumenTotal">S/ 0.00</span></div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Tipo de Descuento</label>
+                    <select class="form-select" id="discountType" onchange="updateDiscountPreview()">
+                        <option value="none">Sin descuento</option>
+                        <option value="total">Descuento al Total</option>
+                        <option value="package">Descuento por Paquete</option>
+                        <option value="essay">Descuento por Ensayo</option>
+                    </select>
+                </div>
+
+                <div id="discountDetailsContainer" style="display: none;">
+                    <div id="discountItemsList"></div>
+                </div>
+
+                <div class="totals-box" style="margin-top: 16px;">
+                    <div class="total-row">
+                        <span>Subtotal:</span>
+                        <span id="finalSubtotal">S/ 0.00</span>
+                    </div>
+                    <div class="total-row">
+                        <span>Descuento:</span>
+                        <span id="discountAmount">S/ 0.00</span>
+                    </div>
+                    <div class="total-row">
+                        <span>Neto:</span>
+                        <span id="neto">S/ 0.00</span>
+                    </div>
+                    <div class="total-row">
+                        <span>IGV (18%):</span>
+                        <span id="finalIgv">S/ 0.00</span>
+                    </div>
+                    <div class="total-row total-final">
+                        <span>Total Final:</span>
+                        <span id="finalTotal">S/ 0.00</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECCIÓN 4: DESCARGAS -->
+            <div class="main-content" id="section4">
+                <div class="section-title">
+                    <i class="fas fa-download"></i> Descargas
+                </div>
+
+                <div class="download-option" onclick="selectDownloadOption('offline')">
+                    <div class="download-title">
+                        <i class="fas fa-bolt"></i> Descarga Rápida (Offline)
+                    </div>
+                    <div class="download-desc">
+                        Archivo sin conexión, ideal para trabajar fuera de línea
+                    </div>
+                </div>
+
+                <div class="download-option" onclick="selectDownloadOption('online')">
+                    <div class="download-title">
+                        <i class="fas fa-cloud-download-alt"></i> Descarga Oficial (Online)
+                    </div>
+                    <div class="download-desc">
+                        PDF profesional con firma digital y respaldo en servidor
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" style="margin-top: 20px; margin-bottom: 12px;" onclick="downloadSelected()">
+                    <i class="fas fa-download"></i> Descargar PDF
+                </button>
+
+                <div class="form-group">
+                    <label class="form-label">Compartir Cotización</label>
+                </div>
+
+                <button class="btn btn-secondary" style="margin-bottom: 10px;" onclick="shareViaWhatsapp()">
+                    <i class="fab fa-whatsapp"></i> Enviar por WhatsApp
+                </button>
+
+                <button class="btn btn-secondary" onclick="shareViaEmail()">
+                    <i class="fas fa-envelope"></i> Enviar por Email
+                </button>
+
+                <div id="shareStatus"></div>
+            </div>
+
+            <!-- BOTTOM BAR -->
+            <div class="bottom-bar">
+                <button class="btn btn-secondary btn-small" id="prevBtn" style="display: none; flex: 0 0 auto; width: auto; padding: 10px 16px;" onclick="previousSection()">
+                    ← Atrás
+                </button>
+                <button class="btn btn-primary" id="nextBtn" onclick="nextSection()">
+                    Siguiente →
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL BÚSQUEDA -->
+    <div class="modal" id="searchModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span id="modalTitle">Buscar Ensayo</span>
+                <button class="close-modal" onclick="closeSearchModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <input type="text" class="search-input" id="searchInput" placeholder="Buscar por nombre, código o norma..." oninput="filterSearchResults()">
+
+            <div id="searchResults"></div>
+
+            <div style="text-align: center; padding: 20px; color: #94a3b8; display: none;" id="noResults">
+                <i class="fas fa-search"></i> Sin resultados
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===================== CATALOGO MOCK DATA =====================
+
+        const ESSAYS_CATALOG = {
+            'CBR': { name: 'CBR', code: 'MS-09', norm: 'MTC E132', price: 150, sample: '120 kg' },
+            'GRANULOMETRIA': { name: 'Análisis Granulométrico', code: 'MS-01', norm: 'D6913/D6913M', price: 38, sample: 'Depende del tamaño' },
+            'HUMEDAD': { name: 'Contenido de Humedad', code: 'MS-03', norm: 'ASTM D2216', price: 12, sample: '2 kg' },
+            'LIQUIDO': { name: 'Límite Líquido', code: 'MS-04', norm: 'ASTM D4318', price: 25, sample: '1 kg' },
+            'PLASTICO': { name: 'Límite Plástico', code: 'MS-05', norm: 'ASTM D4318', price: 20, sample: '1 kg' },
+            'PROCTOR': { name: 'Proctor Modificado', code: 'MS-06', norm: 'NTP 339.141', price: 110, sample: '70 kg' },
+            'COMPRESION': { name: 'Compresión de Concreto', code: 'MS-07', norm: 'NTP 339.034', price: 85, sample: '3 cilindros' },
+            'TRACCION': { name: 'Tracción de Acero', code: 'MS-08', norm: 'ASTM A370', price: 65, sample: '3 probetas' },
+            'FLEXION': { name: 'Flexión en Concreto', code: 'MS-10', norm: 'ASTM C78', price: 95, sample: '3 vigas' },
+            'SLUMP': { name: 'Slump Test', code: 'MS-11', norm: 'ASTM C143', price: 18, sample: 'Al momento' }
+        };
+
+        const PACKAGES_CATALOG = {
+            'PKG-CLASS': {
+                name: 'Paquete de Clasificación',
+                price: 100,
+                services: ['GRANULOMETRIA', 'LIQUIDO', 'PLASTICO', 'HUMEDAD']
+            },
+            'PKG-CBR': {
+                name: 'Paquete de Ensayo de CBR Completo',
+                price: 400,
+                services: ['GRANULOMETRIA', 'LIQUIDO', 'PLASTICO', 'HUMEDAD', 'PROCTOR', 'CBR']
+            },
+            'PKG-CORTE': {
+                name: 'Paquete de Corte Directo',
+                price: 350,
+                services: ['GRANULOMETRIA', 'HUMEDAD', 'PROCTOR']
+            },
+            'PKG-PROCTOR': {
+                name: 'Paquete de Proctor Modificado',
+                price: 210,
+                services: ['HUMEDAD', 'PROCTOR', 'COMPRESION']
+            },
+            'PKG-CONCRETO': {
+                name: 'Paquete de Concreto',
+                price: 280,
+                services: ['SLUMP', 'COMPRESION', 'FLEXION']
+            }
+        };
+
+        const SUNAT_DB = {
+            '20123456789': 'ACME Corporation SAC',
+            '20987654321': 'Tech Solutions EIRL',
+            '20111111111': 'Laboratorio Central SA',
+            '20555555555': 'Constructor Vial SRL',
+            '20666666666': 'Empresa Constructora ABC',
+            '20777777777': 'Servicios de Ingeniería XYZ'
+        };
+
+        // ===================== STATE =====================
+        const state = {
+            currentSection: 1,
+            clientType: 'ruc',
+            searchModalType: 'essay', // 'essay' o 'package'
+            downloadOption: 'offline',
+            client: {
+                ruc: '',
+                empresa: '',
+                apellidos: '',
+                nombres: '',
+                email: '',
+                proyecto: '',
+                validez: 30
+            },
+            essays: [],
+            packages: [],
+            discounts: {}
+        };
+
+        // ===================== FUNCIONES CLIENT TYPE =====================
+
+        function setClientType(type) {
+            state.clientType = type;
+            const tabs = document.querySelectorAll('.selector-tab');
+            tabs.forEach(t => t.classList.remove('active'));
+            event.target.closest('.selector-tab').classList.add('active');
+
+            document.getElementById('tabRuc').style.display = type === 'ruc' ? 'block' : 'none';
+            document.getElementById('tabDni').style.display = type === 'dni' ? 'block' : 'none';
+        }
+
+        function searchRuc() {
+            const rucValue = document.getElementById('rucInput').value.trim();
+            const empresaField = document.getElementById('empresaRuc');
+            const rucErrorField = document.getElementById('rucError');
+
+            empresaField.value = '';
+            rucErrorField.textContent = '';
+
+            if (rucValue.length === 0) {
+                state.client.ruc = '';
+                state.client.empresa = '';
+                return;
+            }
+
+            if (!/^\d{11}$/.test(rucValue)) {
+                rucErrorField.textContent = 'RUC debe tener 11 dígitos';
+                state.client.ruc = '';
+                state.client.empresa = '';
+                return;
+            }
+
+            if (SUNAT_DB[rucValue]) {
+                state.client.ruc = rucValue;
+                state.client.empresa = SUNAT_DB[rucValue];
+                empresaField.value = state.client.empresa;
+                document.getElementById('rucInput').classList.add('success');
+                rucErrorField.textContent = '';
+                showAlert('✓ RUC validado correctamente', 'success');
+            } else {
+                rucErrorField.textContent = 'RUC no encontrado en padrón';
+                state.client.ruc = '';
+                state.client.empresa = '';
+                document.getElementById('rucInput').classList.add('error');
+            }
+        }
+
+        // ===================== FUNCIONES MODAL BÚSQUEDA =====================
+
+        function openSearchModal(type) {
+            state.searchModalType = type;
+            document.getElementById('modalTitle').textContent = type === 'essay' ? 'Agregar Ensayo' : 'Agregar Paquete';
+            document.getElementById('searchInput').value = '';
+            document.getElementById('searchResults').innerHTML = '';
+            document.getElementById('noResults').style.display = 'none';
+            document.getElementById('searchModal').classList.add('show');
+            filterSearchResults();
+        }
+
+        function closeSearchModal() {
+            document.getElementById('searchModal').classList.remove('show');
+        }
+
+        function filterSearchResults() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const resultsContainer = document.getElementById('searchResults');
+            const noResultsDiv = document.getElementById('noResults');
+            let results = [];
+
+            if (state.searchModalType === 'essay') {
+                results = Object.entries(ESSAYS_CATALOG)
+                    .filter(([key, essay]) =>
+                        essay.name.toLowerCase().includes(query) ||
+                        essay.code.toLowerCase().includes(query) ||
+                        essay.norm.toLowerCase().includes(query)
+                    )
+                    .map(([key, essay]) => ({
+                        id: key,
+                        ...essay,
+                        type: 'essay'
+                    }));
+            } else {
+                results = Object.entries(PACKAGES_CATALOG)
+                    .filter(([key, pkg]) =>
+                        pkg.name.toLowerCase().includes(query)
+                    )
+                    .map(([key, pkg]) => ({
+                        id: key,
+                        ...pkg,
+                        type: 'package'
+                    }));
+            }
+
+            if (results.length === 0) {
+                resultsContainer.innerHTML = '';
+                noResultsDiv.style.display = 'block';
+                return;
+            }
+
+            noResultsDiv.style.display = 'none';
+            resultsContainer.innerHTML = results.map(item => `
+                <div class="search-result" onclick="selectSearchResult('${item.id}', '${item.type}')">
+                    <div class="result-name">${item.name}</div>
+                    ${item.code ? `<div class="result-details">Código: ${item.code} | ${item.norm}</div>` : ''}
+                    <div class="result-price">S/ ${item.price.toFixed(2)}</div>
+                </div>
+            `).join('');
+        }
+
+        function selectSearchResult(itemId, itemType) {
+            if (itemType === 'essay') {
+                const essay = ESSAYS_CATALOG[itemId];
+                state.essays.push({
+                    id: Date.now(),
+                    catalogId: itemId,
+                    ...essay,
+                    qty: 1,
+                    subtotal: essay.price
+                });
+                showAlert('✓ Ensayo agregado', 'success');
+            } else {
+                const pkg = PACKAGES_CATALOG[itemId];
+                state.packages.push({
+                    id: Date.now(),
+                    catalogId: itemId,
+                    ...pkg,
+                    qty: 1,
+                    subtotal: pkg.price,
+                    expanded: false
+                });
+                showAlert('✓ Paquete agregado', 'success');
+            }
+
+            renderEssaysSection();
+            renderPackagesSection();
+            calculateTotals();
+            closeSearchModal();
+        }
+
+        // ===================== FUNCIONES RENDERIZADO =====================
+
+        function renderEssaysSection() {
+            const container = document.getElementById('essaysContainer');
+
+            if (state.essays.length === 0) {
+                container.innerHTML = '<div style="text-align: center; color: #94a3b8; padding: 20px 8px;"><i class="fas fa-inbox"></i> Sin ensayos agregados</div>';
+                return;
+            }
+
+            container.innerHTML = state.essays.map(essay => `
+                <div class="essay-card">
+                    <div class="essay-header">
+                        <div>
+                            <div class="essay-name">${essay.name}</div>
+                            <div class="essay-code">Código: ${essay.code}</div>
+                            <div class="essay-norm">Norma: ${essay.norm}</div>
+                        </div>
+                        <div class="essay-price">S/ ${essay.price.toFixed(2)}</div>
+                    </div>
+                    <div class="essay-controls">
+                        <div class="qty-control">
+                            <button class="qty-btn" onclick="updateEssayQty(${essay.id}, ${essay.qty - 1})">−</button>
+                            <input type="number" class="qty-input" value="${essay.qty}" onchange="updateEssayQty(${essay.id}, this.value)">
+                            <button class="qty-btn" onclick="updateEssayQty(${essay.id}, ${essay.qty + 1})">+</button>
+                        </div>
+                        <div class="essay-subtotal">S/ ${essay.subtotal.toFixed(2)}</div>
+                        <button class="btn btn-danger" onclick="deleteEssay(${essay.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderPackagesSection() {
+            const container = document.getElementById('packagesContainer');
+
+            if (state.packages.length === 0) {
+                container.innerHTML = '<div style="text-align: center; color: #94a3b8; padding: 20px 8px;"><i class="fas fa-inbox"></i> Sin paquetes agregados</div>';
+                return;
+            }
+
+            container.innerHTML = state.packages.map(pkg => {
+                const servicesHtml = pkg.services.map(srvId => {
+                    const srv = ESSAYS_CATALOG[srvId];
+                    return srv ? `<div class="service-item">${srv.name}</div>` : '';
+                }).join('');
+
+                return `
+                    <div class="package-card">
+                        <div class="package-header">
+                            <div class="package-name">${pkg.name}</div>
+                            <div class="package-price">S/ ${pkg.price.toFixed(2)}</div>
+                        </div>
+                        <div class="package-controls">
+                            <div class="qty-control">
+                                <button class="qty-btn" onclick="updatePackageQty(${pkg.id}, ${pkg.qty - 1})">−</button>
+                                <input type="number" class="qty-input" value="${pkg.qty}" onchange="updatePackageQty(${pkg.id}, this.value)">
+                                <button class="qty-btn" onclick="updatePackageQty(${pkg.id}, ${pkg.qty + 1})">+</button>
+                            </div>
+                            <div class="package-subtotal">S/ ${pkg.subtotal.toFixed(2)}</div>
+                            <button class="btn btn-danger" onclick="deletePackage(${pkg.id})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                        <button style="width: 100%; margin-top: 8px; padding: 8px; background: none; border: 1px solid #dbeafe; border-radius: 6px; color: #0c2340; font-size: 12px; font-weight: 600; cursor: pointer;" onclick="togglePackageDetails(${pkg.id})">
+                            ${pkg.expanded ? '▼ Ver menos' : '▶ Ver incluidos'}
+                        </button>
+                        <div class="included-services ${pkg.expanded ? 'show' : ''}">
+                            ${servicesHtml}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateEssayQty(id, newQty) {
+            const essay = state.essays.find(e => e.id === id);
+            if (essay) {
+                essay.qty = Math.max(1, parseInt(newQty));
+                essay.subtotal = essay.qty * essay.price;
+                renderEssaysSection();
+                calculateTotals();
+            }
+        }
+
+        function updatePackageQty(id, newQty) {
+            const pkg = state.packages.find(p => p.id === id);
+            if (pkg) {
+                pkg.qty = Math.max(1, parseInt(newQty));
+                pkg.subtotal = pkg.qty * pkg.price;
+                renderPackagesSection();
+                calculateTotals();
+            }
+        }
+
+        function deleteEssay(id) {
+            state.essays = state.essays.filter(e => e.id !== id);
+            renderEssaysSection();
+            calculateTotals();
+            showAlert('✓ Ensayo eliminado', 'success');
+        }
+
+        function deletePackage(id) {
+            state.packages = state.packages.filter(p => p.id !== id);
+            renderPackagesSection();
+            calculateTotals();
+            showAlert('✓ Paquete eliminado', 'success');
+        }
+
+        function togglePackageDetails(id) {
+            const pkg = state.packages.find(p => p.id === id);
+            if (pkg) {
+                pkg.expanded = !pkg.expanded;
+                renderPackagesSection();
+            }
+        }
+
+        // ===================== CÁLCULOS =====================
+
+        function calculateTotals() {
+            const essaySubtotal = state.essays.reduce((acc, e) => acc + e.subtotal, 0);
+            const packageSubtotal = state.packages.reduce((acc, p) => acc + p.subtotal, 0);
+            const subtotal = essaySubtotal + packageSubtotal;
+            const igv = subtotal * 0.18;
+            const total = subtotal + igv;
+
+            document.getElementById('subtotalS2').textContent = 'S/ ' + subtotal.toFixed(2);
+            document.getElementById('igvS2').textContent = 'S/ ' + igv.toFixed(2);
+            document.getElementById('totalS2').textContent = 'S/ ' + total.toFixed(2);
+
+            document.getElementById('resumenSubtotal').textContent = 'S/ ' + subtotal.toFixed(2);
+            document.getElementById('resumenTotal').textContent = 'S/ ' + total.toFixed(2);
+
+            updateDiscountPreview();
+        }
+
+        function updateDiscountPreview() {
+            const essaySubtotal = state.essays.reduce((acc, e) => acc + e.subtotal, 0);
+            const packageSubtotal = state.packages.reduce((acc, p) => acc + p.subtotal, 0);
+            const subtotal = essaySubtotal + packageSubtotal;
+            const igv = subtotal * 0.18;
+            const total = subtotal + igv;
+            const discountType = document.getElementById('discountType').value;
+
+            let discountHtml = '';
+            if (discountType === 'total') {
+                discountHtml = `
+                    <div class="form-group">
+                        <label class="form-label">Descuento (S/)</label>
+                        <input type="number" id="discountValue" value="0" min="0" step="0.01" onchange="updateDiscountPreview()" class="form-input">
+                    </div>
+                `;
+            } else if (discountType === 'essay') {
+                discountHtml = state.essays.map(item => `
+                    <div class="form-group">
+                        <label class="form-label">Descuento para ${item.name} (S/)</label>
+                        <input type="number" data-id="${item.id}" value="0" min="0" step="0.01" onchange="updateDiscountPreview()" class="form-input">
+                    </div>
+                `).join('');
+            } else if (discountType === 'package') {
+                discountHtml = state.packages.map(item => `
+                    <div class="form-group">
+                        <label class="form-label">Descuento para ${item.name} (S/)</label>
+                        <input type="number" data-id="${item.id}" value="0" min="0" step="0.01" onchange="updateDiscountPreview()" class="form-input">
+                    </div>
+                `).join('');
+            }
+
+            document.getElementById('discountDetailsContainer').style.display = discountType === 'none' ? 'none' : 'block';
+            document.getElementById('discountItemsList').innerHTML = discountHtml;
+
+            // Calcular descuento total
+            let totalDiscount = 0;
+            if (discountType === 'total') {
+                totalDiscount = parseFloat(document.getElementById('discountValue')?.value) || 0;
+            } else if (discountType === 'essay' || discountType === 'package') {
+                document.querySelectorAll('[data-id]').forEach(input => {
+                    totalDiscount += parseFloat(input.value) || 0;
+                });
+            }
+
+            const neto = subtotal - totalDiscount;
+            const finalIgv = neto * 0.18;
+            const finalTotal = neto + finalIgv;
+
+            document.getElementById('finalSubtotal').textContent = 'S/ ' + subtotal.toFixed(2);
+            document.getElementById('discountAmount').textContent = 'S/ ' + totalDiscount.toFixed(2);
+            document.getElementById('neto').textContent = 'S/ ' + neto.toFixed(2);
+            document.getElementById('finalIgv').textContent = 'S/ ' + finalIgv.toFixed(2);
+            document.getElementById('finalTotal').textContent = 'S/ ' + finalTotal.toFixed(2);
+        }
+
+        // ===================== NAVEGACIÓN =====================
+
+        function validateSection1() {
+            const errors = {};
+            if (state.clientType === 'ruc') {
+                if (!state.client.ruc) errors.ruc = 'Selecciona un RUC válido';
+            } else {
+                if (!document.getElementById('apellidos').value.trim()) errors.apellidos = 'Requerido';
+                if (!document.getElementById('nombres').value.trim()) errors.nombres = 'Requerido';
+                if (!document.getElementById('empresaDni').value.trim()) errors.empresa = 'Requerido';
+            }
+
+            if (!document.getElementById('email').value.trim()) errors.email = 'Requerido';
+            if (!document.getElementById('proyecto').value.trim()) errors.proyecto = 'Requerido';
+
+            return Object.keys(errors).length === 0;
+        }
+
+        function nextSection() {
+            if (state.currentSection === 1) {
+                if (!validateSection1()) {
+                    showAlert('⚠ Completa los datos requeridos', 'error');
+                    return;
+                }
+                state.client.email = document.getElementById('email').value;
+                state.client.proyecto = document.getElementById('proyecto').value;
+                state.client.validez = parseInt(document.getElementById('validez').value);
+
+                if (state.clientType === 'dni') {
+                    state.client.apellidos = document.getElementById('apellidos').value;
+                    state.client.nombres = document.getElementById('nombres').value;
+                    state.client.empresa = document.getElementById('empresaDni').value;
+                }
+            } else if (state.currentSection === 2) {
+                if (state.essays.length === 0 && state.packages.length === 0) {
+                    showAlert('⚠ Agrega al menos un ensayo o paquete', 'error');
+                    return;
+                }
+            }
+
+            showSection(state.currentSection + 1);
+        }
+
+        function previousSection() {
+            if (state.currentSection > 1) {
+                showSection(state.currentSection - 1);
+            }
+        }
+
+        function showSection(num) {
+            state.currentSection = num;
+
+            document.querySelectorAll('.main-content').forEach(el => el.classList.remove('active'));
+            document.getElementById(`section${num}`).classList.add('active');
+
+            const titles = ['Cliente', 'Cotización', 'Descuentos', 'Descargas'];
+            document.getElementById('headerSubtitle').textContent = titles[num - 1];
+
+            document.querySelectorAll('.stepper-segment').forEach((seg, i) => {
+                seg.classList.toggle('active', i < num);
+            });
+
+            document.getElementById('prevBtn').style.display = num > 1 ? 'block' : 'none';
+            document.getElementById('nextBtn').textContent = num === 4 ? 'Completado ✓' : 'Siguiente →';
+            document.getElementById('nextBtn').style.display = num === 4 ? 'none' : 'block';
+
+            // Actualizar info de cotización
+            if (num === 2) {
+                const clientName = state.clientType === 'ruc' ? state.client.empresa : `${state.client.apellidos} ${state.client.nombres}`;
+                document.getElementById('cotizacionCliente').textContent = clientName;
+                document.getElementById('cotizacionProyecto').textContent = state.client.proyecto || '-';
+            }
+
+            document.querySelector('.phone-content').scrollTop = 0;
+        }
+
+        // ===================== DESCARGAS =====================
+
+        function selectDownloadOption(option) {
+            state.downloadOption = option;
+            document.querySelectorAll('.download-option').forEach(el => el.classList.remove('active'));
+            event.target.closest('.download-option').classList.add('active');
+        }
+
+        function downloadSelected() {
+            const content = generatePdfContent();
+            const element = document.createElement('a');
+            element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(content));
+            element.setAttribute('download', `cotizacion_${state.client.proyecto.replace(/\s+/g, '_')}_${state.downloadOption}.txt`);
+            element.style.display = 'none';
+            document.body.appendChild(element);
+            element.click();
+            document.body.removeChild(element);
+            showAlert('✓ Descargado', 'success');
+        }
+
+        function generatePdfContent() {
+            const essaySubtotal = state.essays.reduce((acc, e) => acc + e.subtotal, 0);
+            const packageSubtotal = state.packages.reduce((acc, p) => acc + p.subtotal, 0);
+            const subtotal = essaySubtotal + packageSubtotal;
+
+            const discountType = document.getElementById('discountType').value;
+            let totalDiscount = 0;
+
+            if (discountType === 'total') {
+                totalDiscount = parseFloat(document.getElementById('discountValue')?.value) || 0;
+            } else if (discountType === 'essay' || discountType === 'package') {
+                document.querySelectorAll('[data-id]').forEach(input => {
+                    totalDiscount += parseFloat(input.value) || 0;
+                });
+            }
+
+            const neto = subtotal - totalDiscount;
+            const igv = neto * 0.18;
+            const total = neto + igv;
+
+            const clientName = state.clientType === 'ruc' ? state.client.empresa : `${state.client.apellidos} ${state.client.nombres}`;
+
+            return `
+COTIZACIÓN - COTIZACIÓN PRO
+Descarga: ${state.downloadOption === 'offline' ? 'OFFLINE (RÁPIDA)' : 'ONLINE (OFICIAL)'}
+Fecha: ${new Date().toLocaleDateString('es-PE')}
+
+═══════════════════════════════════════
+
+CLIENTE: ${clientName}
+EMAIL: ${state.client.email}
+PROYECTO: ${state.client.proyecto}
+VÁLIDO HASTA: ${new Date(new Date().getTime() + state.client.validez * 24 * 60 * 60 * 1000).toLocaleDateString('es-PE')}
+
+═══════════════════════════════════════
+
+ENSAYOS INDIVIDUALES:
+${state.essays.map(essay => `
+${essay.name}
+  Código: ${essay.code}
+  Norma: ${essay.norm}
+  Cantidad: ${essay.qty} × S/ ${essay.price.toFixed(2)} = S/ ${essay.subtotal.toFixed(2)}
+`).join('')}
+
+PAQUETES:
+${state.packages.map(pkg => `
+${pkg.name}
+  Cantidad: ${pkg.qty} × S/ ${pkg.price.toFixed(2)} = S/ ${pkg.subtotal.toFixed(2)}
+  Incluye: ${pkg.services.map(srvId => ESSAYS_CATALOG[srvId]?.name || srvId).join(', ')}
+`).join('')}
+
+═══════════════════════════════════════
+
+Subtotal:      S/ ${subtotal.toFixed(2)}
+Descuento:     S/ ${totalDiscount.toFixed(2)}
+Neto:          S/ ${neto.toFixed(2)}
+IGV (18%):     S/ ${igv.toFixed(2)}
+─────────────────────────────────────
+TOTAL FINAL:   S/ ${total.toFixed(2)}
+
+═══════════════════════════════════════
+
+Generado por: Cotización Pro PWA
+${state.downloadOption === 'online' ? 'Descarga Oficial con Respaldo en Servidor' : 'Descarga Rápida (Offline)'}
+            `;
+        }
+
+        function shareViaWhatsapp() {
+            const essaySubtotal = state.essays.reduce((acc, e) => acc + e.subtotal, 0);
+            const packageSubtotal = state.packages.reduce((acc, p) => acc + p.subtotal, 0);
+            const subtotal = essaySubtotal + packageSubtotal;
+            const total = subtotal * 1.18;
+            const message = `Hola, te envío la cotización para ${state.client.proyecto}. Cliente: ${state.client.empresa}. Monto Total: S/ ${total.toFixed(2)}`;
+            const encoded = encodeURIComponent(message);
+            window.open(`https://wa.me/?text=${encoded}`, '_blank');
+            showAlert('✓ Abriendo WhatsApp...', 'success');
+        }
+
+        function shareViaEmail() {
+            const subject = `Cotización: ${state.client.proyecto}`;
+            const body = generatePdfContent();
+            const mailto = `mailto:${state.client.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            window.location.href = mailto;
+            showAlert('✓ Abriendo cliente de email...', 'success');
+        }
+
+        // ===================== UTILIDADES =====================
+
+        function showAlert(message, type) {
+            const alert = document.getElementById('alert');
+            alert.className = `alert show alert-${type}`;
+            alert.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i> ${message}`;
+            setTimeout(() => alert.classList.remove('show'), 4000);
+        }
+
+        // ===================== INICIALIZACIÓN =====================
+        document.addEventListener('DOMContentLoaded', () => {
+            showSection(1);
+            renderEssaysSection();
+            renderPackagesSection();
+        });
+    </script>
+</body>
+</html>

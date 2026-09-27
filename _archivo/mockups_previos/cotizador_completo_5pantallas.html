@@ -1,0 +1,1778 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cotizador PWA - Sistema Completo 4 Pantallas</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .phone-frame {
+            width: 390px;
+            height: 844px;
+            border: 12px solid #1a1a2e;
+            border-radius: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            background: white;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .notch {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 150px;
+            height: 28px;
+            background: #1a1a2e;
+            border-radius: 0 0 20px 20px;
+            z-index: 100;
+        }
+
+        .app-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            padding: 20px;
+            padding-top: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .progress-stepper {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            margin-top: 15px;
+        }
+
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            font-size: 11px;
+        }
+
+        .step-circle {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .step.active .step-circle {
+            background: white;
+            color: #8b5cf6;
+            border-color: white;
+        }
+
+        .step.completed .step-circle {
+            background: rgba(34, 197, 94, 0.3);
+            border-color: rgb(34, 197, 94);
+            color: white;
+        }
+
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .screen {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .screen.active {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .section {
+            background: #f8f9ff;
+            border-radius: 12px;
+            padding: 15px;
+            border-left: 4px solid #6366f1;
+        }
+
+        .section h2 {
+            font-size: 13px;
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 500;
+            color: #4b5563;
+            margin-bottom: 6px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #e0e7ff;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #6366f1;
+            background: #f0f4ff;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+            border-bottom: 2px solid #e0e7ff;
+        }
+
+        .tab {
+            padding: 10px 15px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            color: #94a3b8;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+        }
+
+        .tab.active {
+            color: #6366f1;
+            border-bottom-color: #6366f1;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .info-badge {
+            background: #dbeafe;
+            color: #1e40af;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .autocomplete-dropdown {
+            position: relative;
+        }
+
+        .dropdown-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #e0e7ff;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            max-height: 150px;
+            overflow-y: auto;
+            z-index: 50;
+            display: none;
+        }
+
+        .dropdown-list.active {
+            display: block;
+        }
+
+        .dropdown-item {
+            padding: 10px;
+            border-bottom: 1px solid #f0f4ff;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .dropdown-item:hover {
+            background: #f0f4ff;
+        }
+
+        .dropdown-item.selected {
+            background: #e0e7ff;
+            color: #6366f1;
+        }
+
+        .item-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .item-card {
+            background: white;
+            border: 1px solid #e0e7ff;
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .item-card:hover {
+            border-color: #6366f1;
+            background: #f0f4ff;
+        }
+
+        .item-card.selected {
+            background: #e0e7ff;
+            border-color: #6366f1;
+        }
+
+        .item-info h3 {
+            font-size: 13px;
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 3px;
+        }
+
+        .item-info p {
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        .item-price {
+            font-size: 14px;
+            font-weight: 600;
+            color: #6366f1;
+        }
+
+        .selected-items {
+            background: white;
+            border-radius: 8px;
+            padding: 10px;
+            max-height: 180px;
+            overflow-y: auto;
+        }
+
+        .selected-item {
+            background: #f8f9ff;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            border-left: 3px solid #6366f1;
+        }
+
+        .selected-item-info h4 {
+            font-size: 12px;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+
+        .selected-item-info p {
+            font-size: 11px;
+            color: #64748b;
+        }
+
+        .qty-controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .qty-btn {
+            width: 24px;
+            height: 24px;
+            border: 1px solid #e0e7ff;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .qty-btn:hover {
+            background: #f0f4ff;
+            border-color: #6366f1;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            font-size: 13px;
+            border-bottom: 1px solid #e0e7ff;
+        }
+
+        .summary-row.total {
+            font-weight: 600;
+            color: #6366f1;
+            font-size: 14px;
+            border-bottom: none;
+        }
+
+        .summary-row.igv {
+            color: #8b5cf6;
+        }
+
+        .discount-input-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: #e0e7ff;
+            color: #6366f1;
+        }
+
+        .btn-secondary:hover {
+            background: #c7d2fe;
+        }
+
+        .btn-icon {
+            padding: 8px;
+            background: #f0f4ff;
+            border: 1px solid #e0e7ff;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .btn-icon:hover {
+            background: #e0e7ff;
+        }
+
+        .pdf-preview {
+            background: white;
+            border: 1px solid #e0e7ff;
+            border-radius: 8px;
+            padding: 15px;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .pdf-header {
+            text-align: center;
+            border-bottom: 2px solid #6366f1;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
+
+        .pdf-header h1 {
+            font-size: 16px;
+            color: #1a1a2e;
+            margin-bottom: 5px;
+        }
+
+        .pdf-section {
+            margin-bottom: 12px;
+        }
+
+        .pdf-section-title {
+            font-weight: 600;
+            color: #6366f1;
+            margin-bottom: 8px;
+            font-size: 12px;
+        }
+
+        .pdf-line {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-bottom: 1px solid #f0f4ff;
+        }
+
+        .search-box {
+            position: relative;
+            margin-bottom: 12px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #e0e7ff;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 30px 20px;
+            color: #94a3b8;
+        }
+
+        .empty-state p {
+            font-size: 13px;
+            margin-bottom: 10px;
+        }
+
+        /* MODAL STYLES */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            width: 90%;
+            max-width: 400px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(30px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e0e7ff;
+            padding-bottom: 15px;
+        }
+
+        .modal-header h2 {
+            font-size: 16px;
+            color: #1a1a2e;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #94a3b8;
+        }
+
+        .close-btn:hover {
+            color: #6366f1;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            border-top: 2px solid #e0e7ff;
+            padding-top: 15px;
+        }
+
+        .modal-footer .btn {
+            flex: 1;
+        }
+
+        .btn-small {
+            padding: 8px 12px;
+            font-size: 12px;
+        }
+
+        .control-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        @media (max-width: 480px) {
+            .phone-frame {
+                border-width: 8px;
+                border-radius: 30px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="phone-frame">
+        <div class="notch"></div>
+        <div class="app-container">
+            <div class="header">
+                <h1>Cotizador</h1>
+                <div class="progress-stepper">
+                    <div class="step active" data-step="1">
+                        <div class="step-circle">1</div>
+                        <span>Cliente</span>
+                    </div>
+                    <div class="step" data-step="2">
+                        <div class="step-circle">2</div>
+                        <span>Ensayos</span>
+                    </div>
+                    <div class="step" data-step="3">
+                        <div class="step-circle">3</div>
+                        <span>Desc/IGV</span>
+                    </div>
+                    <div class="step" data-step="4">
+                        <div class="step-circle">4</div>
+                        <span>Resumen</span>
+                    </div>
+                    <div class="step" data-step="5">
+                        <div class="step-circle">5</div>
+                        <span>Acciones</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content">
+                <!-- PANTALLA 1: CLIENTE Y PROYECTO -->
+                <div class="screen active" data-screen="1">
+                    <div class="section">
+                        <h2>📋 Tipo de Cliente</h2>
+                        <div class="tabs">
+                            <button class="tab active" data-tab="ruc">Por RUC (Empresa)</button>
+                            <button class="tab" data-tab="dni">Por DNI (Persona)</button>
+                        </div>
+
+                        <!-- TAB RUC -->
+                        <div class="tab-content active" id="tab-ruc">
+                            <div class="form-group">
+                                <label>Número de RUC</label>
+                                <div class="autocomplete-dropdown">
+                                    <input type="text" id="ruc-input" placeholder="Ej: 20123456789" maxlength="11" data-type="ruc">
+                                    <div class="dropdown-list" id="ruc-dropdown"></div>
+                                </div>
+                                <div class="info-badge">
+                                    <span>ℹ️ Padrón SUNAT - Empresas registradas</span>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Razón Social</label>
+                                <input type="text" id="razon-social" placeholder="Se completa automáticamente" readonly>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Contacto Principal</label>
+                                <select id="contacto-select">
+                                    <option value="">Selecciona un contacto</option>
+                                </select>
+                                <div class="control-buttons">
+                                    <button class="btn btn-secondary btn-small" onclick="openModalNuevoContacto()">➕ Nuevo Contacto</button>
+                                </div>
+                                <div class="info-badge">
+                                    <span>👤 Personas registradas en esta empresa</span>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Nombre Contacto</label>
+                                <input type="text" id="nombre-contacto" placeholder="Se completa automáticamente" readonly>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Apellido Contacto</label>
+                                <input type="text" id="apellido-contacto" placeholder="Se completa automáticamente" readonly>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Celular</label>
+                                <input type="tel" id="celular-contacto" placeholder="Ej: 987654321">
+                            </div>
+
+                            <div class="form-group">
+                                <label>Email</label>
+                                <input type="email" id="email-ruc" placeholder="correo@empresa.com">
+                            </div>
+                        </div>
+
+                        <!-- TAB DNI -->
+                        <div class="tab-content" id="tab-dni">
+                            <div class="form-group">
+                                <label>DNI</label>
+                                <div class="autocomplete-dropdown">
+                                    <input type="text" id="dni-input" placeholder="Ej: 12345678" maxlength="8" data-type="dni">
+                                    <div class="dropdown-list" id="dni-dropdown"></div>
+                                </div>
+                                <div class="control-buttons">
+                                    <button class="btn btn-secondary btn-small" onclick="openModalNuevaPersona()">➕ Registrar Persona</button>
+                                </div>
+                                <div class="info-badge">
+                                    <span>ℹ️ Personas registradas en el sistema</span>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Nombre</label>
+                                <input type="text" id="nombre-dni" placeholder="Se completa automáticamente" readonly>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Apellido</label>
+                                <input type="text" id="apellido-dni" placeholder="Se completa automáticamente" readonly>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Celular</label>
+                                <input type="tel" id="celular-dni" placeholder="Ej: 987654321">
+                            </div>
+
+                            <div class="form-group">
+                                <label>Email</label>
+                                <input type="email" id="email-dni" placeholder="correo@personal.com">
+                            </div>
+
+                            <div class="form-group">
+                                <label>Empresa Asociada (Opcional)</label>
+                                <input type="text" id="empresa-asociada" placeholder="Nombre de empresa">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <h2>🏗️ Proyecto / Obra</h2>
+                        <div class="form-group">
+                            <label>Nombre del Proyecto</label>
+                            <input type="text" id="proyecto-nombre" placeholder="Ej: Edificio Central Lima">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Validez de la Cotización (días)</label>
+                            <input type="number" id="validez-dias" placeholder="30" min="1" value="30">
+                        </div>
+                        <div class="info-badge">
+                            <span>✓ Se registrará en tabla COTIZACIONES</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PANTALLA 2: ENSAYOS Y PAQUETES -->
+                <div class="screen" data-screen="2">
+                    <div class="section">
+                        <h2>🔍 Buscar Ensayos</h2>
+                        <div class="search-box">
+                            <input type="text" id="search-ensayos" placeholder="Buscar por nombre...">
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <h2>📦 Paquetes Disponibles</h2>
+                        <div class="item-list" id="paquetes-list">
+                            <div class="empty-state">
+                                <p>Cargando paquetes...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <h2>🧪 Ensayos Individuales</h2>
+                        <div class="item-list" id="ensayos-list">
+                            <div class="empty-state">
+                                <p>Cargando ensayos...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <h2>✅ Items Seleccionados</h2>
+                        <div class="selected-items" id="selected-items">
+                            <div class="empty-state">
+                                <p>No hay items seleccionados</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PANTALLA 3: DESCUENTOS E IGV -->
+                <div class="screen" data-screen="3">
+                    <div class="section">
+                        <h2>💰 Resumen de Cálculo</h2>
+                        <div class="summary-row">
+                            <span>Subtotal:</span>
+                            <span id="subtotal-display">S/ 0.00</span>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <h2>🏷️ Descuentos</h2>
+                        <div class="form-group">
+                            <label>Tipo de Descuento</label>
+                            <select id="descuento-tipo">
+                                <option value="">Sin descuento</option>
+                                <option value="porcentaje">Porcentaje (%)</option>
+                                <option value="monto">Monto Fijo (S/)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Valor del Descuento</label>
+                            <input type="number" id="descuento-valor" placeholder="0" min="0" step="0.01">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Razón/Observación</label>
+                            <textarea id="descuento-razon" placeholder="Ej: Cliente frecuente, volumen..." rows="2"></textarea>
+                        </div>
+
+                        <div class="summary-row">
+                            <span>Monto Descuento:</span>
+                            <span id="descuento-display">S/ 0.00</span>
+                        </div>
+                        <div class="info-badge">
+                            <span>✓ Se registrará en tabla DESCUENTOS</span>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <h2>📊 Cálculo Final</h2>
+                        <div class="summary-row">
+                            <span>Subtotal:</span>
+                            <span id="subtotal-display-2">S/ 0.00</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Descuento:</span>
+                            <span id="descuento-display-2">S/ 0.00</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Subtotal Neto:</span>
+                            <span id="neto-display">S/ 0.00</span>
+                        </div>
+                        <div class="summary-row igv">
+                            <span>IGV (18%):</span>
+                            <span id="igv-display">S/ 0.00</span>
+                        </div>
+                        <div class="summary-row total">
+                            <span>TOTAL:</span>
+                            <span id="total-display">S/ 0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PANTALLA 4: RESUMEN Y PDF -->
+                <div class="screen" data-screen="4">
+                    <div class="pdf-preview" id="pdf-preview">
+                        <div class="pdf-header">
+                            <h1>COTIZACIÓN</h1>
+                            <p>Laboratorio de Ensayos</p>
+                        </div>
+
+                        <div class="pdf-section">
+                            <div class="pdf-section-title">DATOS DEL CLIENTE</div>
+                            <div class="pdf-line">
+                                <span>Cliente:</span>
+                                <span id="pdf-cliente">No especificado</span>
+                            </div>
+                            <div class="pdf-line">
+                                <span>Contacto:</span>
+                                <span id="pdf-contacto">No especificado</span>
+                            </div>
+                            <div class="pdf-line">
+                                <span>Email:</span>
+                                <span id="pdf-email">No especificado</span>
+                            </div>
+                            <div class="pdf-line">
+                                <span>Teléfono:</span>
+                                <span id="pdf-telefono">No especificado</span>
+                            </div>
+                        </div>
+
+                        <div class="pdf-section">
+                            <div class="pdf-section-title">PROYECTO</div>
+                            <div class="pdf-line">
+                                <span>Nombre:</span>
+                                <span id="pdf-proyecto">No especificado</span>
+                            </div>
+                            <div class="pdf-line">
+                                <span>Validez:</span>
+                                <span id="pdf-validez">No especificado</span>
+                            </div>
+                        </div>
+
+                        <div class="pdf-section">
+                            <div class="pdf-section-title">ITEMS COTIZADOS</div>
+                            <div id="pdf-items">
+                                <div class="pdf-line">
+                                    <span>No hay items agregados</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pdf-section">
+                            <div class="pdf-section-title">TOTALES</div>
+                            <div class="pdf-line">
+                                <span>Subtotal:</span>
+                                <span id="pdf-subtotal">S/ 0.00</span>
+                            </div>
+                            <div class="pdf-line">
+                                <span>Descuento:</span>
+                                <span id="pdf-descuento">S/ 0.00</span>
+                            </div>
+                            <div class="pdf-line">
+                                <span>IGV (18%):</span>
+                                <span id="pdf-igv">S/ 0.00</span>
+                            </div>
+                            <div class="pdf-line" style="font-weight: 600; border-bottom: 2px solid #6366f1;">
+                                <span>TOTAL:</span>
+                                <span id="pdf-total">S/ 0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PANTALLA 5: ACCIONES (DESCARGAR/ENVIAR) -->
+                <div class="screen" data-screen="5">
+                    <div class="section">
+                        <h2>✅ Cotización Lista</h2>
+                        <p style="color: #64748b; font-size: 14px; margin-bottom: 20px;">Elige cómo deseas proceder con tu cotización</p>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                            <!-- Descargar Offline -->
+                            <div style="background: #f0f4ff; border: 2px solid #6366f1; border-radius: 12px; padding: 15px; text-align: center; cursor: pointer;" onclick="descargarOffline()">
+                                <div style="font-size: 28px; margin-bottom: 8px;">📥</div>
+                                <div style="font-weight: 600; color: #1e293b; font-size: 13px;">Descargar Offline</div>
+                                <div style="font-size: 11px; color: #64748b; margin-top: 5px;">PDF local</div>
+                            </div>
+
+                            <!-- Descargar Online -->
+                            <div style="background: #f0f9ff; border: 2px solid #0284c7; border-radius: 12px; padding: 15px; text-align: center; cursor: pointer;" onclick="descargarOnline()">
+                                <div style="font-size: 28px; margin-bottom: 8px;">☁️</div>
+                                <div style="font-weight: 600; color: #1e293b; font-size: 13px;">Descargar Online</div>
+                                <div style="font-size: 11px; color: #64748b; margin-top: 5px;">Compartir</div>
+                            </div>
+
+                            <!-- Enviar a WhatsApp -->
+                            <div style="background: #f0fdf4; border: 2px solid #22c55e; border-radius: 12px; padding: 15px; text-align: center; cursor: pointer;" onclick="enviarWhatsApp()">
+                                <div style="font-size: 28px; margin-bottom: 8px;">💬</div>
+                                <div style="font-weight: 600; color: #1e293b; font-size: 13px;">WhatsApp</div>
+                                <div style="font-size: 11px; color: #64748b; margin-top: 5px;">Enviar</div>
+                            </div>
+
+                            <!-- Enviar por Email -->
+                            <div style="background: #fdf2f8; border: 2px solid #d946ef; border-radius: 12px; padding: 15px; text-align: center; cursor: pointer;" onclick="enviarEmail()">
+                                <div style="font-size: 28px; margin-bottom: 8px;">📧</div>
+                                <div style="font-weight: 600; color: #1e293b; font-size: 13px;">Email</div>
+                                <div style="font-size: 11px; color: #64748b; margin-top: 5px;">Enviar</div>
+                            </div>
+                        </div>
+
+                        <div style="background: #fffbeb; border: 1px solid #fcd34d; border-radius: 8px; padding: 12px; margin-top: 20px; font-size: 12px; color: #92400e;">
+                            <strong>💡 Nota:</strong> Las acciones se integrarán con backend. Por ahora puede usar print para PDF.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FOOTER CON BOTONES DE NAVEGACIÓN -->
+            <div style="padding: 15px 20px; border-top: 1px solid #e0e7ff; background: white; display: flex; gap: 10px;">
+                <button class="btn btn-secondary" id="btn-prev" style="display: none;">← Anterior</button>
+                <button class="btn btn-primary" id="btn-next">Siguiente →</button>
+                <button class="btn btn-primary" id="btn-pdf" style="display: none;" onclick="window.print()">📄 PDF</button>
+                <button class="btn btn-primary" id="btn-finalizar" style="display: none;" onclick="finalizarCotizacion()">✓ Finalizar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODALES -->
+
+    <!-- Modal: Nuevo Contacto -->
+    <div class="modal" id="modal-nuevo-contacto">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>➕ Agregar Nuevo Contacto</h2>
+                <button class="close-btn" onclick="closeModal('modal-nuevo-contacto')">×</button>
+            </div>
+
+            <div class="form-group">
+                <label>DNI</label>
+                <input type="text" id="nc-dni" placeholder="12345678" maxlength="8">
+            </div>
+
+            <div class="form-group">
+                <label>Nombre</label>
+                <input type="text" id="nc-nombre" placeholder="Juan">
+            </div>
+
+            <div class="form-group">
+                <label>Apellido</label>
+                <input type="text" id="nc-apellido" placeholder="García López">
+            </div>
+
+            <div class="form-group">
+                <label>Cargo</label>
+                <input type="text" id="nc-cargo" placeholder="Gerente Proyectos">
+            </div>
+
+            <div class="form-group">
+                <label>Celular</label>
+                <input type="tel" id="nc-celular" placeholder="987654321">
+            </div>
+
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="nc-email" placeholder="correo@empresa.com">
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('modal-nuevo-contacto')">Cancelar</button>
+                <button class="btn btn-primary" onclick="guardarNuevoContacto()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Nueva Persona -->
+    <div class="modal" id="modal-nueva-persona">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>➕ Registrar Nueva Persona</h2>
+                <button class="close-btn" onclick="closeModal('modal-nueva-persona')">×</button>
+            </div>
+
+            <div class="form-group">
+                <label>DNI</label>
+                <input type="text" id="np-dni" placeholder="12345678" maxlength="8">
+            </div>
+
+            <div class="form-group">
+                <label>Nombre</label>
+                <input type="text" id="np-nombre" placeholder="Juan">
+            </div>
+
+            <div class="form-group">
+                <label>Apellido</label>
+                <input type="text" id="np-apellido" placeholder="García López">
+            </div>
+
+            <div class="form-group">
+                <label>Celular</label>
+                <input type="tel" id="np-celular" placeholder="987654321">
+            </div>
+
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="np-email" placeholder="correo@personal.com">
+            </div>
+
+            <div class="form-group">
+                <label>Empresa Asociada (Opcional)</label>
+                <input type="text" id="np-empresa" placeholder="Nombre de empresa">
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('modal-nueva-persona')">Cancelar</button>
+                <button class="btn btn-primary" onclick="guardarNuevaPersona()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        // BASE DE DATOS NORMALIZADA (8 Tablas)
+        // ============================================================
+
+        const DB = {
+            // Tabla 1: EMPRESAS
+            EMPRESAS: [
+                { ruc: '20123456789', razonSocial: 'Constructora ACME S.A.C.', direccion: 'Av. Principal 123, Lima', telefonoEmpresa: '01-2345678', estado: 'activo', fechaRegistro: '2024-01-15' },
+                { ruc: '20987654321', razonSocial: 'Ingeniería Moderna E.I.R.L.', direccion: 'Calle 2 456, Lima', telefonoEmpresa: '01-9876543', estado: 'activo', fechaRegistro: '2024-02-20' },
+                { ruc: '20111222333', razonSocial: 'Proyectos Andinos S.A.', direccion: 'Jr. 3 789, Arequipa', telefonoEmpresa: '054-1234567', estado: 'activo', fechaRegistro: '2024-03-10' },
+            ],
+
+            // Tabla 2: CONTACTOS (Personas que representan empresas)
+            CONTACTOS: [
+                { id: 'C001', empresaRuc: '20123456789', dni: '12345678', nombre: 'Juan', apellido: 'García López', cargo: 'Gerente Proyectos', celular: '987654321', email: 'juan@acme.com' },
+                { id: 'C002', empresaRuc: '20123456789', dni: '87654321', nombre: 'María', apellido: 'Rodríguez Silva', cargo: 'Asistente', celular: '987123456', email: 'maria@acme.com' },
+                { id: 'C003', empresaRuc: '20987654321', dni: '11223344', nombre: 'Carlos', apellido: 'Pérez Martínez', cargo: 'Director', celular: '987456789', email: 'carlos@moderna.com' },
+                { id: 'C004', empresaRuc: '20111222333', dni: '44556677', nombre: 'Ana', apellido: 'López García', cargo: 'Coordinadora', celular: '987789012', email: 'ana@andinos.com' },
+            ],
+
+            // Tabla 3: PERSONAS (Clientes individuales con DNI)
+            PERSONAS: [
+                { dni: '12345678', nombre: 'Juan', apellido: 'García López', celular: '987654321', email: 'juan.personal@email.com', empresaAsociada: null },
+                { dni: '98765432', nombre: 'Roberto', apellido: 'Martínez Ruiz', celular: '987111222', email: 'roberto@email.com', empresaAsociada: null },
+                { dni: '55667788', nombre: 'Sofía', apellido: 'Fernández Torres', celular: '987222333', email: 'sofia@email.com', empresaAsociada: null },
+            ],
+
+            // Tabla 4: COTIZACIONES
+            COTIZACIONES: [],
+
+            // Tabla 5: COTIZACION_ITEMS
+            COTIZACION_ITEMS: [],
+
+            // Tabla 6: DESCUENTOS
+            DESCUENTOS: [],
+
+            // Tabla 7: ENSAYOS_CATALOGO
+            ENSAYOS_CATALOGO: [
+                { id: 'E001', nombre: 'Resistencia a la Compresión', descripcion: 'Ensayo de compresión en probetas de concreto', precioBase: 150, unidad: 'por muestra', norma: 'NTP 339.034', activo: true },
+                { id: 'E002', nombre: 'Módulo de Rotura', descripcion: 'Ensayo de flexión en vigas', precioBase: 200, unidad: 'por muestra', norma: 'NTP 339.079', activo: true },
+                { id: 'E003', nombre: 'Densidad y Absorción', descripcion: 'Ensayo para agregados', precioBase: 120, unidad: 'por muestra', norma: 'NTP 400.021', activo: true },
+                { id: 'E004', nombre: 'Análisis Granulométrico', descripcion: 'Tamizado de agregados', precioBase: 100, unidad: 'por muestra', norma: 'NTP 400.012', activo: true },
+                { id: 'E005', nombre: 'Contenido de Humedad', descripcion: 'Humedad en agregados', precioBase: 80, unidad: 'por muestra', norma: 'NTP 400.011', activo: true },
+                { id: 'E006', nombre: 'Revenimiento (Slump)', descripcion: 'Medida de consistencia', precioBase: 50, unidad: 'por muestra', norma: 'NTP 339.114', activo: true },
+            ],
+
+            // Tabla 8: PAQUETES_CATALOGO
+            PAQUETES_CATALOGO: [
+                { id: 'P001', nombre: 'Paquete Básico Concreto', descripcion: 'Ensayos esenciales para control de concreto', ensayosIncluidos: ['E001', 'E006'], precioBase: 350, activo: true },
+                { id: 'P002', nombre: 'Paquete Completo Agregados', descripcion: 'Análisis completo de agregados', ensayosIncluidos: ['E003', 'E004', 'E005'], precioBase: 280, activo: true },
+                { id: 'P003', nombre: 'Paquete Premium Concreto', descripcion: 'Análisis estructural completo', ensayosIncluidos: ['E001', 'E002', 'E006'], precioBase: 400, activo: true },
+            ]
+        };
+
+        // ============================================================
+        // ESTADO CENTRALIZADO
+        // ============================================================
+
+        const STATE = {
+            currentScreen: 1,
+            cliente: {
+                tipo: null, // 'ruc' o 'dni'
+                ruc: null,
+                razonSocial: null,
+                dni: null,
+                nombreCliente: null,
+                apellidoCliente: null,
+                contactoId: null,
+                nombreContacto: null,
+                apellidoContacto: null,
+                celular: null,
+                email: null,
+                empresaAsociada: null,
+            },
+            proyecto: {
+                nombre: null,
+                validezDias: 30,
+            },
+            items: [], // { id, tipo: 'ensayo'|'paquete', nombre, cantidad, precioUnitario, subtotal }
+            descuento: {
+                tipo: null, // 'porcentaje' | 'monto'
+                valor: 0,
+                razon: null,
+                montoCalculado: 0,
+            },
+            calculos: {
+                subtotal: 0,
+                descuentoMonto: 0,
+                neto: 0,
+                igv: 0,
+                total: 0,
+            }
+        };
+
+        // ============================================================
+        // FUNCIONES PRINCIPALES
+        // ============================================================
+
+        function initApp() {
+            setupEventListeners();
+            renderEnsayosYPaquetes();
+        }
+
+        function setupEventListeners() {
+            // Navegación entre pantallas
+            document.getElementById('btn-next').addEventListener('click', nextScreen);
+            document.getElementById('btn-prev').addEventListener('click', prevScreen);
+
+            // Tabs de Cliente
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', (e) => switchTab(e.target.dataset.tab));
+            });
+
+            // Autocomplete RUC
+            document.getElementById('ruc-input').addEventListener('input', (e) => {
+                filterAndShowDropdown('ruc', e.target.value, DB.EMPRESAS.map(e => ({
+                    id: e.ruc,
+                    label: `${e.ruc} - ${e.razonSocial}`
+                })));
+            });
+
+            document.getElementById('ruc-input').addEventListener('focus', (e) => {
+                if (e.target.value) {
+                    document.getElementById('ruc-dropdown').classList.add('active');
+                }
+            });
+
+            // Autocomplete DNI
+            document.getElementById('dni-input').addEventListener('input', (e) => {
+                filterAndShowDropdown('dni', e.target.value, DB.PERSONAS.map(p => ({
+                    id: p.dni,
+                    label: `${p.dni} - ${p.nombre} ${p.apellido}`
+                })));
+            });
+
+            document.getElementById('dni-input').addEventListener('focus', (e) => {
+                if (e.target.value) {
+                    document.getElementById('dni-dropdown').classList.add('active');
+                }
+            });
+
+            // Selector de contacto
+            document.getElementById('contacto-select').addEventListener('change', (e) => {
+                selectContacto(e.target.value);
+            });
+
+            // Búsqueda de ensayos
+            document.getElementById('search-ensayos').addEventListener('input', (e) => {
+                renderEnsayosYPaquetes(e.target.value);
+            });
+
+            // Descuento
+            document.getElementById('descuento-tipo').addEventListener('change', updateCalculos);
+            document.getElementById('descuento-valor').addEventListener('input', updateCalculos);
+        }
+
+        function switchTab(tabName) {
+            // Update active tab
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Update content
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+
+            // Update STATE
+            STATE.cliente.tipo = tabName;
+        }
+
+        function filterAndShowDropdown(type, value, options) {
+            const dropdownId = `${type}-dropdown`;
+            const dropdown = document.getElementById(dropdownId);
+
+            if (!value) {
+                dropdown.classList.remove('active');
+                return;
+            }
+
+            const filtered = options.filter(opt =>
+                opt.label.toLowerCase().includes(value.toLowerCase())
+            );
+
+            dropdown.innerHTML = filtered.map((opt, idx) => `
+                <div class="dropdown-item" data-id="${opt.id}" onclick="selectFromDropdown('${type}', '${opt.id}')">
+                    ${opt.label}
+                </div>
+            `).join('');
+
+            dropdown.classList.add('active');
+        }
+
+        function selectFromDropdown(type, value) {
+            if (type === 'ruc') {
+                const empresa = DB.EMPRESAS.find(e => e.ruc === value);
+                document.getElementById('ruc-input').value = empresa.ruc;
+                document.getElementById('razon-social').value = empresa.razonSocial;
+                document.getElementById('ruc-dropdown').classList.remove('active');
+
+                STATE.cliente.ruc = empresa.ruc;
+                STATE.cliente.razonSocial = empresa.razonSocial;
+
+                // Cargar contactos
+                loadContactos(empresa.ruc);
+            } else if (type === 'dni') {
+                const persona = DB.PERSONAS.find(p => p.dni === value);
+                document.getElementById('dni-input').value = persona.dni;
+                document.getElementById('nombre-dni').value = persona.nombre;
+                document.getElementById('apellido-dni').value = persona.apellido;
+                document.getElementById('celular-dni').value = persona.celular;
+                document.getElementById('email-dni').value = persona.email;
+                document.getElementById('dni-dropdown').classList.remove('active');
+
+                STATE.cliente.dni = persona.dni;
+                STATE.cliente.nombreCliente = persona.nombre;
+                STATE.cliente.apellidoCliente = persona.apellido;
+                STATE.cliente.celular = persona.celular;
+                STATE.cliente.email = persona.email;
+            }
+        }
+
+        function loadContactos(ruc) {
+            const contactos = DB.CONTACTOS.filter(c => c.empresaRuc === ruc);
+            const select = document.getElementById('contacto-select');
+
+            select.innerHTML = '<option value="">Selecciona un contacto</option>' +
+                contactos.map(c => `<option value="${c.id}">${c.nombre} ${c.apellido}</option>`).join('');
+        }
+
+        function selectContacto(contactoId) {
+            if (!contactoId) {
+                document.getElementById('nombre-contacto').value = '';
+                document.getElementById('apellido-contacto').value = '';
+                return;
+            }
+
+            const contacto = DB.CONTACTOS.find(c => c.id === contactoId);
+            document.getElementById('nombre-contacto').value = contacto.nombre;
+            document.getElementById('apellido-contacto').value = contacto.apellido;
+
+            STATE.cliente.contactoId = contactoId;
+            STATE.cliente.nombreContacto = contacto.nombre;
+            STATE.cliente.apellidoContacto = contacto.apellido;
+            STATE.cliente.celular = contacto.celular;
+            STATE.cliente.email = contacto.email;
+        }
+
+        function renderEnsayosYPaquetes(search = '') {
+            const paquetesList = document.getElementById('paquetes-list');
+            const ensayosList = document.getElementById('ensayos-list');
+
+            // Filtrar paquetes
+            const paquetesFiltrados = DB.PAQUETES_CATALOGO.filter(p =>
+                p.nombre.toLowerCase().includes(search.toLowerCase())
+            );
+
+            paquetesList.innerHTML = paquetesFiltrados.map(p => `
+                <div class="item-card" data-id="${p.id}" data-type="paquete" onclick="addItem('paquete', '${p.id}', '${p.nombre}', ${p.precioBase})">
+                    <div class="item-info">
+                        <h3>📦 ${p.nombre}</h3>
+                        <p>${p.descripcion}</p>
+                    </div>
+                    <div class="item-price">S/ ${p.precioBase.toFixed(2)}</div>
+                </div>
+            `).join('') || '<div class="empty-state"><p>No hay paquetes</p></div>';
+
+            // Filtrar ensayos
+            const ensayosFiltrados = DB.ENSAYOS_CATALOGO.filter(e =>
+                e.nombre.toLowerCase().includes(search.toLowerCase())
+            );
+
+            ensayosList.innerHTML = ensayosFiltrados.map(e => `
+                <div class="item-card" data-id="${e.id}" data-type="ensayo" onclick="addItem('ensayo', '${e.id}', '${e.nombre}', ${e.precioBase})">
+                    <div class="item-info">
+                        <h3>🧪 ${e.nombre}</h3>
+                        <p>${e.descripcion}</p>
+                        <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #e2e8f0; font-size: 12px; color: #6366f1; font-weight: 500;">
+                            📋 Norma: ${e.norma || 'Sin norma especificada'}
+                        </div>
+                    </div>
+                    <div class="item-price">S/ ${e.precioBase.toFixed(2)}</div>
+                </div>
+            `).join('') || '<div class="empty-state"><p>No hay ensayos</p></div>';
+        }
+
+        function addItem(tipo, id, nombre, precioBase) {
+            const itemExistente = STATE.items.find(i => i.id === id);
+
+            if (itemExistente) {
+                itemExistente.cantidad++;
+                itemExistente.subtotal = itemExistente.cantidad * itemExistente.precioUnitario;
+            } else {
+                STATE.items.push({
+                    id,
+                    tipo,
+                    nombre,
+                    cantidad: 1,
+                    precioUnitario: precioBase,
+                    subtotal: precioBase
+                });
+            }
+
+            updateCalculos();
+            renderSelectedItems();
+        }
+
+        function removeItem(id) {
+            STATE.items = STATE.items.filter(i => i.id !== id);
+            updateCalculos();
+            renderSelectedItems();
+        }
+
+        function updateQuantity(id, change) {
+            const item = STATE.items.find(i => i.id === id);
+            if (item) {
+                item.cantidad += change;
+                if (item.cantidad <= 0) {
+                    removeItem(id);
+                } else {
+                    item.subtotal = item.cantidad * item.precioUnitario;
+                    updateCalculos();
+                    renderSelectedItems();
+                }
+            }
+        }
+
+        function renderSelectedItems() {
+            const container = document.getElementById('selected-items');
+
+            if (STATE.items.length === 0) {
+                container.innerHTML = '<div class="empty-state"><p>No hay items seleccionados</p></div>';
+                return;
+            }
+
+            container.innerHTML = STATE.items.map(item => `
+                <div class="selected-item">
+                    <div class="selected-item-info">
+                        <h4>${item.nombre}</h4>
+                        <p>${item.tipo === 'paquete' ? '📦 Paquete' : '🧪 Ensayo'}</p>
+                    </div>
+                    <div class="qty-controls">
+                        <button class="qty-btn" onclick="updateQuantity('${item.id}', -1)">−</button>
+                        <span style="width: 30px; text-align: center;">${item.cantidad}</span>
+                        <button class="qty-btn" onclick="updateQuantity('${item.id}', 1)">+</button>
+                        <button class="btn-icon" onclick="removeItem('${item.id}')">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateCalculos() {
+            // Subtotal
+            STATE.calculos.subtotal = STATE.items.reduce((sum, item) => sum + item.subtotal, 0);
+
+            // IGV (18%) - Se calcula sobre el subtotal ANTES del descuento
+            STATE.calculos.igv = STATE.calculos.subtotal * 0.18;
+
+            // Total ANTES de descuento
+            const totalAntesDescuento = STATE.calculos.subtotal + STATE.calculos.igv;
+
+            // Descuento - Ahora se aplica al TOTAL (después de IGV)
+            const descuentoTipo = document.getElementById('descuento-tipo').value;
+            const descuentoValor = parseFloat(document.getElementById('descuento-valor').value) || 0;
+
+            if (descuentoTipo === 'porcentaje') {
+                STATE.calculos.descuentoMonto = totalAntesDescuento * (descuentoValor / 100);
+            } else if (descuentoTipo === 'monto') {
+                STATE.calculos.descuentoMonto = descuentoValor;
+            } else {
+                STATE.calculos.descuentoMonto = 0;
+            }
+
+            STATE.descuento.tipo = descuentoTipo;
+            STATE.descuento.valor = descuentoValor;
+            STATE.descuento.montoCalculado = STATE.calculos.descuentoMonto;
+
+            // Neto (para referencia = Subtotal)
+            STATE.calculos.neto = STATE.calculos.subtotal;
+
+            // Total FINAL = Subtotal + IGV - Descuento
+            STATE.calculos.total = totalAntesDescuento - STATE.calculos.descuentoMonto;
+
+            // Actualizar UI
+            updateUI();
+        }
+
+        function updateUI() {
+            // Pantalla 3
+            document.getElementById('subtotal-display').textContent = `S/ ${STATE.calculos.subtotal.toFixed(2)}`;
+            document.getElementById('subtotal-display-2').textContent = `S/ ${STATE.calculos.subtotal.toFixed(2)}`;
+            document.getElementById('descuento-display').textContent = `S/ ${STATE.calculos.descuentoMonto.toFixed(2)}`;
+            document.getElementById('descuento-display-2').textContent = `S/ ${STATE.calculos.descuentoMonto.toFixed(2)}`;
+            document.getElementById('neto-display').textContent = `S/ ${STATE.calculos.neto.toFixed(2)}`;
+            document.getElementById('igv-display').textContent = `S/ ${STATE.calculos.igv.toFixed(2)}`;
+            document.getElementById('total-display').textContent = `S/ ${STATE.calculos.total.toFixed(2)}`;
+
+            // Pantalla 4 - PDF Preview
+            updatePDFPreview();
+        }
+
+        function updatePDFPreview() {
+            // Datos del cliente
+            const clienteNombre = STATE.cliente.tipo === 'ruc'
+                ? STATE.cliente.razonSocial
+                : `${STATE.cliente.nombreCliente} ${STATE.cliente.apellidoCliente}`;
+            const contactoNombre = STATE.cliente.nombreContacto
+                ? `${STATE.cliente.nombreContacto} ${STATE.cliente.apellidoContacto}`
+                : 'No especificado';
+            const email = STATE.cliente.email || 'No especificado';
+            const celular = STATE.cliente.celular || 'No especificado';
+
+            document.getElementById('pdf-cliente').textContent = clienteNombre;
+            document.getElementById('pdf-contacto').textContent = contactoNombre;
+            document.getElementById('pdf-email').textContent = email;
+            document.getElementById('pdf-telefono').textContent = celular;
+
+            // Proyecto
+            document.getElementById('pdf-proyecto').textContent = STATE.proyecto.nombre || 'No especificado';
+            document.getElementById('pdf-validez').textContent = `${STATE.proyecto.validezDias} días`;
+
+            // Items
+            const pdfItems = document.getElementById('pdf-items');
+            if (STATE.items.length > 0) {
+                pdfItems.innerHTML = STATE.items.map(item => `
+                    <div class="pdf-line">
+                        <span>${item.nombre} x${item.cantidad}</span>
+                        <span>S/ ${item.subtotal.toFixed(2)}</span>
+                    </div>
+                `).join('');
+            } else {
+                pdfItems.innerHTML = '<div class="pdf-line"><span>No hay items agregados</span></div>';
+            }
+
+            // Totales
+            document.getElementById('pdf-subtotal').textContent = `S/ ${STATE.calculos.subtotal.toFixed(2)}`;
+            document.getElementById('pdf-descuento').textContent = `S/ ${STATE.calculos.descuentoMonto.toFixed(2)}`;
+            document.getElementById('pdf-igv').textContent = `S/ ${STATE.calculos.igv.toFixed(2)}`;
+            document.getElementById('pdf-total').textContent = `S/ ${STATE.calculos.total.toFixed(2)}`;
+        }
+
+        function nextScreen() {
+            // Validar pantalla actual
+            if (STATE.currentScreen === 1) {
+                if (!STATE.cliente.tipo) {
+                    alert('Selecciona un tipo de cliente');
+                    return;
+                }
+                if (STATE.cliente.tipo === 'ruc' && !STATE.cliente.ruc) {
+                    alert('Selecciona una empresa');
+                    return;
+                }
+                if (STATE.cliente.tipo === 'dni' && !STATE.cliente.dni) {
+                    alert('Selecciona una persona');
+                    return;
+                }
+
+                // Capturar datos de proyecto
+                STATE.proyecto.nombre = document.getElementById('proyecto-nombre').value;
+                STATE.proyecto.validezDias = parseInt(document.getElementById('validez-dias').value) || 30;
+            }
+
+            STATE.currentScreen++;
+            if (STATE.currentScreen > 5) STATE.currentScreen = 5;
+
+            updateScreenDisplay();
+        }
+
+        function prevScreen() {
+            STATE.currentScreen--;
+            if (STATE.currentScreen < 1) STATE.currentScreen = 1;
+            updateScreenDisplay();
+        }
+
+        function updateScreenDisplay() {
+            // Actualizar pantallas
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.querySelector(`[data-screen="${STATE.currentScreen}"]`).classList.add('active');
+
+            // Actualizar steps
+            document.querySelectorAll('.step').forEach((step, idx) => {
+                const stepNum = idx + 1;
+                step.classList.remove('active', 'completed');
+                if (stepNum === STATE.currentScreen) {
+                    step.classList.add('active');
+                } else if (stepNum < STATE.currentScreen) {
+                    step.classList.add('completed');
+                }
+            });
+
+            // Actualizar botones
+            document.getElementById('btn-prev').style.display = STATE.currentScreen > 1 ? 'block' : 'none';
+            document.getElementById('btn-next').style.display = STATE.currentScreen < 5 ? 'block' : 'none';
+            document.getElementById('btn-pdf').style.display = STATE.currentScreen === 4 ? 'block' : 'none';
+            document.getElementById('btn-finalizar').style.display = STATE.currentScreen === 5 ? 'block' : 'none';
+
+            // Scroll to top
+            document.querySelector('.content').scrollTop = 0;
+        }
+
+        // ============================================================
+        // FUNCIONES MODALES
+        // ============================================================
+
+        function openModalNuevoContacto() {
+            if (!STATE.cliente.ruc) {
+                alert('Primero selecciona una empresa');
+                return;
+            }
+            document.getElementById('modal-nuevo-contacto').classList.add('active');
+        }
+
+        function openModalNuevaPersona() {
+            document.getElementById('modal-nueva-persona').classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        function guardarNuevoContacto() {
+            const dni = document.getElementById('nc-dni').value;
+            const nombre = document.getElementById('nc-nombre').value;
+            const apellido = document.getElementById('nc-apellido').value;
+            const cargo = document.getElementById('nc-cargo').value;
+            const celular = document.getElementById('nc-celular').value;
+            const email = document.getElementById('nc-email').value;
+
+            if (!dni || !nombre || !apellido) {
+                alert('Por favor completa todos los campos');
+                return;
+            }
+
+            // Generar ID único
+            const id = 'C' + (DB.CONTACTOS.length + 1).toString().padStart(3, '0');
+
+            // Agregar a DB
+            DB.CONTACTOS.push({
+                id,
+                empresaRuc: STATE.cliente.ruc,
+                dni,
+                nombre,
+                apellido,
+                cargo,
+                celular,
+                email
+            });
+
+            // Recargar select
+            loadContactos(STATE.cliente.ruc);
+
+            // Seleccionar el nuevo contacto
+            document.getElementById('contacto-select').value = id;
+            selectContacto(id);
+
+            // Actualizar celular y email en formulario
+            document.getElementById('celular-contacto').value = celular;
+            document.getElementById('email-ruc').value = email;
+
+            // Cerrar modal
+            closeModal('modal-nuevo-contacto');
+
+            // Limpiar formulario
+            document.getElementById('nc-dni').value = '';
+            document.getElementById('nc-nombre').value = '';
+            document.getElementById('nc-apellido').value = '';
+            document.getElementById('nc-cargo').value = '';
+            document.getElementById('nc-celular').value = '';
+            document.getElementById('nc-email').value = '';
+
+            alert('✅ Contacto guardado exitosamente');
+        }
+
+        function guardarNuevaPersona() {
+            const dni = document.getElementById('np-dni').value;
+            const nombre = document.getElementById('np-nombre').value;
+            const apellido = document.getElementById('np-apellido').value;
+            const celular = document.getElementById('np-celular').value;
+            const email = document.getElementById('np-email').value;
+            const empresa = document.getElementById('np-empresa').value;
+
+            if (!dni || !nombre || !apellido) {
+                alert('Por favor completa todos los campos requeridos');
+                return;
+            }
+
+            // Validar que no exista
+            if (DB.PERSONAS.find(p => p.dni === dni)) {
+                alert('Este DNI ya está registrado');
+                return;
+            }
+
+            // Agregar a DB
+            DB.PERSONAS.push({
+                dni,
+                nombre,
+                apellido,
+                celular,
+                email,
+                empresaAsociada: empresa || null
+            });
+
+            // Seleccionar la nueva persona
+            document.getElementById('dni-input').value = dni;
+            document.getElementById('nombre-dni').value = nombre;
+            document.getElementById('apellido-dni').value = apellido;
+            document.getElementById('celular-dni').value = celular;
+            document.getElementById('email-dni').value = email;
+            document.getElementById('empresa-asociada').value = empresa || '';
+
+            STATE.cliente.dni = dni;
+            STATE.cliente.nombreCliente = nombre;
+            STATE.cliente.apellidoCliente = apellido;
+            STATE.cliente.celular = celular;
+            STATE.cliente.email = email;
+
+            // Cerrar modal
+            closeModal('modal-nueva-persona');
+
+            // Limpiar formulario
+            document.getElementById('np-dni').value = '';
+            document.getElementById('np-nombre').value = '';
+            document.getElementById('np-apellido').value = '';
+            document.getElementById('np-celular').value = '';
+            document.getElementById('np-email').value = '';
+            document.getElementById('np-empresa').value = '';
+
+            alert('✅ Persona registrada exitosamente');
+        }
+
+        // ============================================================
+        // FUNCIONES PANTALLA 5: DESCARGAR/ENVIAR
+        // ============================================================
+
+        function descargarOffline() {
+            alert('📥 Descargar Offline:\n\nSe generará un PDF que puedes guardar localmente en tu dispositivo.');
+            window.print(); // Abre el diálogo de impresión
+        }
+
+        function descargarOnline() {
+            const numero = STATE.proyecto.numero || 'COT-001';
+            const cliente = STATE.cliente.nombreCliente || 'Cliente';
+            alert(`☁️ Descargar Online:\n\nLa cotización #${numero} se compartirá en la nube.\n\nCliente: ${cliente}`);
+        }
+
+        function enviarWhatsApp() {
+            const numero = STATE.proyecto.numero || 'COT-001';
+            const cliente = STATE.cliente.nombreCliente || 'Cliente';
+            const celular = STATE.cliente.celular || '+51987654321';
+            const total = STATE.calculos.total.toFixed(2);
+
+            const mensaje = `Hola ${cliente},\n\nTe compartimos nuestra cotización #${numero}\n\n💰 Total: S/ ${total}\n\n¿Tienes preguntas?`;
+            const url = `https://wa.me/${celular.replace(/\D/g, '')}?text=${encodeURIComponent(mensaje)}`;
+
+            alert(`💬 WhatsApp:\n\n${mensaje}\n\nEn producción, se abrirá WhatsApp.`);
+        }
+
+        function enviarEmail() {
+            const numero = STATE.proyecto.numero || 'COT-001';
+            const cliente = STATE.cliente.email || 'cliente@empresa.com';
+            const total = STATE.calculos.total.toFixed(2);
+
+            const asunto = `Cotización #${numero}`;
+            const cuerpo = `Estimado/a,\n\nAdjunto encontrarás nuestra cotización.\n\nMonto Total: S/ ${total}\n\nQuedamos atento a tus consultas.`;
+
+            alert(`📧 Email:\n\nDestinatario: ${cliente}\nAsunto: ${asunto}\n\nEn producción, se abrirá el cliente de email.`);
+        }
+
+        function finalizarCotizacion() {
+            const numero = STATE.proyecto.numero || 'COT-001';
+            const cliente = STATE.cliente.nombreCliente || 'Cliente';
+            const total = STATE.calculos.total.toFixed(2);
+
+            alert(`✅ Cotización Finalizada\n\n📋 Número: ${numero}\n👤 Cliente: ${cliente}\n💰 Total: S/ ${total}\n\nGracias por usar el cotizador.`);
+
+            // En producción, aquí iría la lógica para guardar en BD y reset
+            STATE.currentScreen = 1;
+            updateScreenDisplay();
+            resetForm();
+        }
+
+        function resetForm() {
+            // Reset STATE
+            STATE.cliente = { tipo: null, ruc: null, dni: null, nombreCliente: null, apellidoCliente: null, celular: null, email: null };
+            STATE.items = [];
+            STATE.descuento = { tipo: null, valor: 0, razon: null, montoCalculado: 0 };
+            STATE.calculos = { subtotal: 0, descuentoMonto: 0, neto: 0, igv: 0, total: 0 };
+
+            // Reset UI
+            renderEnsayosYPaquetes();
+            renderSelectedItems();
+            updateCalculos();
+        }
+
+        // Cerrar modal al hacer clic afuera
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal')) {
+                e.target.classList.remove('active');
+            }
+        });
+
+        // Inicializar
+        initApp();
+    </script>
+</body>
+</html>

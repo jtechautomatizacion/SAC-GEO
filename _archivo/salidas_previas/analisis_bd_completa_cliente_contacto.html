@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análisis BD Completa - Cliente vs Contacto</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --slate-50: #f8fafc;
+            --slate-100: #f1f5f9;
+            --slate-200: #e2e8f0;
+            --slate-600: #475569;
+            --slate-700: #334155;
+            --slate-900: #0f172a;
+            --text: var(--slate-900);
+            --bg: #ffffff;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root:not([data-theme="light"]) {
+                --primary: #818cf8;
+                --success: #34d399;
+                --warning: #fbbf24;
+                --danger: #f87171;
+                --slate-50: #1e293b;
+                --slate-100: #1e293b;
+                --slate-200: #334155;
+                --slate-600: #cbd5e1;
+                --slate-700: #e2e8f0;
+                --slate-900: #f8fafc;
+                --text: var(--slate-900);
+                --bg: #0f172a;
+            }
+        }
+
+        :root[data-theme="dark"] {
+            --primary: #818cf8;
+            --success: #34d399;
+            --warning: #fbbf24;
+            --danger: #f87171;
+            --slate-50: #1e293b;
+            --slate-100: #1e293b;
+            --slate-200: #334155;
+            --slate-600: #cbd5e1;
+            --slate-700: #e2e8f0;
+            --slate-900: #f8fafc;
+            --text: var(--slate-900);
+            --bg: #0f172a;
+            color-scheme: dark;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            padding: 40px 20px;
+            line-height: 1.8;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 32px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, var(--primary), #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            color: var(--slate-600);
+            font-size: 16px;
+            margin-bottom: 12px;
+        }
+
+        .author {
+            color: var(--slate-600);
+            font-size: 13px;
+            font-style: italic;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--slate-200);
+        }
+
+        h2 {
+            font-size: 24px;
+            font-weight: 800;
+            margin-top: 50px;
+            margin-bottom: 20px;
+            color: var(--primary);
+        }
+
+        h3 {
+            font-size: 16px;
+            font-weight: 700;
+            margin-top: 24px;
+            margin-bottom: 12px;
+            color: var(--slate-900);
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        /* Confusión Explicada */
+        .confusion-box {
+            background: linear-gradient(135deg, rgba(239,68,68,0.1), rgba(239,68,68,0.05));
+            border: 2px solid var(--danger);
+            border-radius: 10px;
+            padding: 24px;
+            margin: 20px 0;
+        }
+
+        .confusion-title {
+            color: var(--danger);
+            font-weight: 700;
+            font-size: 16px;
+            margin-bottom: 12px;
+        }
+
+        /* Ejemplo cards */
+        .example-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .example-card {
+            background: var(--slate-50);
+            border: 2px solid var(--slate-200);
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .example-title {
+            font-weight: 700;
+            font-size: 16px;
+            color: var(--primary);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .example-content {
+            font-size: 13px;
+            line-height: 1.8;
+        }
+
+        .example-content p {
+            margin-bottom: 8px;
+        }
+
+        /* Tablas */
+        .tables-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .table-card {
+            background: var(--slate-50);
+            border: 2px solid var(--slate-200);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .table-header {
+            background: linear-gradient(135deg, var(--primary), #8b5cf6);
+            color: white;
+            padding: 16px;
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .table-body {
+            padding: 16px;
+        }
+
+        .field {
+            padding: 10px 0;
+            font-size: 13px;
+            border-bottom: 1px solid var(--slate-200);
+            display: grid;
+            grid-template-columns: 120px 1fr;
+            gap: 12px;
+        }
+
+        .field:last-child {
+            border-bottom: none;
+        }
+
+        .field-name {
+            font-weight: 700;
+            color: var(--primary);
+            font-family: 'IBM Plex Mono', monospace;
+        }
+
+        .field-type {
+            background: var(--slate-100);
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .field-desc {
+            color: var(--slate-600);
+            font-size: 12px;
+        }
+
+        /* Diagrama ER */
+        .er-diagram {
+            background: var(--slate-50);
+            border: 1px solid var(--slate-200);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+
+        svg {
+            display: block;
+            margin: 0 auto;
+        }
+
+        /* Flujo */
+        .flow-step {
+            background: var(--slate-50);
+            border-left: 4px solid var(--primary);
+            padding: 16px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+        }
+
+        .flow-number {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 32px;
+            font-weight: 700;
+            margin-right: 12px;
+        }
+
+        .flow-title {
+            font-weight: 700;
+            display: inline-block;
+            color: var(--text);
+        }
+
+        .flow-desc {
+            color: var(--slate-600);
+            font-size: 13px;
+            margin-left: 44px;
+            margin-top: 8px;
+        }
+
+        /* Nota boxes */
+        .note-box {
+            background: rgba(251, 191, 36, 0.1);
+            border-left: 4px solid var(--warning);
+            padding: 16px;
+            border-radius: 6px;
+            margin: 16px 0;
+            font-size: 13px;
+            color: var(--slate-600);
+        }
+
+        .success-box {
+            background: rgba(16, 185, 129, 0.1);
+            border-left: 4px solid var(--success);
+            padding: 16px;
+            border-radius: 6px;
+            margin: 16px 0;
+            font-size: 13px;
+            color: var(--slate-600);
+        }
+
+        .code-block {
+            background: var(--slate-100);
+            border: 1px solid var(--slate-200);
+            border-radius: 6px;
+            padding: 16px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 12px;
+            overflow-x: auto;
+            margin: 16px 0;
+            line-height: 1.6;
+            color: var(--slate-700);
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .grid-2, .example-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .highlight {
+            background: var(--primary);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        ul li {
+            padding-left: 24px;
+            margin-bottom: 8px;
+            position: relative;
+        }
+
+        ul li:before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: var(--primary);
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🗄️ Análisis Completo de Base de Datos</h1>
+        <p class="subtitle">Especificación técnica para Sistema de Cotizaciones</p>
+        <p class="author">Análisis realizado por: Especialista en Arquitectura de Datos | Laboratorio de Ensayos Técnicos</p>
+
+        <!-- PROBLEMA PRINCIPAL -->
+        <div class="section">
+            <h2>🔴 El Problema: CLIENTE vs CONTACTO</h2>
+
+            <div class="confusion-box">
+                <div class="confusion-title">⚠️ LA CONFUSIÓN</div>
+                <p>El usuario dice: "Ambos se registran con DNI y RUC. ¿Cómo los diferencio?"</p>
+                <p style="margin-top: 12px;">La respuesta: <strong>Sí, ambos tienen DNI y RUC, pero son CONCEPTOS DIFERENTES.</strong></p>
+            </div>
+
+            <h3>Aquí está la claridad:</h3>
+
+            <div class="example-grid">
+                <div class="example-card">
+                    <div class="example-title">🏢 CLIENTE (la entidad que cotiza)</div>
+                    <div class="example-content">
+                        <p><strong>Definición:</strong> La entidad FINAL que pide la cotización.</p>
+                        <p><strong>Puede ser:</strong></p>
+                        <ul style="margin-left: 0;">
+                            <li>Una EMPRESA (tiene RUC)</li>
+                            <li>Una PERSONA (tiene DNI)</li>
+                        </ul>
+                        <p style="margin-top: 12px;"><strong>Ejemplo:</strong></p>
+                        <p>La empresa "Constructora ABC" (RUC 20123456789) pide una cotización.</p>
+                    </div>
+                </div>
+
+                <div class="example-card">
+                    <div class="example-title">👥 CONTACTO (la persona que firma/acepta)</div>
+                    <div class="example-content">
+                        <p><strong>Definición:</strong> La PERSONA que representa al cliente.</p>
+                        <p><strong>Siempre es:</strong> Una persona con DNI</p>
+                        <p><strong>Relación:</strong> Trabajar en una empresa cliente</p>
+                        <p style="margin-top: 12px;"><strong>Ejemplo:</strong></p>
+                        <p>Juan García (DNI 12345678) es gerente de "Constructora ABC".</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- EJEMPLO COMPLETO -->
+        <div class="section">
+            <h2>💡 Ejemplo Práctico Completo</h2>
+
+            <div class="success-box">
+                <strong>Escenario:</strong> Necesitas entender exactamente qué es qué.
+            </div>
+
+            <h3>Caso 1: Cliente Empresa (RUC)</h3>
+            <div class="code-block">
+CLIENTE = Constructora ABC (RUC 20123456789)
+  ├─ Razón Social: Constructora ABC S.A.C.
+  ├─ Dirección: Av. Principal 123
+  └─ Estado: Activa
+
+CONTACTO = Juan García (DNI 12345678)
+  ├─ Vinculado a RUC: 20123456789
+  ├─ Cargo: Gerente de Proyectos
+  ├─ Celular: +51912345678
+  └─ Email: juan@abc.com
+
+COTIZACIÓN:
+  Solicitada por: Juan García (representa a Constructora ABC)
+  A nombre de: Constructora ABC
+  Para proyecto: Torre 2024
+            </div>
+
+            <h3 style="margin-top: 24px;">Caso 2: Cliente Persona (DNI)</h3>
+            <div class="code-block">
+CLIENTE = Juan García (DNI 12345678)
+  ├─ Nombre: Juan
+  ├─ Apellido: García
+  ├─ Celular: +51912345678
+  └─ Empresa: Constructora ABC (opcional)
+
+CONTACTO = NO EXISTE en este caso
+  (Porque Juan es el cliente directo, no un contacto)
+
+COTIZACIÓN:
+  Solicitada por: Juan García (como persona individual)
+  A nombre de: Juan García
+  Para proyecto: Torre 2024
+            </div>
+
+            <h3 style="margin-top: 24px;">Caso 3: Cliente Empresa, Múltiples Contactos</h3>
+            <div class="code-block">
+CLIENTE = Constructora ABC (RUC 20123456789)
+
+CONTACTO 1 = Juan García (DNI 12345678)
+  ├─ Cargo: Gerente de Proyectos
+  └─ Celular: +51912345678
+
+CONTACTO 2 = María López (DNI 87654321)
+  ├─ Cargo: Coordinadora Técnica
+  └─ Celular: +51987654321
+
+COTIZACIÓN 1:
+  Solicitada por: Juan García
+  A nombre de: Constructora ABC
+
+COTIZACIÓN 2 (mismo cliente, otro contacto):
+  Solicitada por: María López
+  A nombre de: Constructora ABC
+            </div>
+
+            <div class="note-box">
+                <strong>💡 Clave:</strong> Un RUC puede tener MÚLTIPLES contactos (DNI). Cada cotización se vincula al cliente (RUC o DNI) y al contacto específico (DNI) si aplica.
+            </div>
+        </div>
+
+        <!-- TABLA DE DIFERENCIAS -->
+        <div class="section">
+            <h2>📊 Tabla Comparativa</h2>
+
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                    <thead>
+                        <tr style="background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white;">
+                            <th style="padding: 12px; text-align: left; border: 1px solid #e2e8f0;">Aspecto</th>
+                            <th style="padding: 12px; text-align: left; border: 1px solid #e2e8f0;">CLIENTE</th>
+                            <th style="padding: 12px; text-align: left; border: 1px solid #e2e8f0;">CONTACTO</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style="background: var(--slate-50);">
+                            <td style="padding: 12px; border: 1px solid #e2e8f0;"><strong>¿Qué es?</strong></td>
+                            <td style="padding: 12px; border: 1px solid #e2e8f0;">Entidad que pide cotización</td>
+                            <td style="padding: 12px; border: 1px solid #e2e8f0;">Persona que representa al cliente</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 12px; border: 1px solid #e2e8f0;"><strong>Identificador</strong></td>
+                            <td style="padding: 12px; border: 1px solid #e2e8f0;">RUC (empresa) o DNI (persona)</td>
+                            <td style="padding: 12px; border: 1px solid #e2e8f0;">DNI (siempre persona)</td>
+                        </tr>
+                        <tr style="background: var(--slate-50);">
+                            <td style="padding: 12px; border: 1px solid #e2e8f0;"><strong>Puede ser múltiple</strong></td>
+                            <td style="padding: 12px; border: 1px solid #e2e8f0;">No (un cliente = una entidad)</td>
+                            <td style="padding: 12px; border: 1px solid #e2e8f0;">Sí (empresa = múltiples contactos)</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 12px; border: 1px solid #e2e8f0;"><strong>¿Siempre existe?</strong></td>
+                            <td style="padding: 12px; border: 1px solid #e2e8f0;">Sí, obligatorio</td>
+                            <td style="padding: 12px; border: 1px solid #e2e8f0;">Solo si cliente es RUC (empresa)</td>
+                        </tr>
+                        <tr style="background: var(--slate-50);">
+                            <td style="padding: 12px; border: 1px solid #e2e8f0;"><strong>En SUNAT</strong></td>
+                            <td style="padding: 12px; border: 1px solid #e2e8f0;">RUC existe en padrón SUNAT</td>
+                            <td style="padding: 12px; border: 1px solid #e2e8f0;">DNI puede estar en padrón</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 12px; border: 1px solid #e2e8f0;"><strong>Ejemplo</strong></td>
+                            <td style="padding: 12px; border: 1px solid #e2e8f0;">Constructora ABC (RUC)</td>
+                            <td style="padding: 12px; border: 1px solid #e2e8f0;">Juan García (trabajador de ABC)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ESTRUCTURA DE BD NORMALIZADA -->
+        <div class="section">
+            <h2>🏗️ Estructura de BD Normalizada Completa</h2>
+
+            <p>Ahora que está clara la diferencia, así es cómo se estructura:</p>
+
+            <div class="tables-grid">
+                <!-- TABLA 1: EMPRESAS -->
+                <div class="table-card">
+                    <div class="table-header">🏢 TABLA: EMPRESAS</div>
+                    <div class="table-body">
+                        <div class="field">
+                            <span class="field-name">ruc</span>
+                            <div><span class="field-type">PK (Llave primaria)</span>
+                            <div class="field-desc">11 dígitos, único por empresa</div></div>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">razonSocial</span>
+                            <div><span class="field-type">Texto</span>
+                            <div class="field-desc">"Constructora ABC S.A.C."</div></div>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">direccion</span>
+                            <div><span class="field-type">Texto</span>
+                            <div class="field-desc">Domicilio fiscal</div></div>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">telefonoEmpresa</span>
+                            <div><span class="field-type">Texto</span>
+                            <div class="field-desc">+51987654321</div></div>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">estado</span>
+                            <div><span class="field-type">Texto</span>
+                            <div class="field-desc">'activa' o 'inactiva'</div></div>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">fechaRegistro</span>
+                            <div><span class="field-type">Fecha</span>
+                            <div class="field-desc">Cuándo se ingresó</div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TABLA 2: CONTACTOS -->
+                <div class="table-card">
+                    <div class="table-header">👥 TABLA: CONTACTOS</div>
+                    <div class="table-body">
+                        <div class="field">
+                            <span class="field-name">id</span>
+                            <div><span class="field-type">PK</span>
+                            <div class="field-desc">Ej: CONT_001</div></div>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">empresaRuc</span>
+                            <div><span class="field-type">FK</span>
+                            <div class="field-desc">Referencia a EMPRESAS.ruc</div></div>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">dni</span>
+                            <div><span class="field-type">Texto</span>
+                            <div class="field-desc">8 dígitos, único</div></div>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">nombre</span>
+                            <div><span class="field-type">Texto</span>
+                            <div class="field-desc">"Juan"</div></div>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">apellido</span>
+                            <div><span class="field-type">Texto</span>
+                            <div class="field-desc">"García"</div></div>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">cargo</span>
+                            <div><span class="field-type">Texto</span>
+                            <div class="field-desc">"Gerente Proyectos"</div></div>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">celular</span>
+                            <div><span class="field-type">Texto</span>
+                            <div class="field-desc">+51912345678</div></div>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">email</span>
+                            <div><span class="field-type">Texto</span>
+                            <div class="field-desc">juan@abc.com</div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TABLA 3: PERSONAS -->
+                <div class="table-card">
+                    <div class="table-header">🆔 TABLA: PERSONAS</div>
+                    <div class="table-body">
+                        <div class="field">
+                            <span class="field-name">dni</span>
+                            <div><span class="field-type">PK</span>
+                            <div class="field-desc">8 dígitos, único</div></div>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">nombre</span>
+                            <div><span class="field-type">Texto</span>
+                            <div class="field-desc">"Juan"</div></div>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">apellido</span>
+                            <div><span class="field-type">Texto</span>
+                            <div class="field-desc">"García"</div></div>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">celular</span>
+                            <div><span class="field-type">Texto</span>
+                            <div class="field-desc">+51912345678</div></div>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">email</span>
+                            <div><span class="field-type">Texto</span>
+                            <div class="field-desc">juan@personal.com</div></div>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">empresaAsociada</span>
+                            <div><span class="field-type">FK (opcional)</span>
+                            <div class="field-desc">Referencia a EMPRESAS.ruc</div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TABLA 4: COTIZACIONES -->
+                <div class="table-card">
+                    <div class="table-header">📋 TABLA: COTIZACIONES</div>
+                    <div class="table-body">
+                        <div class="field">
+                            <span class="field-name">id</span>
+                            <div><span class="field-type">PK</span>
+                            <div class="field-desc">COT_2024_001</div></div>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">clienteRuc</span>
+                            <div><span class="field-type">FK (opcional)</span>
+                            <div class="field-desc">Si cliente es empresa</div></div>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">clienteDni</span>
+                            <div><span class="field-type">FK (opcional)</span>
+                            <div class="field-desc">Si cliente es persona</div></div>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">contactoId</span>
+                            <div><span class="field-type">FK (opcional)</span>
+                            <div class="field-desc">Quién firma (si RUC)</div></div>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">proyecto</span>
+                            <div><span class="field-type">Texto</span>
+                            <div class="field-desc">"Torre 2024"</div></div>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">validezDias</span>
+                            <div><span class="field-type">Número</span>
+                            <div class="field-desc">30 días</div></div>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">estado</span>
+                            <div><span class="field-type">Texto</span>
+                            <div class="field-desc">'borrador','enviada'</div></div>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">fechaCreacion</span>
+                            <div><span class="field-type">Fecha</span>
+                            <div class="field-desc">2024-09-24</div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TABLA 5: COTIZACION_ITEMS -->
+                <div class="table-card">
+                    <div class="table-header">📝 TABLA: COTIZACION_ITEMS</div>
+                    <div class="table-body">
+                        <div class="field">
+                            <span class="field-name">id</span>
+                            <div><span class="field-type">PK</span>
+                            <div class="field-desc">ITEM_001</div></div>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">cotizacionId</span>
+                            <div><span class="field-type">FK</span>
+                            <div class="field-desc">a COTIZACIONES.id</div></div>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">tipo</span>
+                            <div><span class="field-type">Texto</span>
+                            <div class="field-desc">'ensayo' o 'paquete'</div></div>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">itemId</span>
+                            <div><span class="field-type">FK</span>
+                            <div class="field-desc">a ENSAYOS o PAQUETES</div></div>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">cantidad</span>
+                            <div><span class="field-type">Número</span>
+                            <div class="field-desc">3 muestras</div></div>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">precioUnitario</span>
+                            <div><span class="field-type">Número</span>
+                            <div class="field-desc">150 S/.</div></div>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">subtotal</span>
+                            <div><span class="field-type">Calculado</span>
+                            <div class="field-desc">qty × price</div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TABLA 6: DESCUENTOS -->
+                <div class="table-card">
+                    <div class="table-header">💰 TABLA: DESCUENTOS</div>
+                    <div class="table-body">
+                        <div class="field">
+                            <span class="field-name">id</span>
+                            <div><span class="field-type">PK</span>
+                            <div class="field-desc">DESC_001</div></div>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">cotizacionId</span>
+                            <div><span class="field-type">FK</span>
+                            <div class="field-desc">a COTIZACIONES</div></div>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">tipo</span>
+                            <div><span class="field-type">Texto</span>
+                            <div class="field-desc">'porcentaje' o 'monto'</div></div>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">valor</span>
+                            <div><span class="field-type">Número</span>
+                            <div class="field-desc">10 o 500</div></div>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">montoDescuento</span>
+                            <div><span class="field-type">Calculado</span>
+                            <div class="field-desc">Valor en S/.</div></div>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">razon</span>
+                            <div><span class="field-type">Texto</span>
+                            <div class="field-desc">"Por volumen"</div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TABLA 7: ENSAYOS_CATALOGO -->
+                <div class="table-card">
+                    <div class="table-header">🔬 TABLA: ENSAYOS_CATALOGO</div>
+                    <div class="table-body">
+                        <div class="field">
+                            <span class="field-name">id</span>
+                            <div><span class="field-type">PK</span>
+                            <div class="field-desc">ENS_001</div></div>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">nombre</span>
+                            <div><span class="field-type">Texto</span>
+                            <div class="field-desc">"Compresión de Concreto"</div></div>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">descripcion</span>
+                            <div><span class="field-type">Texto largo</span>
+                            <div class="field-desc">Descripción técnica</div></div>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">precioBase</span>
+                            <div><span class="field-type">Número</span>
+                            <div class="field-desc">150 S/.</div></div>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">unidad</span>
+                            <div><span class="field-type">Texto</span>
+                            <div class="field-desc">"Muestra"</div></div>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">norma</span>
+                            <div><span class="field-type">Texto</span>
+                            <div class="field-desc">"NTP 339.034"</div></div>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">activo</span>
+                            <div><span class="field-type">Booleano</span>
+                            <div class="field-desc">true/false</div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TABLA 8: PAQUETES_CATALOGO -->
+                <div class="table-card">
+                    <div class="table-header">📦 TABLA: PAQUETES_CATALOGO</div>
+                    <div class="table-body">
+                        <div class="field">
+                            <span class="field-name">id</span>
+                            <div><span class="field-type">PK</span>
+                            <div class="field-desc">PKG_001</div></div>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">nombre</span>
+                            <div><span class="field-type">Texto</span>
+                            <div class="field-desc">"Paquete Estructural"</div></div>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">descripcion</span>
+                            <div><span class="field-type">Texto largo</span>
+                            <div class="field-desc">Qué incluye</div></div>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">ensayosIncluidos</span>
+                            <div><span class="field-type">JSON Array</span>
+                            <div class="field-desc">[ENS_001, ENS_002]</div></div>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">precioBase</span>
+                            <div><span class="field-type">Número</span>
+                            <div class="field-desc">800 S/.</div></div>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">activo</span>
+                            <div><span class="field-type">Booleano</span>
+                            <div class="field-desc">true/false</div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DIAGRAMA ER -->
+        <div class="section">
+            <h2>📊 Diagrama Entidad-Relación</h2>
+            <div class="er-diagram">
+                <svg viewBox="0 0 1200 400" xmlns="http://www.w3.org/2000/svg" style="max-width: 100%; height: auto;">
+                    <!-- EMPRESAS -->
+                    <rect x="20" y="50" width="160" height="100" fill="#e0e7ff" stroke="#6366f1" stroke-width="2" rx="6"/>
+                    <text x="100" y="75" font-size="14" font-weight="700" text-anchor="middle" fill="#0f172a">EMPRESAS</text>
+                    <text x="35" y="100" font-size="11" fill="#475569">ruc (PK)</text>
+                    <text x="35" y="120" font-size="11" fill="#475569">razonSocial</text>
+                    <text x="35" y="140" font-size="11" fill="#475569">teléfono</text>
+
+                    <!-- CONTACTOS -->
+                    <rect x="220" y="50" width="160" height="100" fill="#d1fae5" stroke="#10b981" stroke-width="2" rx="6"/>
+                    <text x="300" y="75" font-size="14" font-weight="700" text-anchor="middle" fill="#0f172a">CONTACTOS</text>
+                    <text x="235" y="100" font-size="11" fill="#475569">id (PK)</text>
+                    <text x="235" y="120" font-size="11" fill="#475569">empresaRuc (FK)</text>
+                    <text x="235" y="140" font-size="11" fill="#475569">dni, nombre</text>
+
+                    <!-- PERSONAS -->
+                    <rect x="420" y="50" width="160" height="100" fill="#fef3c7" stroke="#f59e0b" stroke-width="2" rx="6"/>
+                    <text x="500" y="75" font-size="14" font-weight="700" text-anchor="middle" fill="#0f172a">PERSONAS</text>
+                    <text x="435" y="100" font-size="11" fill="#475569">dni (PK)</text>
+                    <text x="435" y="120" font-size="11" fill="#475569">nombre, apellido</text>
+                    <text x="435" y="140" font-size="11" fill="#475569">empresaAsoc (FK)</text>
+
+                    <!-- COTIZACIONES -->
+                    <rect x="220" y="200" width="160" height="130" fill="#fce7f3" stroke="#ec4899" stroke-width="2" rx="6"/>
+                    <text x="300" y="225" font-size="14" font-weight="700" text-anchor="middle" fill="#0f172a">COTIZACIONES</text>
+                    <text x="235" y="250" font-size="11" fill="#475569">id (PK)</text>
+                    <text x="235" y="270" font-size="11" fill="#475569">clienteRuc (FK)</text>
+                    <text x="235" y="290" font-size="11" fill="#475569">clienteDni (FK)</text>
+                    <text x="235" y="310" font-size="11" fill="#475569">proyecto</text>
+                    <text x="235" y="330" font-size="11" fill="#475569">estado</text>
+
+                    <!-- COTIZACION_ITEMS -->
+                    <rect x="420" y="200" width="160" height="100" fill="#e0e7ff" stroke="#6366f1" stroke-width="2" rx="6"/>
+                    <text x="500" y="225" font-size="14" font-weight="700" text-anchor="middle" fill="#0f172a">COT_ITEMS</text>
+                    <text x="435" y="250" font-size="11" fill="#475569">id (PK)</text>
+                    <text x="435" y="270" font-size="11" fill="#475569">cotizacionId (FK)</text>
+                    <text x="435" y="290" font-size="11" fill="#475569">cantidad, precio</text>
+
+                    <!-- DESCUENTOS -->
+                    <rect x="620" y="200" width="160" height="100" fill="#d1fae5" stroke="#10b981" stroke-width="2" rx="6"/>
+                    <text x="700" y="225" font-size="14" font-weight="700" text-anchor="middle" fill="#0f172a">DESCUENTOS</text>
+                    <text x="635" y="250" font-size="11" fill="#475569">id (PK)</text>
+                    <text x="635" y="270" font-size="11" fill="#475569">cotizacionId (FK)</text>
+                    <text x="635" y="290" font-size="11" fill="#475569">tipo, valor</text>
+
+                    <!-- ENSAYOS -->
+                    <rect x="820" y="200" width="160" height="100" fill="#fef3c7" stroke="#f59e0b" stroke-width="2" rx="6"/>
+                    <text x="900" y="225" font-size="14" font-weight="700" text-anchor="middle" fill="#0f172a">ENSAYOS</text>
+                    <text x="835" y="250" font-size="11" fill="#475569">id (PK)</text>
+                    <text x="835" y="270" font-size="11" fill="#475569">nombre</text>
+                    <text x="835" y="290" font-size="11" fill="#475569">precioBase</text>
+
+                    <!-- PAQUETES -->
+                    <rect x="1020" y="200" width="160" height="100" fill="#fce7f3" stroke="#ec4899" stroke-width="2" rx="6"/>
+                    <text x="1100" y="225" font-size="14" font-weight="700" text-anchor="middle" fill="#0f172a">PAQUETES</text>
+                    <text x="1035" y="250" font-size="11" fill="#475569">id (PK)</text>
+                    <text x="1035" y="270" font-size="11" fill="#475569">nombre</text>
+                    <text x="1035" y="290" font-size="11" fill="#475569">ensayosIncluidos</text>
+
+                    <!-- FLECHAS (Relaciones) -->
+                    <!-- EMPRESAS -> CONTACTOS -->
+                    <path d="M 180 100 L 220 100" stroke="#6366f1" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+                    <text x="200" y="90" font-size="10" text-anchor="middle" fill="#6366f1">1:N</text>
+
+                    <!-- EMPRESAS -> COTIZACIONES -->
+                    <path d="M 100 150 L 280 200" stroke="#6366f1" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+                    <text x="150" y="170" font-size="10" fill="#6366f1">1:N</text>
+
+                    <!-- PERSONAS -> COTIZACIONES -->
+                    <path d="M 420 150 L 340 200" stroke="#6366f1" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+
+                    <!-- CONTACTOS -> COTIZACIONES -->
+                    <path d="M 300 150 L 300 200" stroke="#10b981" stroke-width="2" fill="none" marker-end="url(#arrowhead2)"/>
+
+                    <!-- COTIZACIONES -> ITEMS -->
+                    <path d="M 380 235 L 420 235" stroke="#6366f1" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+                    <text x="400" y="225" font-size="10" text-anchor="middle" fill="#6366f1">1:N</text>
+
+                    <!-- COTIZACIONES -> DESCUENTOS -->
+                    <path d="M 380 270 L 620 270" stroke="#6366f1" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+                    <text x="500" y="260" font-size="10" text-anchor="middle" fill="#6366f1">1:N</text>
+
+                    <!-- ITEMS -> ENSAYOS/PAQUETES -->
+                    <path d="M 580 240 L 820 240" stroke="#f59e0b" stroke-width="2" fill="none" marker-end="url(#arrowhead3)"/>
+
+                    <!-- Define arrow markers -->
+                    <defs>
+                        <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                            <polygon points="0 0, 10 3, 0 6" fill="#6366f1"/>
+                        </marker>
+                        <marker id="arrowhead2" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                            <polygon points="0 0, 10 3, 0 6" fill="#10b981"/>
+                        </marker>
+                        <marker id="arrowhead3" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                            <polygon points="0 0, 10 3, 0 6" fill="#f59e0b"/>
+                        </marker>
+                    </defs>
+                </svg>
+            </div>
+        </div>
+
+        <!-- FLUJO DE CREACIÓN DE COTIZACIÓN -->
+        <div class="section">
+            <h2>🔄 Flujo Completo: Cómo el Usuario Crea una Cotización</h2>
+
+            <div class="flow-step">
+                <span class="flow-number">1</span>
+                <span class="flow-title">Usuario abre pantalla 1</span>
+                <div class="flow-desc">Elige si cotiza por RUC (empresa) o DNI (persona)</div>
+            </div>
+
+            <div class="flow-step">
+                <span class="flow-number">2</span>
+                <span class="flow-title">Si selecciona RUC</span>
+                <div class="flow-desc">
+                    Sistema busca en EMPRESAS y autocompleta razonSocial.
+                    Sistema busca CONTACTOS vinculados a ese RUC y muestra dropdown.
+                    Usuario elige contacto (o agrega uno nuevo).
+                    <strong>Se crea registro en COTIZACIONES con clienteRuc + contactoId</strong>
+                </div>
+            </div>
+
+            <div class="flow-step">
+                <span class="flow-number">3</span>
+                <span class="flow-title">Si selecciona DNI</span>
+                <div class="flow-desc">
+                    Sistema busca en PERSONAS y autocompleta nombre/apellido.
+                    Usuario puede indicar si trabaja en alguna empresa.
+                    <strong>Se crea registro en COTIZACIONES con clienteDni (contactoId = null)</strong>
+                </div>
+            </div>
+
+            <div class="flow-step">
+                <span class="flow-number">4</span>
+                <span class="flow-title">Usuario llena proyecto + validez</span>
+                <div class="flow-desc">Estos datos se guardan en COTIZACIONES.proyecto y COTIZACIONES.validezDias</div>
+            </div>
+
+            <div class="flow-step">
+                <span class="flow-number">5</span>
+                <span class="flow-title">Pantalla 2: Añade ensayos/paquetes</span>
+                <div class="flow-desc">
+                    Usuario busca en ENSAYOS_CATALOGO y PAQUETES_CATALOGO
+                    Especifica cantidad
+                    <strong>Se crea múltiples registros en COTIZACION_ITEMS (uno por línea)</strong>
+                </div>
+            </div>
+
+            <div class="flow-step">
+                <span class="flow-number">6</span>
+                <span class="flow-title">Sistema calcula subtotales</span>
+                <div class="flow-desc">Para cada ITEM: cantidad × precioUnitario = subtotal</div>
+            </div>
+
+            <div class="flow-step">
+                <span class="flow-number">7</span>
+                <span class="flow-title">Pantalla 3: Aplica descuentos</span>
+                <div class="flow-desc">
+                    Usuario selecciona tipo (% o monto) y valor
+                    <strong>Se crea registro en DESCUENTOS con cotizacionId</strong>
+                    Sistema calcula: SUBTOTAL - descuento = NETO
+                </div>
+            </div>
+
+            <div class="flow-step">
+                <span class="flow-number">8</span>
+                <span class="flow-title">Sistema calcula IGV</span>
+                <div class="flow-desc">NETO × 1.18 = TOTAL FINAL</div>
+            </div>
+
+            <div class="flow-step">
+                <span class="flow-number">9</span>
+                <span class="flow-title">Pantalla 4: Envía cotización</span>
+                <div class="flow-desc">
+                    Usuario descarga PDF, comparte por WhatsApp, o envía email
+                    Se actualiza COTIZACIONES.estado = "enviada"
+                    <strong>TODA la información se mantiene registrada en BD para futuras referencias</strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- REGLAS DE NEGOCIO -->
+        <div class="section">
+            <h2>⚙️ Reglas de Negocio Importantes</h2>
+
+            <h3>1. Cliente (COTIZACIONES)</h3>
+            <ul>
+                <li>Un cliente DEBE ser RUC O DNI (no puede ser ninguno de los dos = error)</li>
+                <li>Si es RUC → clienteRuc = obligatorio, clienteDni = NULL</li>
+                <li>Si es DNI → clienteDni = obligatorio, clienteRuc = NULL</li>
+                <li>Un RUC NO puede tener dos cotizaciones simultáneamente (una es la actual, otras terminadas)</li>
+            </ul>
+
+            <h3>2. Contacto (vinculado a COTIZACIONES)</h3>
+            <ul>
+                <li>contactoId solo se llena si clienteRuc está lleno</li>
+                <li>Si clienteDni está lleno → contactoId siempre es NULL</li>
+                <li>Un RUC puede tener múltiples contactos, pero cada cotización tiene UN contacto</li>
+            </ul>
+
+            <h3>3. Ensayos/Paquetes</h3>
+            <ul>
+                <li>El usuario SOLO puede seleccionar de ENSAYOS_CATALOGO y PAQUETES_CATALOGO (no crear en el momento)</li>
+                <li>Los precios son fijos (lo define el laboratorio, no el usuario)</li>
+                <li>Una cotización puede mezclar ensayos y paquetes en las mismas líneas</li>
+            </ul>
+
+            <h3>4. Descuentos</h3>
+            <ul>
+                <li>Una cotización puede tener 0 o 1 descuento (no múltiples descuentos)</li>
+                <li>Si es porcentaje: se aplica al subtotal total</li>
+                <li>Si es monto: es un valor fijo en S/.</li>
+            </ul>
+
+            <h3>5. Cálculos</h3>
+            <ul>
+                <li>IGV siempre es 18% (fijo por ley Perú)</li>
+                <li>IGV se aplica DESPUÉS del descuento</li>
+                <li>Todos los montos en soles (S/.)</li>
+            </ul>
+        </div>
+
+        <!-- SUMMARY -->
+        <div class="section">
+            <div style="background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(139,92,246,0.1)); padding: 32px; border-radius: 12px; border: 2px solid var(--primary);">
+                <h2 style="color: var(--primary); margin-top: 0;">✅ Resumen Ejecutivo</h2>
+                <ul style="list-style: none; padding: 0; font-size: 14px;">
+                    <li style="margin-bottom: 12px;"><strong>8 tablas normalizadas</strong> interconectadas por Foreign Keys</li>
+                    <li style="margin-bottom: 12px;"><strong>CLIENTE = RUC (empresa) O DNI (persona)</strong> - NUNCA ambos en una cotización</li>
+                    <li style="margin-bottom: 12px;"><strong>CONTACTO = Persona que trabaja en empresa</strong> - Solo existe si cliente es RUC</li>
+                    <li style="margin-bottom: 12px;"><strong>Cada cotización</strong> guarda cliente, items, descuentos e histórico completo</li>
+                    <li style="margin-bottom: 12px;"><strong>El usuario NO crea ensayos/paquetes</strong> - Solo selecciona del catálogo y ajusta cantidad</li>
+                    <li><strong>Sistema calcula automáticamente</strong> subtotales, descuentos e IGV</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- PRÓXIMOS PASOS -->
+        <div class="section">
+            <h2>🎯 Próximos Pasos</h2>
+            <div class="note-box">
+                <strong>1. Validar esta estructura</strong> con tu caso de uso real
+                <br><strong>2. Conectar con backend</strong> (Firebase, Supabase, etc.)
+                <br><strong>3. Implementar pantallas 2-4</strong> con esta BD como referencia
+                <br><strong>4. Crear catálogo de ensayos/paquetes</strong> (sistema de admin)
+                <br><strong>5. Generar PDF</strong> que traiga todos estos datos
+            </div>
+        </div>
+    </div>
+</body>
+</html>

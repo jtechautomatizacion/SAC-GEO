@@ -1,0 +1,1522 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>GTQC Cotizador</title>
+
+<!-- PWA nativo -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="GTQC">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#6366f1">
+<meta name="description" content="Sistema de cotizaciones GTQC Laboratorio">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%236366f1'/%3E%3Ctext x='50' y='64' font-size='46' text-anchor='middle' fill='white' font-family='Arial' font-weight='bold'%3EG%3C/text%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%236366f1'/%3E%3Ctext x='50' y='64' font-size='46' text-anchor='middle' fill='white' font-family='Arial' font-weight='bold'%3EG%3C/text%3E%3C/svg%3E">
+<link rel="manifest" href='data:application/manifest+json,{"name":"GTQC Cotizador","short_name":"GTQC","start_url":".","display":"standalone","background_color":"%23f8fafc","theme_color":"%236366f1","orientation":"portrait","icons":[{"src":"data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 192 192\'%3E%3Crect width=\'192\' height=\'192\' rx=\'40\' fill=\'%236366f1\'/%3E%3Ctext x=\'96\' y=\'128\' font-size=\'96\' text-anchor=\'middle\' fill=\'white\' font-family=\'Arial\' font-weight=\'bold\'%3EG%3C/text%3E%3C/svg%3E","sizes":"192x192","type":"image/svg+xml"}]}'>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+:root{
+  --primary:#6366f1;
+  --primary-dark:#4f46e5;
+  --secondary:#8b5cf6;
+  --success:#16a34a;
+  --success-bg:#dcfce7;
+  --warning:#f59e0b;
+  --warning-bg:#fef3c7;
+  --danger:#dc2626;
+  --danger-bg:#fee2e2;
+  --gray:#6b7280;
+  --gray-bg:#f1f5f9;
+  --bg:#f8fafc;
+  --card:#ffffff;
+  --text:#1e293b;
+  --text-muted:#64748b;
+  --border:#e2e8f0;
+  --radius:16px;
+  --shadow:0 1px 3px rgba(15,23,42,.08), 0 1px 2px rgba(15,23,42,.06);
+  --shadow-lg:0 10px 25px rgba(79,70,229,.18);
+}
+*{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; -webkit-touch-callout:none;}
+html,body{height:100%; overscroll-behavior-y:none;}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  background:var(--bg); color:var(--text);
+  -webkit-font-smoothing:antialiased;
+}
+button, input, textarea, select{font-family:inherit;}
+button{cursor:pointer; border:none; background:none;}
+input, textarea, select{outline:none;}
+::-webkit-scrollbar{display:none;}
+
+#app{
+  max-width:480px; margin:0 auto; min-height:100vh; min-height:100dvh;
+  background:var(--bg); position:relative; display:flex; flex-direction:column;
+  box-shadow:0 0 40px rgba(0,0,0,.06);
+}
+@media (min-width:481px){
+  body{background:#eef0fb;}
+}
+
+/* ===== Header por vista ===== */
+.app-header{
+  background:linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  color:#fff; padding:max(18px, env(safe-area-inset-top)) 20px 22px;
+  border-radius:0 0 24px 24px;
+}
+.app-header h1{font-size:22px; font-weight:800; display:flex; align-items:center; gap:8px;}
+.app-header p{font-size:13px; opacity:.85; margin-top:3px;}
+
+/* ===== Views ===== */
+#views{flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding-bottom:96px;}
+.view{display:none; animation:fadeIn .25s ease;}
+.view.active{display:block;}
+@keyframes fadeIn{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
+
+.section{padding:16px 16px 4px;}
+.section-title{font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--text-muted); margin-bottom:10px; display:flex; align-items:center; gap:6px;}
+
+/* ===== Cards ===== */
+.card{
+  background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow);
+  padding:16px; margin-bottom:12px;
+}
+.cta-card{
+  background:linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  color:#fff; border-radius:20px; padding:18px 20px; margin-bottom:14px;
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  box-shadow:var(--shadow-lg);
+}
+.cta-card:active{transform:scale(.98);}
+.cta-card .cta-text{font-size:16px; font-weight:700;}
+.cta-card .cta-sub{font-size:12px; opacity:.85; margin-top:2px; font-weight:400;}
+.cta-card .cta-icon{width:46px; height:46px; border-radius:14px; background:rgba(255,255,255,.22); display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0;}
+
+.stats-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+@media (min-width:600px){.stats-grid{grid-template-columns:repeat(4,1fr);}}
+.stat-card{background:var(--card); border-radius:14px; padding:14px; box-shadow:var(--shadow);}
+.stat-card .stat-label{font-size:11px; font-weight:700; text-transform:uppercase; color:var(--text-muted); letter-spacing:.03em;}
+.stat-card .stat-value{font-size:24px; font-weight:800; margin-top:4px;}
+.stat-card.c-total .stat-value{color:var(--primary);}
+.stat-card.c-ok .stat-value{color:var(--success);}
+.stat-card.c-pend .stat-value{color:var(--warning);}
+.stat-card.c-val .stat-value{color:#0891b2; font-size:19px;}
+
+.chart-card{background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); padding:16px; margin-bottom:12px;}
+.chart-card h3{font-size:14px; font-weight:700; margin-bottom:12px;}
+.chart-wrap{position:relative; height:200px;}
+.chart-wrap.small{height:170px;}
+
+/* ===== Quotation card ===== */
+.cot-card{
+  background:var(--card); border-radius:14px; box-shadow:var(--shadow);
+  padding:14px 14px 14px 16px; margin-bottom:10px; border-left:5px solid var(--gray);
+  position:relative;
+}
+.cot-card.st-aceptada{border-left-color:var(--success);}
+.cot-card.st-emitida{border-left-color:var(--warning);}
+.cot-card.st-rechazada{border-left-color:var(--danger);}
+.cot-card.st-cancelada{border-left-color:var(--gray);}
+.cot-card:active{transform:scale(.985);}
+.cot-top{display:flex; justify-content:space-between; align-items:flex-start; gap:8px;}
+.cot-num{font-size:13px; font-weight:800; color:var(--primary-dark);}
+.cot-cliente{font-size:15px; font-weight:700; margin-top:2px;}
+.cot-proyecto{font-size:12.5px; color:var(--text-muted); margin-top:1px;}
+.badge{font-size:10.5px; font-weight:700; padding:4px 9px; border-radius:20px; white-space:nowrap;}
+.badge.st-aceptada{background:var(--success-bg); color:var(--success);}
+.badge.st-emitida{background:var(--warning-bg); color:#b45309;}
+.badge.st-rechazada{background:var(--danger-bg); color:var(--danger);}
+.badge.st-cancelada{background:var(--gray-bg); color:var(--gray);}
+.cot-grid{display:grid; grid-template-columns:1fr 1fr; gap:6px 10px; margin:10px 0; font-size:12px;}
+.cot-grid div span{display:block; color:var(--text-muted); font-size:10.5px; text-transform:uppercase; letter-spacing:.02em;}
+.cot-grid div b{font-size:13px;}
+.cot-actions{display:flex; gap:8px; margin-top:8px;}
+.icon-btn{
+  flex:1; display:flex; align-items:center; justify-content:center; gap:5px;
+  background:var(--gray-bg); border-radius:10px; padding:9px 6px; font-size:12px; font-weight:600; color:var(--text);
+}
+.icon-btn:active{background:var(--border);}
+.icon-btn.wa{background:#dcfce7; color:#166534;}
+.icon-btn.mail{background:#dbeafe; color:#1e40af;}
+.icon-btn.pdf{background:#fce7f3; color:#9d174d;}
+
+/* ===== Filter chips ===== */
+.chips{display:flex; gap:8px; overflow-x:auto; padding-bottom:4px; margin-bottom:4px;}
+.chip{
+  flex-shrink:0; padding:8px 14px; border-radius:20px; background:var(--card); box-shadow:var(--shadow);
+  font-size:12.5px; font-weight:600; color:var(--text-muted); white-space:nowrap;
+}
+.chip.active{background:var(--primary); color:#fff; box-shadow:0 4px 10px rgba(99,102,241,.35);}
+
+.search-box{
+  display:flex; align-items:center; gap:8px; background:var(--card); border-radius:12px;
+  padding:11px 14px; box-shadow:var(--shadow); margin-bottom:12px;
+}
+.search-box input{flex:1; border:none; font-size:14px; background:transparent; color:var(--text);}
+.search-box input::placeholder{color:#94a3b8;}
+
+.empty-state{text-align:center; padding:50px 20px; color:var(--text-muted);}
+.empty-state .emoji{font-size:44px; margin-bottom:10px;}
+.empty-state p{font-size:13.5px;}
+
+/* ===== Bottom Nav ===== */
+#bottom-nav{
+  position:fixed; bottom:0; left:50%; transform:translateX(-50%);
+  width:100%; max-width:480px; background:#fff; border-top:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-around;
+  padding:8px 6px max(8px, env(safe-area-inset-bottom));
+  z-index:50;
+}
+.nav-btn{display:flex; flex-direction:column; align-items:center; gap:3px; padding:4px 8px; color:#94a3b8; min-width:44px;}
+.nav-btn .nav-ic{font-size:20px; line-height:1;}
+.nav-btn .nav-lb{font-size:10px; font-weight:600;}
+.nav-btn.active{color:var(--primary);}
+.nav-fab{
+  width:52px; height:52px; border-radius:50%;
+  background:linear-gradient(135deg, var(--primary), var(--secondary));
+  display:flex; align-items:center; justify-content:center; color:#fff; font-size:26px;
+  box-shadow:0 8px 18px rgba(99,102,241,.45); margin-top:-26px; flex-shrink:0;
+}
+.nav-fab:active{transform:scale(.92);}
+
+/* ===== Wizard overlay ===== */
+#wizard-overlay{
+  position:fixed; inset:0; background:var(--bg); z-index:200;
+  display:none; flex-direction:column; max-width:480px; margin:0 auto;
+}
+#wizard-overlay.open{display:flex;}
+.wizard-header{
+  background:linear-gradient(135deg, var(--primary), var(--secondary)); color:#fff;
+  padding:max(16px, env(safe-area-inset-top)) 18px 16px;
+  border-radius:0 0 20px 20px;
+}
+.wizard-top-row{display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;}
+.wizard-close, .wizard-back{
+  width:34px; height:34px; border-radius:50%; background:rgba(255,255,255,.2);
+  display:flex; align-items:center; justify-content:center; color:#fff; font-size:16px;
+}
+.wizard-title{font-size:15px; font-weight:700; text-align:center; flex:1;}
+.wizard-progress{height:5px; background:rgba(255,255,255,.25); border-radius:10px; overflow:hidden;}
+.wizard-progress-bar{height:100%; background:#fff; border-radius:10px; transition:width .3s ease;}
+.wizard-steps-label{display:flex; justify-content:space-between; font-size:10.5px; opacity:.85; margin-top:6px;}
+
+.wizard-content{flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:16px 16px 110px;}
+.wizard-step{display:none;}
+.wizard-step.active{display:block; animation:fadeIn .25s ease;}
+
+.wizard-footer{
+  position:absolute; bottom:0; left:0; right:0; background:#fff; border-top:1px solid var(--border);
+  padding:12px 16px max(12px, env(safe-area-inset-bottom)); display:flex; gap:10px;
+}
+.btn{
+  flex:1; padding:14px; border-radius:14px; font-size:15px; font-weight:700; text-align:center;
+}
+.btn-primary{background:linear-gradient(135deg, var(--primary), var(--secondary)); color:#fff; box-shadow:0 6px 16px rgba(99,102,241,.35);}
+.btn-primary:disabled{opacity:.4; box-shadow:none;}
+.btn-primary:active{transform:scale(.98);}
+.btn-secondary{background:var(--gray-bg); color:var(--text); flex:0 0 auto; width:52px;}
+.btn-outline{background:#fff; border:1.5px solid var(--border); color:var(--text);}
+
+/* Tabs (cliente nuevo/buscar) */
+.tab-switch{display:flex; background:var(--gray-bg); border-radius:12px; padding:4px; margin-bottom:16px;}
+.tab-switch button{flex:1; padding:10px; border-radius:9px; font-size:13px; font-weight:700; color:var(--text-muted);}
+.tab-switch button.active{background:#fff; color:var(--primary); box-shadow:var(--shadow);}
+
+.field{margin-bottom:14px;}
+.field label{display:block; font-size:12.5px; font-weight:700; color:var(--text-muted); margin-bottom:6px;}
+.field input, .field textarea{
+  width:100%; padding:13px 14px; border-radius:12px; border:1.5px solid var(--border);
+  font-size:14.5px; background:#fff; color:var(--text);
+}
+.field input:focus, .field textarea:focus{border-color:var(--primary);}
+.field textarea{resize:vertical; min-height:70px;}
+.field .hint{font-size:11px; color:var(--text-muted); margin-top:4px;}
+.input-row{display:flex; gap:8px;}
+.input-row .field{flex:1;}
+
+.client-result-card{
+  background:#fff; border:1.5px solid var(--border); border-radius:14px; padding:14px; margin-top:10px;
+}
+.client-result-card.selected{border-color:var(--success); background:#f0fdf4;}
+.client-result-card h4{font-size:14.5px; font-weight:800; margin-bottom:6px;}
+.client-result-card .cr-row{font-size:12.5px; color:var(--text-muted); margin-bottom:2px;}
+.client-mini{
+  display:flex; justify-content:space-between; align-items:center; padding:12px; border:1.5px solid var(--border);
+  border-radius:12px; margin-bottom:8px;
+}
+.client-mini b{font-size:13.5px; display:block;}
+.client-mini span{font-size:11.5px; color:var(--text-muted);}
+
+/* Categoria chips ensayos */
+.cat-chips{display:flex; gap:8px; overflow-x:auto; margin-bottom:12px;}
+.ensayo-card{
+  background:#fff; border-radius:13px; box-shadow:var(--shadow); padding:13px 14px;
+  display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:9px;
+}
+.ensayo-info .cat-tag{font-size:10px; font-weight:700; color:var(--primary); text-transform:uppercase; letter-spacing:.03em;}
+.ensayo-info h4{font-size:14px; font-weight:700; margin:2px 0 3px;}
+.ensayo-info .price{font-size:13px; color:var(--text-muted); font-weight:600;}
+.add-btn{
+  background:var(--primary); color:#fff; width:36px; height:36px; border-radius:10px; font-size:18px; font-weight:700; flex-shrink:0;
+}
+.qty-stepper{display:flex; align-items:center; gap:8px; flex-shrink:0;}
+.qty-stepper button{width:30px; height:30px; border-radius:9px; background:var(--gray-bg); font-size:16px; font-weight:700; color:var(--primary);}
+.qty-stepper span{font-size:15px; font-weight:700; min-width:18px; text-align:center;}
+
+.sticky-summary{
+  position:absolute; bottom:0; left:0; right:0; background:#fff; border-top:1px solid var(--border);
+  padding:12px 16px max(12px, env(safe-area-inset-bottom)); display:flex; align-items:center; gap:12px;
+}
+.sticky-summary .ss-info{flex:1;}
+.sticky-summary .ss-count{font-size:11.5px; color:var(--text-muted); font-weight:600;}
+.sticky-summary .ss-total{font-size:17px; font-weight:800; color:var(--primary-dark);}
+
+/* Resumen items */
+.resumen-item{background:#fff; border-radius:13px; box-shadow:var(--shadow); padding:12px 14px; margin-bottom:9px;}
+.ri-top{display:flex; justify-content:space-between; align-items:flex-start;}
+.ri-top h4{font-size:13.5px; font-weight:700; flex:1; padding-right:8px;}
+.ri-remove{color:var(--danger); font-size:12px; font-weight:700; flex-shrink:0;}
+.ri-bottom{display:flex; justify-content:space-between; align-items:center; margin-top:8px;}
+.ri-price{font-size:12px; color:var(--text-muted);}
+.ri-subtotal{font-size:14px; font-weight:800; color:var(--text);}
+
+.totales-card{background:#fff; border-radius:14px; box-shadow:var(--shadow); padding:16px;}
+.tot-row{display:flex; justify-content:space-between; font-size:13.5px; padding:6px 0; color:var(--text-muted);}
+.tot-row.total{border-top:1.5px dashed var(--border); margin-top:6px; padding-top:12px; font-size:19px; font-weight:800; color:var(--primary-dark);}
+.tot-row b{color:var(--text);}
+
+/* PDF preview */
+.pdf-doc{background:#fff; border-radius:14px; box-shadow:var(--shadow); padding:20px; font-size:12px; color:#334155;}
+.pdf-doc .pdf-head{display:flex; justify-content:space-between; align-items:flex-start; border-bottom:2px solid var(--primary); padding-bottom:12px; margin-bottom:14px;}
+.pdf-doc .pdf-logo{font-size:16px; font-weight:900; color:var(--primary-dark);}
+.pdf-doc .pdf-logo small{display:block; font-weight:500; font-size:9.5px; color:var(--text-muted);}
+.pdf-doc .pdf-num{text-align:right; font-size:12px; font-weight:800; color:var(--primary-dark);}
+.pdf-doc .pdf-num small{display:block; font-weight:500; color:var(--text-muted); font-size:10px;}
+.pdf-doc h5{font-size:10.5px; text-transform:uppercase; letter-spacing:.04em; color:var(--text-muted); margin:12px 0 6px;}
+.pdf-doc .pdf-client-grid{display:grid; grid-template-columns:1fr 1fr; gap:4px 10px; font-size:11.5px;}
+.pdf-row{display:grid; grid-template-columns:1fr 34px 62px 70px; gap:4px; font-size:11px; padding:7px 0; border-bottom:1px solid #f1f5f9;}
+.pdf-row.head{font-weight:700; color:var(--text-muted); font-size:9.5px; text-transform:uppercase; border-bottom:1.5px solid var(--border);}
+.pdf-row.head div, .pdf-row div{display:flex; align-items:center;}
+.pdf-row div:nth-child(2), .pdf-row div:nth-child(3), .pdf-row div:nth-child(4){justify-content:flex-end; text-align:right;}
+.pdf-tot{margin-top:10px; margin-left:auto; width:60%;}
+.pdf-tot .tr{display:flex; justify-content:space-between; font-size:11.5px; padding:3px 0;}
+.pdf-tot .tr.f{font-weight:800; font-size:14px; border-top:1.5px solid var(--primary); margin-top:4px; padding-top:6px; color:var(--primary-dark);}
+.pdf-notes{margin-top:14px; font-size:10.5px; color:var(--text-muted); line-height:1.5; background:#f8fafc; border-radius:8px; padding:10px;}
+.pdf-foot{margin-top:16px; text-align:center; font-size:10px; color:#94a3b8;}
+
+/* Acciones finales */
+.success-box{text-align:center; padding:14px 0 20px;}
+.success-box .check{width:70px; height:70px; border-radius:50%; background:var(--success-bg); color:var(--success); font-size:36px; display:flex; align-items:center; justify-content:center; margin:0 auto 14px;}
+.success-box h2{font-size:19px; font-weight:800;}
+.success-box p{font-size:13px; color:var(--text-muted); margin-top:4px;}
+.actions-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;}
+.action-card{background:#fff; border-radius:14px; box-shadow:var(--shadow); padding:16px 10px; text-align:center;}
+.action-card:active{transform:scale(.96);}
+.action-card .ac-icon{font-size:28px; margin-bottom:8px;}
+.action-card .ac-label{font-size:12.5px; font-weight:700;}
+.action-card .ac-sub{font-size:10px; color:var(--text-muted); margin-top:2px;}
+
+/* Modal */
+.modal-overlay{position:fixed; inset:0; background:rgba(15,23,42,.5); z-index:300; display:none; align-items:flex-end; justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal-sheet{
+  background:#fff; width:100%; max-width:480px; border-radius:22px 22px 0 0; max-height:88vh; overflow-y:auto;
+  padding:10px 18px max(20px, env(safe-area-inset-bottom)); animation:slideUp .25s ease;
+}
+@keyframes slideUp{from{transform:translateY(30px); opacity:.5;} to{transform:translateY(0); opacity:1;}}
+.modal-handle{width:40px; height:5px; background:var(--border); border-radius:10px; margin:6px auto 14px;}
+.modal-header{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;}
+.modal-close{width:30px; height:30px; border-radius:50%; background:var(--gray-bg); font-size:14px; color:var(--text-muted);}
+
+.state-btns{display:flex; gap:8px; flex-wrap:wrap; margin:12px 0;}
+.state-btn{padding:9px 14px; border-radius:10px; font-size:12px; font-weight:700; flex:1; min-width:100px;}
+.state-btn.b-ok{background:var(--success-bg); color:var(--success);}
+.state-btn.b-warn{background:var(--warning-bg); color:#b45309;}
+.state-btn.b-danger{background:var(--danger-bg); color:var(--danger);}
+.state-btn.b-gray{background:var(--gray-bg); color:var(--gray);}
+.state-btn:disabled{opacity:.35;}
+
+.timeline{margin-top:6px;}
+.timeline-item{display:flex; gap:10px; padding:9px 0; border-bottom:1px solid #f1f5f9;}
+.timeline-item:last-child{border-bottom:none;}
+.timeline-dot{width:10px; height:10px; border-radius:50%; margin-top:4px; flex-shrink:0;}
+.timeline-item.aceptada .timeline-dot{background:var(--success);}
+.timeline-item.emitida .timeline-dot{background:var(--warning);}
+.timeline-item.rechazada .timeline-dot{background:var(--danger);}
+.timeline-item.cancelada .timeline-dot{background:var(--gray);}
+.timeline-text b{font-size:13px;}
+.timeline-text p{font-size:11.5px; color:var(--text-muted); margin-top:1px;}
+
+/* Historial view */
+.hist-day-label{font-size:11.5px; font-weight:700; color:var(--text-muted); margin:14px 0 8px; text-transform:uppercase;}
+.hist-card{background:#fff; border-radius:13px; box-shadow:var(--shadow); padding:12px 14px; margin-bottom:8px; display:flex; gap:10px; align-items:flex-start;}
+.hist-icon{width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0;}
+.hist-icon.aceptada{background:var(--success-bg);}
+.hist-icon.emitida{background:var(--warning-bg);}
+.hist-icon.rechazada{background:var(--danger-bg);}
+.hist-icon.cancelada{background:var(--gray-bg);}
+
+/* Config view */
+.config-item{display:flex; justify-content:space-between; align-items:center; padding:13px 0; border-bottom:1px solid #f1f5f9;}
+.config-item:last-child{border-bottom:none;}
+.config-item .ci-label{font-size:13.5px; font-weight:600;}
+.config-item .ci-sub{font-size:11px; color:var(--text-muted); margin-top:2px;}
+.config-btn{font-size:13px; font-weight:700; color:var(--primary);}
+.config-btn.danger{color:var(--danger);}
+
+/* Toast */
+#toast{
+  position:fixed; bottom:100px; left:50%; transform:translateX(-50%) translateY(20px); opacity:0;
+  background:#1e293b; color:#fff; padding:12px 20px; border-radius:12px; font-size:13px; font-weight:600;
+  z-index:500; transition:all .25s ease; max-width:85%; text-align:center; pointer-events:none;
+}
+#toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+/* PDF hidden render target */
+#pdf-render-target{position:fixed; left:-9999px; top:0; width:380px; pointer-events:none;}
+
+@media (min-width:600px){
+  .actions-grid{grid-template-columns:1fr 1fr 1fr;}
+}
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ============ VIEW: DASHBOARD ============ -->
+  <section id="view-dashboard" class="view active">
+    <div class="app-header">
+      <h1>👋 Hola, GTQC</h1>
+      <p id="dash-date">Panel de cotizaciones</p>
+    </div>
+    <div class="section">
+      <div class="cta-card" onclick="openWizard()">
+        <div>
+          <div class="cta-text">Nueva Cotización</div>
+          <div class="cta-sub">Cliente → Ensayos → PDF → Enviar</div>
+        </div>
+        <div class="cta-icon">➕</div>
+      </div>
+
+      <div class="stats-grid" id="dash-stats"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">📊 Análisis</div>
+      <div class="chart-card">
+        <h3>Estado de Cotizaciones</h3>
+        <div class="chart-wrap"><canvas id="chart-estado"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>Evolución (últimos 6 meses)</h3>
+        <div class="chart-wrap small"><canvas id="chart-evolucion"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>Top Clientes por Monto</h3>
+        <div class="chart-wrap small"><canvas id="chart-clientes"></canvas></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">🕒 Recientes</div>
+      <div id="dash-recientes"></div>
+    </div>
+  </section>
+
+  <!-- ============ VIEW: COTIZACIONES ============ -->
+  <section id="view-cotizaciones" class="view">
+    <div class="app-header">
+      <h1>📋 Cotizaciones</h1>
+      <p id="cot-count-label">Todas tus cotizaciones</p>
+    </div>
+    <div class="section">
+      <div class="search-box">
+        <span>🔍</span>
+        <input type="text" id="cot-search" placeholder="Buscar por número, cliente o proyecto..." oninput="onCotSearch()">
+      </div>
+      <div class="chips" id="cot-filters"></div>
+      <div id="cot-list"></div>
+    </div>
+  </section>
+
+  <!-- ============ VIEW: HISTORIAL ============ -->
+  <section id="view-historial" class="view">
+    <div class="app-header">
+      <h1>🕒 Historial</h1>
+      <p>Línea de tiempo de cambios de estado</p>
+    </div>
+    <div class="section" id="historial-list"></div>
+  </section>
+
+  <!-- ============ VIEW: CONFIG ============ -->
+  <section id="view-config" class="view">
+    <div class="app-header">
+      <h1>⚙️ Más</h1>
+      <p>Configuración y datos</p>
+    </div>
+    <div class="section">
+      <div class="section-title">🏢 Mi Empresa</div>
+      <div class="card">
+        <div class="field"><label>Nombre de empresa</label><input id="cfg-nombre" type="text"></div>
+        <div class="field"><label>RUC</label><input id="cfg-ruc" type="text"></div>
+        <div class="field"><label>Teléfono</label><input id="cfg-tel" type="text"></div>
+        <div class="field"><label>Email</label><input id="cfg-email" type="text"></div>
+        <button class="btn btn-primary" style="width:100%" onclick="guardarConfigEmpresa()">Guardar Datos</button>
+      </div>
+
+      <div class="section-title" style="margin-top:6px;">💾 Datos</div>
+      <div class="card">
+        <div class="config-item">
+          <div><div class="ci-label">Exportar todas las cotizaciones</div><div class="ci-sub">Descarga un archivo JSON con tu información</div></div>
+          <button class="config-btn" onclick="exportarDatos()">Exportar</button>
+        </div>
+        <div class="config-item">
+          <div><div class="ci-label">Borrar todas las cotizaciones</div><div class="ci-sub">Esta acción no se puede deshacer</div></div>
+          <button class="config-btn danger" onclick="limpiarDatos()">Borrar</button>
+        </div>
+      </div>
+
+      <div class="section-title" style="margin-top:6px;">📲 Instalar como App</div>
+      <div class="card">
+        <div style="font-size:12.5px; color:var(--text-muted); line-height:1.6;">
+          <b>iPhone (Safari):</b> Botón Compartir → "Añadir a pantalla de inicio".<br><br>
+          <b>Android (Chrome):</b> Menú (⋮) → "Instalar app" o "Añadir a pantalla principal".
+        </div>
+      </div>
+
+      <div class="section-title" style="margin-top:6px;">ℹ️ Acerca de</div>
+      <div class="card">
+        <div class="config-item"><div class="ci-label">Versión</div><div class="ci-sub">2.0 · App unificada</div></div>
+        <div class="config-item"><div class="ci-label">Estado</div><div class="ci-sub">100% offline · PWA nativa</div></div>
+      </div>
+    </div>
+  </section>
+
+</div><!-- /views handled inside #app already -->
+
+<!-- ============ BOTTOM NAV ============ -->
+<nav id="bottom-nav">
+  <button class="nav-btn active" data-view="dashboard" onclick="switchView('dashboard')">
+    <span class="nav-ic">🏠</span><span class="nav-lb">Inicio</span>
+  </button>
+  <button class="nav-btn" data-view="cotizaciones" onclick="switchView('cotizaciones')">
+    <span class="nav-ic">📋</span><span class="nav-lb">Cotiz.</span>
+  </button>
+  <button class="nav-fab" onclick="openWizard()">➕</button>
+  <button class="nav-btn" data-view="historial" onclick="switchView('historial')">
+    <span class="nav-ic">🕒</span><span class="nav-lb">Historial</span>
+  </button>
+  <button class="nav-btn" data-view="config" onclick="switchView('config')">
+    <span class="nav-ic">⚙️</span><span class="nav-lb">Más</span>
+  </button>
+</nav>
+
+<!-- ============ WIZARD OVERLAY (Nueva Cotización) ============ -->
+<div id="wizard-overlay">
+  <div class="wizard-header">
+    <div class="wizard-top-row">
+      <button class="wizard-back" id="wiz-back-btn" onclick="wizardBack()">←</button>
+      <div class="wizard-title" id="wiz-title">Cliente y Proyecto</div>
+      <button class="wizard-close" onclick="closeWizard()">✕</button>
+    </div>
+    <div class="wizard-progress"><div class="wizard-progress-bar" id="wiz-progress" style="width:20%"></div></div>
+    <div class="wizard-steps-label"><span id="wiz-step-label">Paso 1 de 5</span><span id="wiz-step-name">Cliente</span></div>
+  </div>
+
+  <div class="wizard-content" id="wizard-content" style="position:relative;">
+
+    <!-- STEP 1: CLIENTE -->
+    <div class="wizard-step" id="step-1">
+      <div class="tab-switch">
+        <button id="tab-buscar" class="active" onclick="setClientTab('buscar')">🔍 Buscar Cliente</button>
+        <button id="tab-nuevo" onclick="setClientTab('nuevo')">✨ Cliente Nuevo</button>
+      </div>
+
+      <div id="panel-buscar">
+        <div class="field">
+          <label>RUC / DNI</label>
+          <input type="text" id="buscar-ruc" placeholder="Ej: 20123456789" oninput="buscarCliente()">
+        </div>
+        <div id="buscar-resultado"></div>
+        <div class="section-title" style="margin-top:16px;">Clientes recientes</div>
+        <div id="clientes-recientes"></div>
+      </div>
+
+      <div id="panel-nuevo" style="display:none;">
+        <div class="field"><label>RUC / DNI</label><input type="text" id="nc-ruc" placeholder="20123456789"></div>
+        <div class="field"><label>Razón Social / Nombre</label><input type="text" id="nc-nombre" placeholder="Empresa S.A.C."></div>
+        <div class="input-row">
+          <div class="field"><label>Contacto</label><input type="text" id="nc-contacto" placeholder="Nombre completo"></div>
+          <div class="field"><label>Teléfono</label><input type="text" id="nc-tel" placeholder="9XXXXXXXX"></div>
+        </div>
+        <div class="field"><label>Email</label><input type="email" id="nc-email" placeholder="correo@empresa.com"></div>
+        <div class="field"><label>Dirección</label><input type="text" id="nc-dir" placeholder="Av. Ejemplo 123"></div>
+      </div>
+
+      <div class="section-title" style="margin-top:16px;">Proyecto / Obra</div>
+      <div class="field">
+        <label>Nombre de referencia</label>
+        <input type="text" id="wiz-proyecto" placeholder="Ej: Edificio Central - Torre A" oninput="validarStep1()">
+      </div>
+    </div>
+
+    <!-- STEP 2: ENSAYOS -->
+    <div class="wizard-step" id="step-2">
+      <div class="search-box">
+        <span>🔍</span>
+        <input type="text" id="ensayo-search" placeholder="Buscar ensayo..." oninput="renderEnsayos()">
+      </div>
+      <div class="cat-chips" id="cat-chips"></div>
+      <div id="ensayos-list" style="padding-bottom:70px;"></div>
+    </div>
+
+    <!-- STEP 3: RESUMEN -->
+    <div class="wizard-step" id="step-3">
+      <div class="section-title">🧪 Ensayos Seleccionados</div>
+      <div id="resumen-items"></div>
+
+      <div class="field" style="margin-top:14px;">
+        <label>Descuento (%)</label>
+        <input type="number" id="wiz-descuento" min="0" max="100" value="0" oninput="renderTotales()">
+      </div>
+      <div class="field">
+        <label>Notas / Condiciones</label>
+        <textarea id="wiz-notas">Validez de la cotización: 15 días calendario. Forma de pago: 50% adelanto, 50% contra entrega de informe. Precios no incluyen IGV visible por separado (ya calculado abajo).</textarea>
+      </div>
+
+      <div class="section-title">💰 Totales</div>
+      <div class="totales-card" id="totales-card"></div>
+    </div>
+
+    <!-- STEP 4: PDF PREVIEW -->
+    <div class="wizard-step" id="step-4">
+      <div id="pdf-preview-content"></div>
+    </div>
+
+    <!-- STEP 5: ACCIONES -->
+    <div class="wizard-step" id="step-5">
+      <div class="success-box">
+        <div class="check">✓</div>
+        <h2>¡Cotización Generada!</h2>
+        <p id="wiz-final-num">COT-2026-000</p>
+      </div>
+      <div class="actions-grid">
+        <div class="action-card" onclick="accionDescargarPDF()">
+          <div class="ac-icon">📥</div><div class="ac-label">Descargar PDF</div><div class="ac-sub">Offline</div>
+        </div>
+        <div class="action-card" onclick="accionGuardarOnline()">
+          <div class="ac-icon">☁️</div><div class="ac-label">Guardar Online</div><div class="ac-sub">Enlace compartible</div>
+        </div>
+        <div class="action-card" onclick="accionWhatsapp()">
+          <div class="ac-icon">💬</div><div class="ac-label">WhatsApp</div><div class="ac-sub">Enviar al cliente</div>
+        </div>
+        <div class="action-card" onclick="accionEmail()">
+          <div class="ac-icon">📧</div><div class="ac-label">Email</div><div class="ac-sub">Enviar por correo</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="wizard-footer" id="wizard-footer">
+    <button class="btn btn-primary" id="wiz-next-btn" onclick="wizardNext()">Continuar →</button>
+  </div>
+</div>
+
+<!-- ============ MODAL DETALLE ============ -->
+<div class="modal-overlay" id="modal-detail">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div>
+        <div class="cot-num" id="md-num"></div>
+        <div class="cot-cliente" id="md-cliente"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div id="md-body"></div>
+  </div>
+</div>
+
+<div id="pdf-render-target"></div>
+<div id="toast"></div>
+
+<script>
+/* ============================================================
+   DATOS BASE
+   ============================================================ */
+const ENSAYOS = [
+  {id:1, cat:'Agua', nombre:'Análisis Físico-Químico de Agua Potable', precio:450},
+  {id:2, cat:'Agua', nombre:'Análisis Microbiológico de Agua', precio:380},
+  {id:3, cat:'Agua', nombre:'Análisis de Agua Residual (DBO/DQO)', precio:520},
+  {id:4, cat:'Suelos', nombre:'Estudio de Mecánica de Suelos (EMS)', precio:1200},
+  {id:5, cat:'Suelos', nombre:'Análisis Granulométrico de Suelos', precio:350},
+  {id:6, cat:'Suelos', nombre:'Ensayo de Compactación Proctor', precio:420},
+  {id:7, cat:'Concreto', nombre:'Resistencia a la Compresión (Testigo)', precio:85},
+  {id:8, cat:'Concreto', nombre:'Diseño de Mezcla de Concreto', precio:650},
+  {id:9, cat:'Materiales', nombre:'Ensayo de Acero de Refuerzo', precio:280},
+  {id:10, cat:'Materiales', nombre:'Análisis Granulométrico de Agregados', precio:300},
+  {id:11, cat:'Ambiental', nombre:'Monitoreo de Calidad de Aire', precio:850},
+  {id:12, cat:'Ambiental', nombre:'Medición de Ruido Ambiental', precio:480},
+  {id:13, cat:'Ambiental', nombre:'Análisis de Suelos Contaminados', precio:950},
+  {id:14, cat:'Estructural', nombre:'Ensayo de Esclerometría', precio:380},
+];
+const CATEGORIAS = ['Todas','Agua','Suelos','Concreto','Materiales','Ambiental','Estructural'];
+
+const CLIENTES_DEFAULT = [
+  {ruc:'20123456789', nombre:'Constructora ACME S.A.C.', contacto:'Carlos Mendoza', tel:'987654321', email:'carlos@acme.com', dir:'Av. Industrial 450, Lima'},
+  {ruc:'20987654321', nombre:'Ingeniería Moderna E.I.R.L.', contacto:'Ana Torres', tel:'976543210', email:'ana@ingmoderna.com', dir:'Jr. Los Pinos 120, Arequipa'},
+  {ruc:'20555666777', nombre:'Empresa Médica del Sur S.A.', contacto:'Dr. Luis Ramírez', tel:'965432109', email:'luis@medicasur.com', dir:'Calle Salud 300, Trujillo'},
+  {ruc:'20444333222', nombre:'Servicios ABC S.R.L.', contacto:'María Flores', tel:'954321098', email:'maria@serviciosabc.com', dir:'Av. Comercio 88, Chiclayo'},
+];
+
+function mesesAtras(n, diaExtra){
+  const d = new Date();
+  d.setMonth(d.getMonth() - n);
+  if(diaExtra) d.setDate(d.getDate() - diaExtra);
+  return d.toISOString();
+}
+
+function buildDefaultQuotations(){
+  const c = CLIENTES_DEFAULT;
+  return [
+    {numero:'COT-2026-001', cliente:c[0], proyecto:'Edificio Central - Torre A', fecha:mesesAtras(5,3),
+      items:[{...ENSAYOS[3], cantidad:1},{...ENSAYOS[6], cantidad:12},{...ENSAYOS[7], cantidad:2}],
+      descuento:5, notas:'Validez 15 días. Pago 50/50.', estado:'aceptada',
+      historial:[{estado:'emitida', fecha:mesesAtras(5,3)},{estado:'aceptada', fecha:mesesAtras(5,0)}]},
+    {numero:'COT-2026-002', cliente:c[1], proyecto:'Centro Comercial Plaza Norte', fecha:mesesAtras(4,5),
+      items:[{...ENSAYOS[3], cantidad:2},{...ENSAYOS[4], cantidad:4},{...ENSAYOS[9], cantidad:6}],
+      descuento:0, notas:'Validez 15 días. Pago contado.', estado:'aceptada',
+      historial:[{estado:'emitida', fecha:mesesAtras(4,5)},{estado:'aceptada', fecha:mesesAtras(4,1)}]},
+    {numero:'COT-2026-003', cliente:c[2], proyecto:'Clínica San Rafael - Ampliación', fecha:mesesAtras(2,8),
+      items:[{...ENSAYOS[10], cantidad:1},{...ENSAYOS[11], cantidad:2},{...ENSAYOS[0], cantidad:3}],
+      descuento:0, notas:'Validez 15 días.', estado:'emitida',
+      historial:[{estado:'emitida', fecha:mesesAtras(2,8)}]},
+    {numero:'COT-2026-004', cliente:c[3], proyecto:'Remodelación de Oficinas', fecha:mesesAtras(3,2),
+      items:[{...ENSAYOS[6], cantidad:8},{...ENSAYOS[8], cantidad:4}],
+      descuento:10, notas:'Validez 10 días.', estado:'rechazada',
+      historial:[{estado:'emitida', fecha:mesesAtras(3,2)},{estado:'rechazada', fecha:mesesAtras(2,20)}]},
+    {numero:'COT-2026-005', cliente:c[0], proyecto:'Puente Peatonal Km 12', fecha:mesesAtras(1,4),
+      items:[{...ENSAYOS[3], cantidad:1},{...ENSAYOS[4], cantidad:6},{...ENSAYOS[5], cantidad:4},{...ENSAYOS[6], cantidad:20}],
+      descuento:0, notas:'Validez 15 días.', estado:'emitida',
+      historial:[{estado:'emitida', fecha:mesesAtras(1,4)}]},
+    {numero:'COT-2026-006', cliente:c[2], proyecto:'Hospital Regional - Nueva Ala', fecha:mesesAtras(0,6),
+      items:[{...ENSAYOS[10], cantidad:2},{...ENSAYOS[3], cantidad:1},{...ENSAYOS[7], cantidad:3}],
+      descuento:8, notas:'Validez 15 días.', estado:'aceptada',
+      historial:[{estado:'emitida', fecha:mesesAtras(0,6)},{estado:'aceptada', fecha:mesesAtras(0,1)}]},
+  ];
+}
+
+/* ============================================================
+   ESTADO / PERSISTENCIA
+   ============================================================ */
+let DB = {clientes:[], cotizaciones:[], empresa:{}};
+
+function loadDB(){
+  try{
+    const raw = localStorage.getItem('gtqc_db');
+    if(raw){ DB = JSON.parse(raw); }
+    else{
+      DB = {
+        clientes: CLIENTES_DEFAULT.slice(),
+        cotizaciones: buildDefaultQuotations(),
+        empresa: {nombre:'GTQC Laboratorio', ruc:'20500000001', tel:'014000000', email:'contacto@gtqc.com'}
+      };
+      saveDB();
+    }
+  }catch(e){
+    DB = {clientes:CLIENTES_DEFAULT.slice(), cotizaciones:buildDefaultQuotations(), empresa:{nombre:'GTQC Laboratorio', ruc:'20500000001', tel:'014000000', email:'contacto@gtqc.com'}};
+  }
+}
+function saveDB(){
+  try{ localStorage.setItem('gtqc_db', JSON.stringify(DB)); }catch(e){}
+}
+
+let state = {
+  view:'dashboard',
+  cotFilter:'todas',
+  cotSearch:'',
+  clientTab:'buscar',
+  ensayoCat:'Todas',
+  wizard:{ step:1, cliente:null, proyecto:'', items:[], descuento:0, notas:'', numero:null }
+};
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
+function formatMoney(n){
+  return 'S/ ' + Number(n||0).toLocaleString('es-PE', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+function formatFecha(iso){
+  const d = new Date(iso);
+  return d.toLocaleDateString('es-PE', {day:'2-digit', month:'short', year:'numeric'});
+}
+function formatFechaHora(iso){
+  const d = new Date(iso);
+  return d.toLocaleDateString('es-PE', {day:'2-digit', month:'short'}) + ' · ' + d.toLocaleTimeString('es-PE', {hour:'2-digit', minute:'2-digit'});
+}
+function estadoLabel(e){
+  return {aceptada:'✅ Aceptada', emitida:'⏳ Pendiente', rechazada:'❌ Rechazada', cancelada:'🚫 Cancelada'}[e] || e;
+}
+function estadoIcon(e){
+  return {aceptada:'✅', emitida:'⏳', rechazada:'❌', cancelada:'🚫'}[e] || '•';
+}
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(()=> t.classList.remove('show'), 2600);
+}
+function calcularTotales(items, descuentoPct){
+  const subtotal = items.reduce((s,i)=> s + i.precio * i.cantidad, 0);
+  const descuentoMonto = subtotal * ((descuentoPct||0)/100);
+  const baseImponible = subtotal - descuentoMonto;
+  const igv = baseImponible * 0.18;
+  const total = baseImponible + igv;
+  return {subtotal, descuentoMonto, baseImponible, igv, total};
+}
+function nextNumero(){
+  const nums = DB.cotizaciones.map(c => parseInt(c.numero.split('-')[2]||'0'));
+  const max = nums.length ? Math.max(...nums) : 0;
+  const year = new Date().getFullYear();
+  return 'COT-' + year + '-' + String(max+1).padStart(3,'0');
+}
+
+/* ============================================================
+   NAVEGACIÓN
+   ============================================================ */
+function switchView(v){
+  state.view = v;
+  document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+  document.getElementById('view-'+v).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.view === v));
+  document.getElementById('views-scroll') && (document.getElementById('views-scroll').scrollTop = 0);
+  if(v === 'dashboard') renderDashboard();
+  if(v === 'cotizaciones') renderCotizaciones();
+  if(v === 'historial') renderHistorial();
+  if(v === 'config') renderConfig();
+}
+
+/* ============================================================
+   RENDER: DASHBOARD
+   ============================================================ */
+let charts = {};
+function renderDashboard(){
+  document.getElementById('dash-date').textContent = new Date().toLocaleDateString('es-PE', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+
+  const cots = DB.cotizaciones;
+  const total = cots.length;
+  const aceptadas = cots.filter(c=>c.estado==='aceptada').length;
+  const pendientes = cots.filter(c=>c.estado==='emitida').length;
+  const valorTotal = cots.filter(c=>c.estado!=='rechazada' && c.estado!=='cancelada').reduce((s,c)=> s + calcularTotales(c.items,c.descuento).total, 0);
+
+  document.getElementById('dash-stats').innerHTML = `
+    <div class="stat-card c-total"><div class="stat-label">Total</div><div class="stat-value">${total}</div></div>
+    <div class="stat-card c-ok"><div class="stat-label">Aceptadas</div><div class="stat-value">${aceptadas}</div></div>
+    <div class="stat-card c-pend"><div class="stat-label">Pendientes</div><div class="stat-value">${pendientes}</div></div>
+    <div class="stat-card c-val"><div class="stat-label">Valor Total</div><div class="stat-value">${formatMoney(valorTotal)}</div></div>
+  `;
+
+  const recientes = cots.slice().sort((a,b)=> new Date(b.fecha)-new Date(a.fecha)).slice(0,3);
+  document.getElementById('dash-recientes').innerHTML = recientes.map(c => cotCardHTML(c)).join('') || '<div class="empty-state"><div class="emoji">📭</div><p>Aún no hay cotizaciones</p></div>';
+
+  renderCharts();
+}
+
+function renderCharts(){
+  const cots = DB.cotizaciones;
+  const ctxEstado = document.getElementById('chart-estado');
+  const ctxEvo = document.getElementById('chart-evolucion');
+  const ctxCli = document.getElementById('chart-clientes');
+  if(!ctxEstado || !ctxEvo || !ctxCli) return;
+
+  Object.values(charts).forEach(ch => ch && ch.destroy());
+
+  const estados = ['aceptada','emitida','rechazada','cancelada'];
+  const estadoColors = {aceptada:'#16a34a', emitida:'#f59e0b', rechazada:'#dc2626', cancelada:'#6b7280'};
+  const estadoCounts = estados.map(e => cots.filter(c=>c.estado===e).length);
+  const estadoLabels = ['Aceptadas','Pendientes','Rechazadas','Canceladas'];
+  const hasEstadoData = estadoCounts.some(v => v > 0);
+
+  charts.estado = new Chart(ctxEstado, {
+    type:'doughnut',
+    data:{
+      labels: estadoLabels,
+      datasets:[{ data: hasEstadoData ? estadoCounts : [1,0,0,0], backgroundColor: estados.map(e=>estadoColors[e]), borderWidth:0 }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false, cutout:'62%',
+      plugins:{ legend:{ position:'bottom', labels:{ padding:14, usePointStyle:true, font:{size:11.5} } } }
+    }
+  });
+
+  // Evolución mensual (últimos 6 meses) - construida a partir de fechas reales
+  const now = new Date();
+  const mesesLabels = [];
+  const mesesKeys = [];
+  for(let i=5; i>=0; i--){
+    const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+    mesesLabels.push(d.toLocaleDateString('es-PE', {month:'short'}).replace('.',''));
+    mesesKeys.push(d.getFullYear()+'-'+d.getMonth());
+  }
+  const evoCounts = mesesKeys.map(key => cots.filter(c => {
+    const d = new Date(c.fecha);
+    return (d.getFullYear()+'-'+d.getMonth()) === key;
+  }).length);
+
+  charts.evolucion = new Chart(ctxEvo, {
+    type:'bar',
+    data:{
+      labels: mesesLabels,
+      datasets:[{ label:'Cotizaciones', data: evoCounts, backgroundColor:'#6366f1', borderRadius:6, maxBarThickness:34 }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:false } },
+      scales:{
+        y:{ beginAtZero:true, ticks:{ precision:0, font:{size:10.5} }, grid:{ color:'#f1f5f9' } },
+        x:{ grid:{ display:false }, ticks:{ font:{size:10.5} } }
+      }
+    }
+  });
+
+  // Top clientes por monto
+  const porCliente = {};
+  cots.forEach(c => {
+    const key = c.cliente.nombre;
+    const tot = calcularTotales(c.items, c.descuento).total;
+    porCliente[key] = (porCliente[key]||0) + tot;
+  });
+  const clienteEntries = Object.entries(porCliente).sort((a,b)=>b[1]-a[1]).slice(0,4);
+  const clientColors = ['#6366f1','#8b5cf6','#06b6d4','#ec4899'];
+
+  charts.clientes = new Chart(ctxCli, {
+    type:'bar',
+    data:{
+      labels: clienteEntries.map(e => e[0].length > 16 ? e[0].slice(0,15)+'…' : e[0]),
+      datasets:[{ data: clienteEntries.map(e => e[1]), backgroundColor: clientColors, borderRadius:6, maxBarThickness:28 }]
+    },
+    options:{
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ label: ctx => formatMoney(ctx.parsed.x) } } },
+      scales:{
+        x:{ beginAtZero:true, ticks:{ font:{size:10}, callback:v=>'S/'+v }, grid:{ color:'#f1f5f9' } },
+        y:{ grid:{ display:false }, ticks:{ font:{size:11} } }
+      }
+    }
+  });
+}
+
+/* ============================================================
+   RENDER: COTIZACIONES (lista + filtros)
+   ============================================================ */
+function cotCardHTML(c){
+  const tot = calcularTotales(c.items, c.descuento);
+  return `
+  <div class="cot-card st-${c.estado}" onclick="openDetail('${c.numero}')">
+    <div class="cot-top">
+      <div>
+        <div class="cot-num">${c.numero}</div>
+        <div class="cot-cliente">${c.cliente.nombre}</div>
+        <div class="cot-proyecto">${c.proyecto}</div>
+      </div>
+      <span class="badge st-${c.estado}">${estadoLabel(c.estado)}</span>
+    </div>
+    <div class="cot-grid">
+      <div><span>Monto</span><b>${formatMoney(tot.total)}</b></div>
+      <div><span>Ensayos</span><b>${c.items.length} items</b></div>
+      <div><span>Fecha</span><b>${formatFecha(c.fecha)}</b></div>
+      <div><span>Contacto</span><b>${c.cliente.contacto}</b></div>
+    </div>
+    <div class="cot-actions" onclick="event.stopPropagation()">
+      <button class="icon-btn wa" onclick="whatsappCot('${c.numero}')">💬 WhatsApp</button>
+      <button class="icon-btn mail" onclick="emailCot('${c.numero}')">📧 Email</button>
+      <button class="icon-btn pdf" onclick="pdfCot('${c.numero}')">📄 PDF</button>
+    </div>
+  </div>`;
+}
+
+function renderCotizaciones(){
+  const filtros = [
+    {key:'todas', label:'Todas'},
+    {key:'aceptada', label:'✅ Aceptadas'},
+    {key:'emitida', label:'⏳ Pendientes'},
+    {key:'rechazada', label:'❌ Rechazadas'},
+    {key:'cancelada', label:'🚫 Canceladas'},
+  ];
+  document.getElementById('cot-filters').innerHTML = filtros.map(f => {
+    const count = f.key==='todas' ? DB.cotizaciones.length : DB.cotizaciones.filter(c=>c.estado===f.key).length;
+    return `<button class="chip ${state.cotFilter===f.key?'active':''}" onclick="setCotFilter('${f.key}')">${f.label} (${count})</button>`;
+  }).join('');
+
+  let list = DB.cotizaciones.slice();
+  if(state.cotFilter !== 'todas') list = list.filter(c => c.estado === state.cotFilter);
+  if(state.cotSearch){
+    const q = state.cotSearch.toLowerCase();
+    list = list.filter(c => c.numero.toLowerCase().includes(q) || c.cliente.nombre.toLowerCase().includes(q) || c.proyecto.toLowerCase().includes(q));
+  }
+  list.sort((a,b)=> new Date(b.fecha)-new Date(a.fecha));
+
+  document.getElementById('cot-count-label').textContent = list.length + ' cotización(es) encontrada(s)';
+  document.getElementById('cot-list').innerHTML = list.map(cotCardHTML).join('') || '<div class="empty-state"><div class="emoji">🔍</div><p>No se encontraron cotizaciones</p></div>';
+}
+function setCotFilter(f){ state.cotFilter = f; renderCotizaciones(); }
+function onCotSearch(){ state.cotSearch = document.getElementById('cot-search').value; renderCotizaciones(); }
+
+/* ============================================================
+   RENDER: HISTORIAL
+   ============================================================ */
+function renderHistorial(){
+  const eventos = [];
+  DB.cotizaciones.forEach(c => {
+    (c.historial||[]).forEach(h => eventos.push({...h, numero:c.numero, cliente:c.cliente.nombre}));
+  });
+  eventos.sort((a,b)=> new Date(b.fecha) - new Date(a.fecha));
+
+  if(!eventos.length){
+    document.getElementById('historial-list').innerHTML = '<div class="empty-state"><div class="emoji">🕒</div><p>Sin eventos aún</p></div>';
+    return;
+  }
+
+  let lastDay = null;
+  let html = '';
+  eventos.forEach(ev => {
+    const day = formatFecha(ev.fecha);
+    if(day !== lastDay){ html += `<div class="hist-day-label">${day}</div>`; lastDay = day; }
+    html += `
+      <div class="hist-card">
+        <div class="hist-icon ${ev.estado}">${estadoIcon(ev.estado)}</div>
+        <div>
+          <b style="font-size:13px;">${ev.numero} — ${estadoLabel(ev.estado)}</b>
+          <div style="font-size:11.5px; color:var(--text-muted); margin-top:2px;">${ev.cliente}</div>
+          <div style="font-size:10.5px; color:#94a3b8; margin-top:2px;">${formatFechaHora(ev.fecha)}</div>
+        </div>
+      </div>`;
+  });
+  document.getElementById('historial-list').innerHTML = html;
+}
+
+/* ============================================================
+   RENDER: CONFIG
+   ============================================================ */
+function renderConfig(){
+  document.getElementById('cfg-nombre').value = DB.empresa.nombre || '';
+  document.getElementById('cfg-ruc').value = DB.empresa.ruc || '';
+  document.getElementById('cfg-tel').value = DB.empresa.tel || '';
+  document.getElementById('cfg-email').value = DB.empresa.email || '';
+}
+function guardarConfigEmpresa(){
+  DB.empresa = {
+    nombre: document.getElementById('cfg-nombre').value,
+    ruc: document.getElementById('cfg-ruc').value,
+    tel: document.getElementById('cfg-tel').value,
+    email: document.getElementById('cfg-email').value,
+  };
+  saveDB();
+  showToast('✅ Datos de empresa guardados');
+}
+function exportarDatos(){
+  const blob = new Blob([JSON.stringify(DB, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'gtqc_datos_' + Date.now() + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('📦 Datos exportados');
+}
+function limpiarDatos(){
+  if(confirm('¿Seguro que deseas borrar TODAS las cotizaciones? Esta acción no se puede deshacer.')){
+    DB.cotizaciones = [];
+    saveDB();
+    showToast('🗑️ Cotizaciones eliminadas');
+    renderDashboard();
+  }
+}
+
+/* ============================================================
+   MODAL DETALLE
+   ============================================================ */
+function openDetail(numero){
+  const c = DB.cotizaciones.find(x=>x.numero===numero);
+  if(!c) return;
+  const tot = calcularTotales(c.items, c.descuento);
+  document.getElementById('md-num').textContent = c.numero;
+  document.getElementById('md-cliente').textContent = c.cliente.nombre;
+
+  const itemsHTML = c.items.map(i => `
+    <div class="resumen-item">
+      <div class="ri-top"><h4>${i.nombre}</h4></div>
+      <div class="ri-bottom">
+        <span class="ri-price">${i.cantidad} x ${formatMoney(i.precio)}</span>
+        <span class="ri-subtotal">${formatMoney(i.precio*i.cantidad)}</span>
+      </div>
+    </div>`).join('');
+
+  const timelineHTML = (c.historial||[]).slice().reverse().map(h => `
+    <div class="timeline-item ${h.estado}">
+      <div class="timeline-dot"></div>
+      <div class="timeline-text"><b>${estadoLabel(h.estado)}</b><p>${formatFechaHora(h.fecha)}</p></div>
+    </div>`).join('');
+
+  document.getElementById('md-body').innerHTML = `
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+      <span class="badge st-${c.estado}">${estadoLabel(c.estado)}</span>
+      <span style="font-size:12px; color:var(--text-muted);">${c.proyecto}</span>
+    </div>
+    <div class="section-title">Ensayos (${c.items.length})</div>
+    ${itemsHTML}
+    <div class="totales-card" style="margin-top:6px;">
+      <div class="tot-row"><span>Subtotal</span><b>${formatMoney(tot.subtotal)}</b></div>
+      <div class="tot-row"><span>Descuento (${c.descuento||0}%)</span><b>-${formatMoney(tot.descuentoMonto)}</b></div>
+      <div class="tot-row"><span>IGV (18%)</span><b>${formatMoney(tot.igv)}</b></div>
+      <div class="tot-row total"><span>Total</span><b>${formatMoney(tot.total)}</b></div>
+    </div>
+    <div class="section-title" style="margin-top:14px;">Cambiar Estado</div>
+    <div class="state-btns">
+      <button class="state-btn b-ok" ${c.estado==='aceptada'?'disabled':''} onclick="cambiarEstado('${c.numero}','aceptada')">✅ Aceptar</button>
+      <button class="state-btn b-warn" ${c.estado==='emitida'?'disabled':''} onclick="cambiarEstado('${c.numero}','emitida')">⏳ Pendiente</button>
+      <button class="state-btn b-danger" ${c.estado==='rechazada'?'disabled':''} onclick="cambiarEstado('${c.numero}','rechazada')">❌ Rechazar</button>
+      <button class="state-btn b-gray" ${c.estado==='cancelada'?'disabled':''} onclick="cambiarEstado('${c.numero}','cancelada')">🚫 Cancelar</button>
+    </div>
+    <div class="section-title" style="margin-top:14px;">Historial</div>
+    <div class="timeline">${timelineHTML}</div>
+    <div class="cot-actions" style="margin-top:14px;">
+      <button class="icon-btn wa" onclick="whatsappCot('${c.numero}')">💬 WhatsApp</button>
+      <button class="icon-btn mail" onclick="emailCot('${c.numero}')">📧 Email</button>
+      <button class="icon-btn pdf" onclick="pdfCot('${c.numero}')">📄 PDF</button>
+    </div>
+  `;
+  document.getElementById('modal-detail').classList.add('open');
+}
+function closeModal(){ document.getElementById('modal-detail').classList.remove('open'); }
+
+function cambiarEstado(numero, nuevo){
+  const c = DB.cotizaciones.find(x=>x.numero===numero);
+  if(!c) return;
+  c.estado = nuevo;
+  c.historial = c.historial || [];
+  c.historial.push({estado:nuevo, fecha:new Date().toISOString()});
+  saveDB();
+  showToast('Estado actualizado a: ' + estadoLabel(nuevo));
+  openDetail(numero);
+  renderDashboard();
+  if(state.view==='cotizaciones') renderCotizaciones();
+  if(state.view==='historial') renderHistorial();
+}
+
+/* ============================================================
+   ACCIONES: WhatsApp / Email / PDF (para cotizaciones guardadas)
+   ============================================================ */
+function whatsappCot(numero){
+  const c = DB.cotizaciones.find(x=>x.numero===numero);
+  const tot = calcularTotales(c.items, c.descuento);
+  const texto = `Hola ${c.cliente.contacto}, le compartimos la cotización *${c.numero}* para el proyecto "${c.proyecto}". Total: ${formatMoney(tot.total)}. Cualquier consulta, quedamos atentos. — ${DB.empresa.nombre||'GTQC'}`;
+  const tel = (c.cliente.tel||'').replace(/\D/g,'');
+  window.open(`https://wa.me/51${tel}?text=${encodeURIComponent(texto)}`, '_blank');
+}
+function emailCot(numero){
+  const c = DB.cotizaciones.find(x=>x.numero===numero);
+  const tot = calcularTotales(c.items, c.descuento);
+  const subject = `Cotización ${c.numero} - ${DB.empresa.nombre||'GTQC'}`;
+  const body = `Estimado(a) ${c.cliente.contacto},\n\nAdjuntamos la cotización ${c.numero} para el proyecto "${c.proyecto}".\nTotal: ${formatMoney(tot.total)}\n\nQuedamos atentos a sus comentarios.\n\nSaludos,\n${DB.empresa.nombre||'GTQC Laboratorio'}`;
+  window.location.href = `mailto:${c.cliente.email||''}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+function pdfCot(numero){
+  const c = DB.cotizaciones.find(x=>x.numero===numero);
+  descargarPDFDe(c);
+}
+
+function renderPdfTemplate(c){
+  const tot = calcularTotales(c.items, c.descuento);
+  const rows = c.items.map(i => `
+    <div class="pdf-row">
+      <div>${i.nombre}</div>
+      <div>${i.cantidad}</div>
+      <div>${formatMoney(i.precio)}</div>
+      <div>${formatMoney(i.precio*i.cantidad)}</div>
+    </div>`).join('');
+  return `
+    <div class="pdf-doc">
+      <div class="pdf-head">
+        <div class="pdf-logo">${DB.empresa.nombre||'GTQC Laboratorio'}<small>RUC ${DB.empresa.ruc||'-'} · ${DB.empresa.tel||''}</small></div>
+        <div class="pdf-num">${c.numero}<small>${formatFecha(c.fecha)}</small></div>
+      </div>
+      <h5>Cliente</h5>
+      <div class="pdf-client-grid">
+        <div><b>${c.cliente.nombre}</b></div><div>RUC: ${c.cliente.ruc}</div>
+        <div>Contacto: ${c.cliente.contacto}</div><div>Tel: ${c.cliente.tel}</div>
+        <div>Email: ${c.cliente.email}</div><div>Proyecto: ${c.proyecto}</div>
+      </div>
+      <h5 style="margin-top:14px;">Detalle de Ensayos</h5>
+      <div class="pdf-row head"><div>Descripción</div><div>Cant</div><div>P.Unit</div><div>Subtotal</div></div>
+      ${rows}
+      <div class="pdf-tot">
+        <div class="tr"><span>Subtotal</span><span>${formatMoney(tot.subtotal)}</span></div>
+        <div class="tr"><span>Descuento (${c.descuento||0}%)</span><span>-${formatMoney(tot.descuentoMonto)}</span></div>
+        <div class="tr"><span>IGV (18%)</span><span>${formatMoney(tot.igv)}</span></div>
+        <div class="tr f"><span>TOTAL</span><span>${formatMoney(tot.total)}</span></div>
+      </div>
+      <div class="pdf-notes">${c.notas||''}</div>
+      <div class="pdf-foot">${DB.empresa.nombre||'GTQC Laboratorio'} · ${DB.empresa.email||''} · Gracias por su preferencia</div>
+    </div>`;
+}
+
+async function generarPDFObjeto(c){
+  const target = document.getElementById('pdf-render-target');
+  target.innerHTML = renderPdfTemplate(c);
+  // esperar a que el navegador termine el layout antes de capturar
+  await new Promise(r => requestAnimationFrame(()=>requestAnimationFrame(r)));
+  const canvas = await html2canvas(target, {scale:2, backgroundColor:'#ffffff'});
+  target.innerHTML = '';
+
+  const imgData = canvas.toDataURL('image/jpeg', 0.95);
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({unit:'mm', format:'a4', orientation:'portrait'});
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const pageHeight = pdf.internal.pageSize.getHeight();
+  const imgWidth = pageWidth;
+  const imgHeight = canvas.height * imgWidth / canvas.width;
+
+  let heightLeft = imgHeight;
+  let position = 0;
+  pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+  heightLeft -= pageHeight;
+  while(heightLeft > 0){
+    position = heightLeft - imgHeight;
+    pdf.addPage();
+    pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+    heightLeft -= pageHeight;
+  }
+  return pdf;
+}
+function descargarPDFDe(c){
+  showToast('Generando PDF...');
+  generarPDFObjeto(c).then(pdf => {
+    pdf.save(c.numero+'.pdf');
+    showToast('✅ PDF descargado: '+c.numero+'.pdf');
+  }).catch(()=> showToast('❌ Error al generar el PDF'));
+}
+
+/* ============================================================
+   WIZARD: NUEVA COTIZACIÓN
+   ============================================================ */
+function openWizard(){
+  state.wizard = { step:1, cliente:null, proyecto:'', items:[], descuento:0, notas:'', numero:null };
+  document.getElementById('buscar-ruc').value = '';
+  document.getElementById('buscar-resultado').innerHTML = '';
+  document.getElementById('wiz-proyecto').value = '';
+  document.getElementById('nc-ruc').value = '';
+  document.getElementById('nc-nombre').value = '';
+  document.getElementById('nc-contacto').value = '';
+  document.getElementById('nc-tel').value = '';
+  document.getElementById('nc-email').value = '';
+  document.getElementById('nc-dir').value = '';
+  setClientTab('buscar');
+  renderClientesRecientes();
+  document.getElementById('wizard-overlay').classList.add('open');
+  goToStep(1);
+}
+function closeWizard(){
+  document.getElementById('wizard-overlay').classList.remove('open');
+}
+
+const STEP_NAMES = ['', 'Cliente y Proyecto', 'Selección de Ensayos', 'Resumen y Cálculo', 'Vista Previa', 'Finalizar'];
+function goToStep(n){
+  state.wizard.step = n;
+  document.querySelectorAll('.wizard-step').forEach(el=>el.classList.remove('active'));
+  document.getElementById('step-'+n).classList.add('active');
+  document.getElementById('wiz-title').textContent = STEP_NAMES[n];
+  document.getElementById('wiz-step-label').textContent = 'Paso '+n+' de 5';
+  document.getElementById('wiz-step-name').textContent = STEP_NAMES[n];
+  document.getElementById('wiz-progress').style.width = (n*20)+'%';
+  document.getElementById('wiz-back-btn').style.visibility = n===1 ? 'hidden' : 'visible';
+
+  const footer = document.getElementById('wizard-footer');
+  const nextBtn = document.getElementById('wiz-next-btn');
+  if(n===5){
+    footer.style.display = 'flex';
+    nextBtn.textContent = '✅ Guardar y Finalizar';
+    nextBtn.disabled = false;
+  } else if(n===2){
+    footer.style.display = 'none'; // usa sticky-summary propio
+  } else {
+    footer.style.display = 'flex';
+    nextBtn.textContent = n===4 ? 'Continuar →' : 'Continuar →';
+    nextBtn.disabled = false;
+  }
+
+  if(n===1) validarStep1();
+  if(n===2) renderEnsayos();
+  if(n===3) { renderResumenItems(); renderTotales(); }
+  if(n===4) { document.getElementById('pdf-preview-content').innerHTML = renderPdfTemplate(wizardToCot(true)); }
+  if(n===5) { document.getElementById('wiz-final-num').textContent = state.wizard.numero || nextNumero(); }
+}
+function wizardBack(){
+  if(state.wizard.step > 1) goToStep(state.wizard.step - 1);
+}
+function wizardNext(){
+  const s = state.wizard.step;
+  if(s===1){
+    if(!validarStep1(true)) return;
+    goToStep(2);
+  } else if(s===3){
+    if(state.wizard.items.length===0){ showToast('Agrega al menos un ensayo'); return; }
+    state.wizard.descuento = Number(document.getElementById('wiz-descuento').value)||0;
+    state.wizard.notas = document.getElementById('wiz-notas').value;
+    goToStep(4);
+  } else if(s===4){
+    goToStep(5);
+  } else if(s===5){
+    finalizarCotizacion();
+  }
+}
+
+/* --- Step 1: cliente --- */
+function setClientTab(tab){
+  state.clientTab = tab;
+  document.getElementById('tab-buscar').classList.toggle('active', tab==='buscar');
+  document.getElementById('tab-nuevo').classList.toggle('active', tab==='nuevo');
+  document.getElementById('panel-buscar').style.display = tab==='buscar' ? 'block' : 'none';
+  document.getElementById('panel-nuevo').style.display = tab==='nuevo' ? 'block' : 'none';
+  validarStep1();
+}
+function renderClientesRecientes(){
+  document.getElementById('clientes-recientes').innerHTML = DB.clientes.map(cl => `
+    <div class="client-mini" onclick="seleccionarClienteRapido('${cl.ruc}')">
+      <div><b>${cl.nombre}</b><span>RUC ${cl.ruc} · ${cl.contacto}</span></div>
+      <span style="color:var(--primary); font-weight:700; font-size:12px;">Usar →</span>
+    </div>`).join('');
+}
+function seleccionarClienteRapido(ruc){
+  document.getElementById('buscar-ruc').value = ruc;
+  buscarCliente();
+}
+function buscarCliente(){
+  const q = document.getElementById('buscar-ruc').value.trim();
+  const res = document.getElementById('buscar-resultado');
+  if(!q){ res.innerHTML=''; state.wizard.cliente=null; validarStep1(); return; }
+  const cl = DB.clientes.find(c => c.ruc === q);
+  if(cl){
+    state.wizard.cliente = cl;
+    res.innerHTML = `
+      <div class="client-result-card selected">
+        <h4>✓ ${cl.nombre}</h4>
+        <div class="cr-row">RUC: ${cl.ruc}</div>
+        <div class="cr-row">Contacto: ${cl.contacto} · ${cl.tel}</div>
+        <div class="cr-row">Email: ${cl.email}</div>
+        <div class="cr-row">Dirección: ${cl.dir}</div>
+      </div>`;
+  } else {
+    state.wizard.cliente = null;
+    res.innerHTML = `<div class="client-result-card"><div class="cr-row">Sin resultados para "${q}". Usa la pestaña "Cliente Nuevo" para registrarlo.</div></div>`;
+  }
+  validarStep1();
+}
+function validarStep1(soloValidar){
+  const proyecto = document.getElementById('wiz-proyecto').value.trim();
+  let clienteOk = false;
+  if(state.clientTab === 'buscar'){
+    clienteOk = !!state.wizard.cliente;
+  } else {
+    const ruc = document.getElementById('nc-ruc').value.trim();
+    const nombre = document.getElementById('nc-nombre').value.trim();
+    const tel = document.getElementById('nc-tel').value.trim();
+    clienteOk = !!(ruc && nombre && tel);
+    if(clienteOk){
+      state.wizard.cliente = {
+        ruc, nombre,
+        contacto: document.getElementById('nc-contacto').value.trim() || nombre,
+        tel, email: document.getElementById('nc-email').value.trim(),
+        dir: document.getElementById('nc-dir').value.trim()
+      };
+    }
+  }
+  state.wizard.proyecto = proyecto;
+  const ok = clienteOk && !!proyecto;
+  const btn = document.getElementById('wiz-next-btn');
+  if(state.wizard.step===1) btn.disabled = !ok;
+  return ok;
+}
+
+/* --- Step 2: ensayos --- */
+function renderCatChips(){
+  document.getElementById('cat-chips').innerHTML = CATEGORIAS.map(cat => `
+    <button class="chip ${state.ensayoCat===cat?'active':''}" onclick="setEnsayoCat('${cat}')">${cat}</button>
+  `).join('');
+}
+function setEnsayoCat(cat){ state.ensayoCat = cat; renderEnsayos(); }
+function renderEnsayos(){
+  renderCatChips();
+  const q = (document.getElementById('ensayo-search').value||'').toLowerCase();
+  let list = ENSAYOS.filter(e => (state.ensayoCat==='Todas' || e.cat===state.ensayoCat) && e.nombre.toLowerCase().includes(q));
+
+  document.getElementById('ensayos-list').innerHTML = list.map(e => {
+    const sel = state.wizard.items.find(i => i.id === e.id);
+    return `
+    <div class="ensayo-card">
+      <div class="ensayo-info">
+        <div class="cat-tag">${e.cat}</div>
+        <h4>${e.nombre}</h4>
+        <div class="price">${formatMoney(e.precio)}</div>
+      </div>
+      ${sel ?
+        `<div class="qty-stepper">
+          <button onclick="cambiarCantidad(${e.id},-1)">−</button>
+          <span>${sel.cantidad}</span>
+          <button onclick="cambiarCantidad(${e.id},1)">+</button>
+        </div>` :
+        `<button class="add-btn" onclick="agregarEnsayo(${e.id})">+</button>`
+      }
+    </div>`;
+  }).join('') || '<div class="empty-state"><div class="emoji">🔍</div><p>Sin resultados</p></div>';
+
+  updateStickySummary();
+}
+function agregarEnsayo(id){
+  const e = ENSAYOS.find(x=>x.id===id);
+  state.wizard.items.push({...e, cantidad:1});
+  renderEnsayos();
+}
+function cambiarCantidad(id, delta){
+  const item = state.wizard.items.find(i=>i.id===id);
+  if(!item) return;
+  item.cantidad += delta;
+  if(item.cantidad <= 0){
+    state.wizard.items = state.wizard.items.filter(i=>i.id!==id);
+  }
+  renderEnsayos();
+}
+function updateStickySummary(){
+  let bar = document.getElementById('sticky-ensayos-bar');
+  const wc = document.getElementById('wizard-content');
+  if(!bar){
+    bar = document.createElement('div');
+    bar.id = 'sticky-ensayos-bar';
+    bar.className = 'sticky-summary';
+    wc.appendChild(bar);
+  }
+  const count = state.wizard.items.reduce((s,i)=>s+i.cantidad,0);
+  const subtotal = state.wizard.items.reduce((s,i)=>s+i.precio*i.cantidad,0);
+  bar.style.display = state.wizard.step===2 ? 'flex' : 'none';
+  bar.innerHTML = `
+    <div class="ss-info"><div class="ss-count">${count} ensayo(s) seleccionados</div><div class="ss-total">${formatMoney(subtotal)}</div></div>
+    <button class="btn btn-primary" style="flex:0 0 auto; padding:12px 20px;" ${state.wizard.items.length===0?'disabled':''} onclick="goToStep(3)">Continuar →</button>
+  `;
+}
+
+/* --- Step 3: resumen --- */
+function renderResumenItems(){
+  document.getElementById('resumen-items').innerHTML = state.wizard.items.map(i => `
+    <div class="resumen-item">
+      <div class="ri-top"><h4>${i.nombre}</h4><span class="ri-remove" onclick="quitarItem(${i.id})">Quitar</span></div>
+      <div class="ri-bottom">
+        <div class="qty-stepper">
+          <button onclick="cambiarCantidad(${i.id},-1); renderResumenItems(); renderTotales();">−</button>
+          <span>${i.cantidad}</span>
+          <button onclick="cambiarCantidad(${i.id},1); renderResumenItems(); renderTotales();">+</button>
+        </div>
+        <span class="ri-subtotal">${formatMoney(i.precio*i.cantidad)}</span>
+      </div>
+    </div>`).join('') || '<div class="empty-state"><div class="emoji">🧪</div><p>No hay ensayos seleccionados</p></div>';
+}
+function quitarItem(id){
+  state.wizard.items = state.wizard.items.filter(i=>i.id!==id);
+  renderResumenItems();
+  renderTotales();
+}
+function renderTotales(){
+  const descuento = Number(document.getElementById('wiz-descuento').value)||0;
+  const tot = calcularTotales(state.wizard.items, descuento);
+  document.getElementById('totales-card').innerHTML = `
+    <div class="tot-row"><span>Subtotal</span><b>${formatMoney(tot.subtotal)}</b></div>
+    <div class="tot-row"><span>Descuento (${descuento}%)</span><b>-${formatMoney(tot.descuentoMonto)}</b></div>
+    <div class="tot-row"><span>IGV (18%)</span><b>${formatMoney(tot.igv)}</b></div>
+    <div class="tot-row total"><span>Total</span><b>${formatMoney(tot.total)}</b></div>
+  `;
+}
+
+/* --- Step 4/5: generar objeto cotización --- */
+function wizardToCot(preview){
+  return {
+    numero: state.wizard.numero || nextNumero(),
+    cliente: state.wizard.cliente,
+    proyecto: state.wizard.proyecto,
+    fecha: new Date().toISOString(),
+    items: state.wizard.items,
+    descuento: state.wizard.descuento,
+    notas: state.wizard.notas,
+    estado: 'emitida',
+    historial: [{estado:'emitida', fecha:new Date().toISOString()}]
+  };
+}
+function finalizarCotizacion(){
+  if(!state.wizard.numero){
+    const cot = wizardToCot();
+    state.wizard.numero = cot.numero;
+    // ¿existe ya un cliente con ese RUC? si no, agregarlo
+    if(!DB.clientes.find(c=>c.ruc===cot.cliente.ruc)) DB.clientes.push(cot.cliente);
+    DB.cotizaciones.push(cot);
+    saveDB();
+  }
+  showToast('✅ '+state.wizard.numero+' guardada como Pendiente');
+  closeWizard();
+  switchView('cotizaciones');
+}
+
+/* --- Acciones paso 5 (usa la cotización recién creada, aún no guardada hasta finalizar) --- */
+function accionDescargarPDF(){
+  descargarPDFDe(wizardToCot(true));
+}
+function accionGuardarOnline(){
+  showToast('☁️ Enlace generado (demo): gtqc.app/c/'+(state.wizard.numero||nextNumero()).toLowerCase());
+}
+function accionWhatsapp(){
+  const c = wizardToCot(true);
+  const tot = calcularTotales(c.items, c.descuento);
+  const texto = `Hola ${c.cliente.contacto}, le compartimos la cotización *${c.numero}* para el proyecto "${c.proyecto}". Total: ${formatMoney(tot.total)}. — ${DB.empresa.nombre||'GTQC'}`;
+  const tel = (c.cliente.tel||'').replace(/\D/g,'');
+  window.open(`https://wa.me/51${tel}?text=${encodeURIComponent(texto)}`, '_blank');
+}
+function accionEmail(){
+  const c = wizardToCot(true);
+  const tot = calcularTotales(c.items, c.descuento);
+  const subject = `Cotización ${c.numero} - ${DB.empresa.nombre||'GTQC'}`;
+  const body = `Estimado(a) ${c.cliente.contacto},\n\nAdjuntamos la cotización ${c.numero} para el proyecto "${c.proyecto}".\nTotal: ${formatMoney(tot.total)}\n\nSaludos,\n${DB.empresa.nombre||'GTQC Laboratorio'}`;
+  window.location.href = `mailto:${c.cliente.email||''}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+function init(){
+  loadDB();
+  renderDashboard();
+  renderCotizaciones();
+
+  // Prevenir zoom por doble tap y pull-to-refresh (comportamiento nativo)
+  let lastTouchEnd = 0;
+  document.addEventListener('touchend', e => {
+    const now = Date.now();
+    if(now - lastTouchEnd <= 300) e.preventDefault();
+    lastTouchEnd = now;
+  }, {passive:false});
+
+  if('serviceWorker' in navigator && (location.protocol==='https:' || location.hostname==='localhost')){
+    try{
+      const swCode = `self.addEventListener('install',e=>self.skipWaiting()); self.addEventListener('fetch',e=>{});`;
+      const swBlob = new Blob([swCode], {type:'application/javascript'});
+      navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(()=>{});
+    }catch(e){}
+  }
+}
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

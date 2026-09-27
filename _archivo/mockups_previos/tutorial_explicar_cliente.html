@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tutorial: Explicar BD al Cliente</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400&display=swap">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --slate-50: #f8fafc;
+            --slate-100: #f1f5f9;
+            --slate-200: #e2e8f0;
+            --slate-400: #94a3b8;
+            --slate-600: #475569;
+            --slate-900: #0f172a;
+            --text: var(--slate-900);
+            --bg: #ffffff;
+            --success: #10b981;
+            --warning: #f59e0b;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root:not([data-theme="light"]) {
+                --primary: #818cf8;
+                --slate-50: #1e293b;
+                --slate-100: #1e293b;
+                --slate-200: #334155;
+                --slate-400: #64748b;
+                --slate-600: #cbd5e1;
+                --slate-900: #f8fafc;
+                --text: var(--slate-900);
+                --bg: #0f172a;
+                --success: #34d399;
+                --warning: #fbbf24;
+            }
+        }
+
+        :root[data-theme="dark"] {
+            --primary: #818cf8;
+            --slate-50: #1e293b;
+            --slate-100: #1e293b;
+            --slate-200: #334155;
+            --slate-400: #64748b;
+            --slate-600: #cbd5e1;
+            --slate-900: #f8fafc;
+            --text: var(--slate-900);
+            --bg: #0f172a;
+            --success: #34d399;
+            --warning: #fbbf24;
+            color-scheme: dark;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            padding: 40px 20px;
+            line-height: 1.8;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 32px;
+            font-weight: 800;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, var(--primary), #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            color: var(--slate-600);
+            font-size: 16px;
+            margin-bottom: 40px;
+        }
+
+        h2 {
+            font-size: 22px;
+            font-weight: 700;
+            margin-top: 40px;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--primary);
+        }
+
+        h3 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-top: 24px;
+            margin-bottom: 12px;
+            color: var(--primary);
+        }
+
+        p {
+            margin-bottom: 16px;
+            color: var(--slate-600);
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        /* Boxes */
+        .analogy-box {
+            background: linear-gradient(135deg, rgba(99,102,241,0.05), rgba(139,92,246,0.05));
+            border-left: 4px solid var(--primary);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .analogy-title {
+            font-weight: 700;
+            color: var(--primary);
+            font-size: 14px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .analogy-text {
+            color: var(--slate-600);
+            font-size: 14px;
+        }
+
+        .bullet-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .bullet-list li {
+            margin-bottom: 12px;
+            padding-left: 32px;
+            position: relative;
+            color: var(--slate-600);
+        }
+
+        .bullet-list li:before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: var(--primary);
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .script-box {
+            background: var(--slate-50);
+            padding: 24px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 1px solid var(--slate-200);
+        }
+
+        .script-title {
+            font-weight: 700;
+            font-size: 14px;
+            text-transform: uppercase;
+            color: var(--primary);
+            margin-bottom: 12px;
+            letter-spacing: 0.5px;
+        }
+
+        .dialogue {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 16px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .speaker {
+            font-weight: 700;
+            color: var(--primary);
+            white-space: nowrap;
+        }
+
+        .quote {
+            color: var(--slate-600);
+            padding: 12px;
+            background: white;
+            border-radius: 6px;
+            border-left: 3px solid var(--primary);
+        }
+
+        .visual-step {
+            background: var(--slate-50);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 16px 0;
+            border: 1px solid var(--slate-200);
+        }
+
+        .step-number {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 32px;
+            font-weight: 700;
+            margin-right: 12px;
+        }
+
+        .step-title {
+            font-weight: 700;
+            display: inline-block;
+            color: var(--text);
+        }
+
+        .step-description {
+            color: var(--slate-600);
+            font-size: 14px;
+            margin-left: 44px;
+            margin-top: 8px;
+        }
+
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .comparison-item {
+            padding: 16px;
+            border-radius: 8px;
+            border: 2px solid var(--slate-200);
+        }
+
+        .comparison-item.bad {
+            background: #fef2f2;
+            border-color: #fecaca;
+        }
+
+        .comparison-item.good {
+            background: #f0fdf4;
+            border-color: #86efac;
+        }
+
+        .comparison-title {
+            font-weight: 700;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .comparison-item.bad .comparison-title {
+            color: #dc2626;
+        }
+
+        .comparison-item.good .comparison-title {
+            color: #16a34a;
+        }
+
+        .comparison-item.bad .comparison-title:before {
+            content: "❌ ";
+        }
+
+        .comparison-item.good .comparison-title:before {
+            content: "✅ ";
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        ul li {
+            margin-bottom: 8px;
+            padding-left: 20px;
+            position: relative;
+            color: var(--slate-600);
+            font-size: 14px;
+        }
+
+        ul li:before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        .highlight {
+            background: rgba(99, 102, 241, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .note {
+            background: rgba(245, 158, 11, 0.1);
+            border-left: 3px solid var(--warning);
+            padding: 12px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            color: var(--slate-600);
+            margin: 16px 0;
+        }
+
+        .success {
+            background: rgba(16, 185, 129, 0.1);
+            border-left: 3px solid var(--success);
+            padding: 12px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            color: var(--slate-600);
+            margin: 16px 0;
+        }
+
+        code {
+            background: var(--slate-100);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 13px;
+            color: var(--slate-900);
+        }
+
+        .emoji {
+            font-size: 24px;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📖 Cómo Explicar la Base de Datos a tu Cliente</h1>
+        <p class="subtitle">Guía práctica sin tecnicismos. Aprende a explicar conceptos complejos de forma sencilla.</p>
+
+        <!-- INTRO -->
+        <div class="section">
+            <h2>Antes de la Reunión</h2>
+            <p>Tu cliente no entiende (ni le importa) qué es SQL, una tabla, o una llave foránea. Lo que le importa es que su sistema de cotizaciones:</p>
+            <ul>
+                <li>Encuentre clientes rápido</li>
+                <li>No pierda información</li>
+                <li>Sea fácil de usar</li>
+                <li>Crezca sin problemas</li>
+            </ul>
+            <p><strong>Tu trabajo es mostrar que la BD está diseñada para todo esto.</strong></p>
+        </div>
+
+        <!-- ANALOGÍA 1 -->
+        <div class="section">
+            <h2>🎯 Paso 1: La Analogía del Archivo</h2>
+
+            <div class="analogy-box">
+                <div class="analogy-title">La Forma ANTIGUA (Caótica)</div>
+                <div class="analogy-text">
+                    <strong>Imagina una oficina del 2005:</strong> Tienes un archivo con carpetas. En cada carpeta de cliente (Constructora ABC) metes un papel con todos sus datos: empresa, contacto Juan, teléfono, email, después agregan otro contacto María... todo en el mismo papel. Si Juan se va, tienes que buscar su nombre en el papel, tachar, escribir de nuevo. Si quieres encontrar a María, tienes que revisar TODAS las carpetas porque no sabes si está en esta o en otra.
+                </div>
+            </div>
+
+            <div class="analogy-box">
+                <div class="analogy-title">La Forma NUEVA (Organizada)</div>
+                <div class="analogy-text">
+                    <strong>Ahora es una oficina moderna:</strong> Tienes 3 cajoneras separadas:
+                    <ul style="margin-top: 8px; margin-bottom: 0;">
+                        <li><strong>Cajonera 1 (Empresas):</strong> Datos de la empresa (RUC, nombre, dirección)</li>
+                        <li><strong>Cajonera 2 (Contactos):</strong> Personas vinculadas a esa empresa (nombre, apellido, celular)</li>
+                        <li><strong>Cajonera 3 (Personas):</strong> Gente sin empresa vinculada que cotiza directamente</li>
+                    </ul>
+                </div>
+            </div>
+
+            <p style="margin-top: 20px;"><strong>¿Beneficio para el cliente?</strong></p>
+            <ul>
+                <li>Buscar es rápido (sabe exactamente dónde buscar)</li>
+                <li>Cambios son fáciles (si Juan se va, elimina un registro, nada más)</li>
+                <li>Sin duplicados (un contacto no aparece dos veces)</li>
+                <li>Crece sin confusión</li>
+            </ul>
+        </div>
+
+        <!-- ANALOGÍA 2 -->
+        <div class="section">
+            <h2>🏢 Paso 2: Explicar la Relación Empresa → Contactos</h2>
+
+            <div class="analogy-box">
+                <div class="analogy-title">Analogía: Teléfono Centralita</div>
+                <div class="analogy-text">
+                    <strong>La Constructora ABC tiene un teléfono centralita.</strong> La empresa (RUC 20123456789) es LA CENTRALITA. Cuando llamas, ¿a quién hablas? Con Juan, con María, con Carlos... Todos trabajan en la MISMA empresa, pero cada uno es una extensión diferente.
+                    <br><br>
+                    <strong>En el sistema:</strong> RUC 20123456789 → tiene 3 contactos (Juan, María, Carlos). Si Juan cambia de empresa, lo sacas de esa extensión y lo pones en otra centralita.
+                </div>
+            </div>
+
+            <div class="visual-step">
+                <span class="step-number">1</span><span class="step-title">Cliente selecciona RUC de Constructora ABC</span>
+                <div class="step-description">El sistema busca: "¿Quién trabaja en esta empresa?"</div>
+            </div>
+
+            <div class="visual-step">
+                <span class="step-number">2</span><span class="step-title">Sistema automáticamente muestra contactos</span>
+                <div class="step-description">Juan García, María López, Carlos Ruiz</div>
+            </div>
+
+            <div class="visual-step">
+                <span class="step-number">3</span><span class="step-title">Cliente elige con quién cotizar</span>
+                <div class="step-description">"Quiero cotizar con María López"</div>
+            </div>
+
+            <p style="margin-top: 20px;"><strong>¿Por qué es mejor que antes?</strong> Antes tenías que escribir nombre y apellido dos veces. Ahora el sistema los trae automáticamente.</p>
+        </div>
+
+        <!-- COMPARACIÓN VISUAL -->
+        <div class="section">
+            <h2>⚖️ Paso 3: Mostrar la Diferencia (Antes vs Después)</h2>
+
+            <div class="comparison">
+                <div class="comparison-item bad">
+                    <div class="comparison-title">Estructura Antigua</div>
+                    <p style="font-size: 12px; color: #7c2d12; margin-bottom: 8px;">Si un contacto trabaja en 2 empresas, ¿lo duplicas o cómo?</p>
+                    <code style="display: block; padding: 8px; background: #fecaca; border-radius: 4px; margin-top: 8px; font-size: 11px;">
+                        Juan García, Constructora ABC<br>
+                        Juan García, Consultora XYZ<br>
+                        (¿son el mismo Juan?)
+                    </code>
+                </div>
+
+                <div class="comparison-item good">
+                    <div class="comparison-title">Estructura Nueva</div>
+                    <p style="font-size: 12px; color: #166534; margin-bottom: 8px;">Juan es una PERSONA (DNI único). Puede estar en múltiples empresas como contacto.</p>
+                    <code style="display: block; padding: 8px; background: #86efac; border-radius: 4px; margin-top: 8px; font-size: 11px;">
+                        PERSONAS_DB: Juan (DNI 12345678)<br>
+                        CONTACTOS: CNT_001 (Empresa ABC)<br>
+                        CONTACTOS: CNT_099 (Consultora XYZ)
+                    </code>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCRIPT PARA EXPLICAR -->
+        <div class="section">
+            <h2>🗣️ Paso 4: Cómo Contarlo en una Reunión</h2>
+
+            <div class="script-box">
+                <div class="script-title">📝 Guion de Presentación (5 min)</div>
+
+                <div class="dialogue">
+                    <div class="speaker">TÚ:</div>
+                    <div class="quote">
+                        "Mira, diseñamos la base de datos en 3 partes. Primero: tus empresas clientes (con RUC). Segundo: los contactos de cada empresa (personas que trabajan ahí). Tercero: personas que cotizan directo sin empresa."
+                    </div>
+                </div>
+
+                <div class="dialogue">
+                    <div class="speaker">CLIENTE:</div>
+                    <div class="quote">
+                        "Ok... ¿y eso de qué me sirve?"
+                    </div>
+                </div>
+
+                <div class="dialogue">
+                    <div class="speaker">TÚ:</div>
+                    <div class="quote">
+                        "Te sirve para NO perder información y buscar rápido. Ejemplo: tienes 500 clientes en el sistema. Escribes 'Constructora' y te muestra solo las empresas que empiezan así. Luego escoges una, y automáticamente te salen sus contactos. No tienes que escribir nada."
+                    </div>
+                </div>
+
+                <div class="dialogue">
+                    <div class="speaker">CLIENTE:</div>
+                    <div class="quote">
+                        "Ah, eso es útil. ¿Y si un contacto se va?"
+                    </div>
+                </div>
+
+                <div class="dialogue">
+                    <div class="speaker">TÚ:</div>
+                    <div class="quote">
+                        "Simplemente lo eliminas del sistema. La empresa sigue existiendo. Los otros contactos siguen ahí. Y si necesitas buscar quién es Juan García, el sistema te busca por teléfono o por nombre. Como cuando buscas un contacto en WhatsApp."
+                    </div>
+                </div>
+
+                <div class="dialogue">
+                    <div class="speaker">CLIENTE:</div>
+                    <div class="quote">
+                        "Entendido. Suena bien."
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PREGUNTAS ANTICIPADAS -->
+        <div class="section">
+            <h2>❓ Paso 5: Preguntas que Pueden Hacer</h2>
+
+            <h3>"¿Qué pasa si tengo un contacto que trabaja en dos empresas?"</h3>
+            <p>El sistema lo permite. La persona Juan García existe UNA sola vez (por su DNI). Pero puede aparecer como contacto de empresa ABC y también de empresa XYZ. Es como un empleado que trabaja dos días en una empresa y dos días en otra.</p>
+
+            <h3>"¿Puedo buscar solo por nombre del contacto?"</h3>
+            <p>Sí. Escribes "Juan" en el buscador y te muestra todos los Juanes. Luego haces clic y ves en qué empresa trabaja. Es como buscar en Google Maps: escribes "Starbucks" y ves cuántos hay en tu ciudad.</p>
+
+            <h3>"¿Se me mezclan los clientes?"</h3>
+            <p>No. Cada cliente es único por su RUC o DNI. No hay duplicados. Incluso si dos empresas se llaman "Constructora XYZ", tienen RUCs diferentes, así que el sistema las diferencia automáticamente.</p>
+
+            <h3>"¿Qué pasa si me equivoco y cargo datos duplicados?"</h3>
+            <p>El sistema no lo permite. Si intentas agregar RUC 20123456789 dos veces, te avisa: "Este RUC ya existe". Como cuando en Instagram intentas registrarte dos veces con el mismo email.</p>
+
+            <h3>"¿Cuántos contactos puedo tener por empresa?"</h3>
+            <p>Los que quieras. 1, 10, 100. El sistema crece sin problema. Es infinito.</p>
+        </div>
+
+        <!-- BENEFICIOS FINALES -->
+        <div class="section">
+            <h2>✨ Paso 6: Cierr a con Beneficios Claros</h2>
+
+            <div class="success">
+                <strong>💡 Resume así:</strong>
+                <ul style="margin-top: 8px;">
+                    <li><span class="highlight">Búsqueda rápida:</span> Encuentra cualquier cliente en segundos</li>
+                    <li><span class="highlight">Sin confusión:</span> Un cliente = un RUC o DNI (no hay duplicados)</li>
+                    <li><span class="highlight">Flexible:</span> Puedes cambiar, agregar o eliminar contactos sin perder nada</li>
+                    <li><span class="highlight">Escalable:</span> Puedes crecer de 10 clientes a 1000 sin problemas</li>
+                    <li><span class="highlight">Reportes fáciles:</span> Después podemos hacer reportes: "Cuántas cotizaciones hice a cada empresa"</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- DEMOSTRACIÓN PRÁCTICA -->
+        <div class="section">
+            <h2>🎬 Bonus: Si Quieres Demo en Vivo</h2>
+
+            <div class="script-box">
+                <div class="script-title">Lo Que Puedes Mostrar</div>
+                <p style="font-size: 14px; color: var(--slate-600);">
+                    Abre el mockup (index_v5) y muestra esto en orden:
+                </p>
+            </div>
+
+            <div class="visual-step">
+                <span class="step-number">1</span><span class="step-title">Escribe "Constructora" en el buscador</span>
+                <div class="step-description">Muestra que aparecen 3 empresas que empiezan así</div>
+            </div>
+
+            <div class="visual-step">
+                <span class="step-number">2</span><span class="step-title">Haces clic en "Constructora ABC"</span>
+                <div class="step-description">Se llena automáticamente: Razón Social, Teléfono, Nombre y Apellido de Juan</div>
+            </div>
+
+            <div class="visual-step">
+                <span class="step-number">3</span><span class="step-title">Señala: "Mira, no escribí nada. El sistema lo trajo automáticamente"</span>
+                <div class="step-description">Cliente ve que ahorra tiempo</div>
+            </div>
+
+            <div class="note">
+                <strong>💡 Consejo:</strong> No expliques internamente cómo funciona (no digas "tabla", "llave foránea", "base de datos"). Solo muestra el resultado: es rápido y funciona.
+            </div>
+        </div>
+
+        <!-- CIERRE -->
+        <div class="section">
+            <div style="background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(139,92,246,0.1)); padding: 32px; border-radius: 12px; border: 2px solid var(--primary);">
+                <h3 style="color: var(--primary); margin-top: 0;">🎯 Recuerda</h3>
+                <p><strong>No hables de tecnología. Habla de resultados:</strong></p>
+                <ul>
+                    <li>"Es más rápido"</li>
+                    <li>"Menos errores"</li>
+                    <li>"Crece contigo"</li>
+                    <li>"Buscar es fácil"</li>
+                </ul>
+                <p style="margin-top: 16px; margin-bottom: 0;"><strong>El cliente estará satisfecho si ve que SU problema (perder clientes, datos duplicados, búsquedas lentas) está RESUELTO.</strong></p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

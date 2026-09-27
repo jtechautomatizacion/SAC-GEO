@@ -1,0 +1,1190 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Dashboard GTQC">
+    <meta name="theme-color" content="#6366f1">
+    <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22Dashboard GTQC%22,%22short_name%22:%22Dashboard%22,%22start_url%22:%22/%22,%22display%22:%22standalone%22,%22background_color%22:%22%23ffffff%22,%22theme_color%22:%22%236366f1%22,%22orientation%22:%22portrait%22,%22icons%22:[{%22src%22:%22data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 192 192%27%3E%3Crect fill=%27%236366f1%27 width=%27192%27 height=%27192%27/%3E%3Ctext x=%2750%25%27 y=%2750%25%27 font-size=%27100%27 fill=%27white%27 text-anchor=%27middle%27 dominant-baseline=%27central%27 font-weight=%27bold%27%3EDG%3C/text%3E%3C/svg%3E%22,%22sizes%22:%22192x192%22,%22type%22:%22image/svg+xml%22}]}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <title>Dashboard GTQC - Nativo Completo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #f8f9fa;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: #1a1a2e;
+            position: fixed;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .status-bar {
+            height: max(20px, env(safe-area-inset-top));
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        }
+
+        .app-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            padding-bottom: max(0px, env(safe-area-inset-bottom));
+        }
+
+        .header {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            padding: 16px 20px;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+        }
+
+        .header-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .header-subtitle {
+            font-size: 11px;
+            opacity: 0.85;
+        }
+
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+            padding: 0;
+            background: #f8f9fa;
+        }
+
+        .view {
+            display: none;
+            width: 100%;
+            min-height: 100%;
+            padding: 20px;
+            padding-bottom: 100px;
+        }
+
+        .view.active {
+            display: block;
+        }
+
+        .section {
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            opacity: 0.7;
+            padding: 0 0 8px 0;
+        }
+
+        /* ============================================
+           STAT CARDS
+           ============================================ */
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            border-left: 4px solid #6366f1;
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.08);
+            transition: all 0.2s ease;
+        }
+
+        .stat-card:active {
+            transform: scale(0.98);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #9ca3af;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            margin-bottom: 6px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-card.aceptada { border-left-color: #16a34a; }
+        .stat-card.emitida { border-left-color: #f59e0b; }
+        .stat-card.rechazada { border-left-color: #dc2626; }
+        .stat-card.valor { border-left-color: #0284c7; }
+
+        /* ============================================
+           QUOTATION CARDS
+           ============================================ */
+
+        .quotation-card {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border-left: 4px solid #6366f1;
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.08);
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .quotation-card:active {
+            transform: scale(0.98);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+        }
+
+        .quotation-card.aceptada { border-left-color: #16a34a; }
+        .quotation-card.emitida { border-left-color: #f59e0b; }
+        .quotation-card.rechazada { border-left-color: #dc2626; }
+        .quotation-card.cancelada { border-left-color: #6b7280; }
+
+        .quotation-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .quotation-number {
+            font-size: 14px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+
+        .quotation-badge {
+            font-size: 10px;
+            font-weight: 700;
+            padding: 4px 8px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.2px;
+            white-space: nowrap;
+        }
+
+        .quotation-card.aceptada .quotation-badge {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .quotation-card.emitida .quotation-badge {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .quotation-card.rechazada .quotation-badge {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .quotation-card.cancelada .quotation-badge {
+            background: #f3f4f6;
+            color: #374151;
+        }
+
+        .quotation-client {
+            font-size: 13px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 4px;
+        }
+
+        .quotation-project {
+            font-size: 12px;
+            color: #6b7280;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .quotation-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        .quotation-item {
+            background: #f9fafb;
+            padding: 8px;
+            border-radius: 6px;
+        }
+
+        .quotation-item-label {
+            font-size: 10px;
+            font-weight: 600;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 0.2px;
+            margin-bottom: 2px;
+        }
+
+        .quotation-item-value {
+            font-size: 13px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+
+        .quotation-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .btn-small {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #e5e7eb;
+            background: white;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            color: #6366f1;
+            transition: all 0.2s ease;
+        }
+
+        .btn-small:active {
+            background: #f9fafb;
+            transform: scale(0.95);
+        }
+
+        /* ============================================
+           FILTERS
+           ============================================ */
+
+        .filter-bar {
+            background: white;
+            padding: 12px 20px;
+            margin-bottom: 16px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .filter-btn {
+            padding: 8px 12px;
+            border: 1px solid #e5e7eb;
+            background: white;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            color: #6b7280;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+        }
+
+        .filter-btn.active {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            border-color: transparent;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 13px;
+            background: #f9fafb;
+            color: #1a1a2e;
+            margin-bottom: 12px;
+        }
+
+        .search-input::placeholder {
+            color: #9ca3af;
+        }
+
+        /* ============================================
+           CHART CARDS
+           ============================================ */
+
+        .chart-card {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.08);
+        }
+
+        .chart-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 12px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 180px;
+        }
+
+        /* ============================================
+           EMPTY STATE
+           ============================================ */
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #9ca3af;
+        }
+
+        .empty-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        .empty-text {
+            font-size: 13px;
+            font-weight: 600;
+            color: #6b7280;
+        }
+
+        /* ============================================
+           BOTTOM NAVIGATION
+           ============================================ */
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 70px;
+            background: white;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-start;
+            padding-top: 10px;
+            padding-bottom: max(10px, env(safe-area-inset-bottom));
+            box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.05);
+            z-index: 999;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            color: #9ca3af;
+            transition: all 0.2s ease;
+            flex: 1;
+            font-weight: 600;
+        }
+
+        .nav-item.active {
+            color: #6366f1;
+        }
+
+        .nav-icon {
+            font-size: 24px;
+            line-height: 1;
+        }
+
+        /* ============================================
+           MODAL
+           ============================================ */
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: flex-end;
+        }
+
+        .modal-content {
+            background: white;
+            width: 100%;
+            border-radius: 16px 16px 0 0;
+            padding: 20px;
+            max-height: 80vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .modal-title {
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #9ca3af;
+        }
+
+        .status-timeline {
+            padding: 20px 0;
+        }
+
+        .status-item {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .status-dot {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .status-item.aceptada .status-dot {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-item.emitida .status-dot {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-item.rechazada .status-dot {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .status-info {
+            flex: 1;
+        }
+
+        .status-label {
+            font-size: 13px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 2px;
+        }
+
+        .status-date {
+            font-size: 11px;
+            color: #9ca3af;
+        }
+
+        @media (min-width: 481px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .quotation-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+
+            .chart-container {
+                height: 220px;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .stats-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+
+            .chart-container {
+                height: 280px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="status-bar"></div>
+
+    <div class="app-container">
+        <div class="header">
+            <div class="header-title">📊 Dashboard GTQC</div>
+            <div class="header-subtitle">Gestión de Cotizaciones • <span id="headerDate"></span></div>
+        </div>
+
+        <div class="content">
+            <!-- VIEW 1: DASHBOARD -->
+            <div class="view active">
+                <!-- Estadísticas -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Total</div>
+                        <div class="stat-value" id="statTotal">0</div>
+                    </div>
+                    <div class="stat-card aceptada">
+                        <div class="stat-label">Aceptadas</div>
+                        <div class="stat-value" id="statAceptada">0</div>
+                    </div>
+                    <div class="stat-card emitida">
+                        <div class="stat-label">Emitidas</div>
+                        <div class="stat-value" id="statEmitida">0</div>
+                    </div>
+                    <div class="stat-card valor">
+                        <div class="stat-label">Valor</div>
+                        <div class="stat-value" id="statValor">S/ 0</div>
+                    </div>
+                </div>
+
+                <!-- Gráficos -->
+                <div class="section">
+                    <div class="section-title">📈 Análisis</div>
+
+                    <div class="chart-card">
+                        <div class="chart-title">Estado de Cotizaciones</div>
+                        <div class="chart-container">
+                            <canvas id="estadoChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-card">
+                        <div class="chart-title">Evolución Mensual</div>
+                        <div class="chart-container">
+                            <canvas id="evolucionChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-card">
+                        <div class="chart-title">Top Clientes</div>
+                        <div class="chart-container">
+                            <canvas id="clientesChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW 2: MIS COTIZACIONES -->
+            <div class="view">
+                <input type="text" class="search-input" id="searchInput" placeholder="🔍 Buscar cotización..." oninput="filterQuotations()">
+
+                <div class="filter-bar">
+                    <button class="filter-btn active" onclick="filterByStatus('todos')">Todas</button>
+                    <button class="filter-btn" onclick="filterByStatus('aceptada')">✅ Aceptadas</button>
+                    <button class="filter-btn" onclick="filterByStatus('emitida')">⏳ Emitidas</button>
+                    <button class="filter-btn" onclick="filterByStatus('rechazada')">❌ Rechazadas</button>
+                </div>
+
+                <div id="quotationsList"></div>
+            </div>
+
+            <!-- VIEW 3: HISTORIAL -->
+            <div class="view">
+                <div class="section-title">📅 Historial de Cambios</div>
+                <div id="historialList"></div>
+            </div>
+
+            <!-- VIEW 4: CONFIGURACIÓN -->
+            <div class="view">
+                <div class="section">
+                    <div class="section-title">Empresa</div>
+                    <div class="quotation-card">
+                        <div class="quotation-client">GTQC LABORATORIO S.A.C.</div>
+                        <div class="quotation-project">Av. Científica 120, San Isidro, Lima</div>
+                        <div style="font-size: 12px; color: #9ca3af; margin-top: 8px;">
+                            📞 +51 1 6162000<br>
+                            📧 cotizaciones@gtqc.pe
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">Datos</div>
+                    <div class="quotation-card" onclick="exportData()" style="cursor: pointer;">
+                        <div class="quotation-client">📥 Exportar Datos</div>
+                        <div class="quotation-project">Descargar cotizaciones como JSON</div>
+                    </div>
+                    <div class="quotation-card" onclick="clearData()" style="cursor: pointer; border-left-color: #dc2626;">
+                        <div class="quotation-client">🗑️ Limpiar Datos</div>
+                        <div class="quotation-project">Eliminar todas las cotizaciones</div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">Sobre</div>
+                    <div class="quotation-card">
+                        <div class="quotation-client">Dashboard GTQC v1.0</div>
+                        <div class="quotation-project">Nativo PWA • Funcional Completo</div>
+                        <div style="font-size: 12px; color: #9ca3af; margin-top: 8px;">
+                            ✅ Offline<br>
+                            ✅ Installable<br>
+                            ✅ Sincronización automática
+                        </div>
+                    </div>
+                </div>
+            </view>
+        </div>
+    </div>
+
+    <!-- Modal para detalles -->
+    <div class="modal" id="detailModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Detalles de Cotización</div>
+                <button class="modal-close" onclick="closeModal()">×</button>
+            </div>
+
+            <div id="modalBody"></div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 20px;">
+                <button class="btn-small" onclick="updateStatus('aceptada')">✅ Aceptar</button>
+                <button class="btn-small" onclick="updateStatus('rechazada')">❌ Rechazar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <div class="nav-item active" onclick="switchView(0)">
+            <div class="nav-icon">📊</div>
+            <div>Dashboard</div>
+        </div>
+        <div class="nav-item" onclick="switchView(1)">
+            <div class="nav-icon">📋</div>
+            <div>Cotizaciones</div>
+        </div>
+        <div class="nav-item" onclick="switchView(2)">
+            <div class="nav-icon">📅</div>
+            <div>Historial</div>
+        </div>
+        <div class="nav-item" onclick="switchView(3)">
+            <div class="nav-icon">⚙️</div>
+            <div>Más</div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // STATE & DATA
+        // ============================================
+
+        let currentView = 0;
+        let selectedQuotation = null;
+        let currentFilter = 'todos';
+
+        // Datos de ejemplo con estados
+        const mockQuotations = [
+            {
+                id: 1,
+                numero: '2024-001',
+                cliente: 'Constructora ACME S.A.C.',
+                proyecto: 'Edificio Central Lima',
+                items: 5,
+                monto: 8500,
+                estado: 'aceptada',
+                fecha: '2024-09-01',
+                contacto: 'Juan García',
+                ensayos: ['Análisis de Agua', 'Test de Compresión', 'Análisis Químico']
+            },
+            {
+                id: 2,
+                numero: '2024-002',
+                cliente: 'Ing. Moderna E.I.R.L.',
+                proyecto: 'Centro Comercial Arequipa',
+                items: 8,
+                monto: 12300,
+                estado: 'aceptada',
+                fecha: '2024-09-05',
+                contacto: 'María López',
+                ensayos: ['Análisis de Suelo', 'Análisis Microbiológico']
+            },
+            {
+                id: 3,
+                numero: '2024-003',
+                cliente: 'Empresa Médica del Perú',
+                proyecto: 'Clínica San Juan',
+                items: 6,
+                monto: 9800,
+                estado: 'emitida',
+                fecha: '2024-09-08',
+                contacto: 'Dr. Carlos Ruiz',
+                ensayos: ['Análisis de Agua Residual', 'Test de pH']
+            },
+            {
+                id: 4,
+                numero: '2024-004',
+                cliente: 'Servicios Empresariales ABC',
+                proyecto: 'Oficinas Centro',
+                items: 4,
+                monto: 5200,
+                estado: 'rechazada',
+                fecha: '2024-09-03',
+                contacto: 'Roberto Soto',
+                ensayos: ['Análisis Químico Completo']
+            },
+            {
+                id: 5,
+                numero: '2024-005',
+                cliente: 'Constructora ACME S.A.C.',
+                proyecto: 'Puente Peatonal',
+                items: 7,
+                monto: 14200,
+                estado: 'emitida',
+                fecha: '2024-09-10',
+                contacto: 'Juan García',
+                ensayos: ['Análisis de Metales Pesados', 'Test de Compresión']
+            },
+            {
+                id: 6,
+                numero: '2024-006',
+                cliente: 'Empresa Médica del Perú',
+                proyecto: 'Hospital Regional',
+                items: 9,
+                monto: 18500,
+                estado: 'aceptada',
+                fecha: '2024-09-12',
+                contacto: 'Dr. Carlos Ruiz',
+                ensayos: ['Análisis Microbiológico Completo']
+            }
+        ];
+
+        // Cargar cotizaciones del localStorage
+        function loadQuotations() {
+            const saved = localStorage.getItem('quotations');
+            if (saved) {
+                return JSON.parse(saved);
+            }
+            // Guardar datos de ejemplo
+            localStorage.setItem('quotations', JSON.stringify(mockQuotations));
+            return mockQuotations;
+        }
+
+        let quotations = loadQuotations();
+
+        // ============================================
+        // VIEW MANAGEMENT
+        // ============================================
+
+        const views = document.querySelectorAll('.view');
+
+        function switchView(index) {
+            views.forEach((view, i) => view.classList.toggle('active', i === index));
+            document.querySelectorAll('.nav-item').forEach((item, i) => item.classList.toggle('active', i === index));
+            currentView = index;
+            document.querySelector('.content').scrollTop = 0;
+
+            if (index === 1) renderQuotations();
+            if (index === 2) renderHistorial();
+        }
+
+        // ============================================
+        // STATISTICS
+        // ============================================
+
+        function updateStatistics() {
+            const total = quotations.length;
+            const aceptadas = quotations.filter(q => q.estado === 'aceptada').length;
+            const emitidas = quotations.filter(q => q.estado === 'emitida').length;
+            const valor = quotations.reduce((sum, q) => sum + q.monto, 0);
+
+            document.getElementById('statTotal').textContent = total;
+            document.getElementById('statAceptada').textContent = aceptadas;
+            document.getElementById('statEmitida').textContent = emitidas;
+            document.getElementById('statValor').textContent = `S/ ${valor.toLocaleString('es-PE')}`;
+
+            updateCharts();
+        }
+
+        // ============================================
+        // CHARTS
+        // ============================================
+
+        function updateCharts() {
+            const estados = {
+                aceptada: quotations.filter(q => q.estado === 'aceptada').length,
+                emitida: quotations.filter(q => q.estado === 'emitida').length,
+                rechazada: quotations.filter(q => q.estado === 'rechazada').length,
+                cancelada: quotations.filter(q => q.estado === 'cancelada').length
+            };
+
+            // Gráfico de estado
+            const estadoCtx = document.getElementById('estadoChart').getContext('2d');
+            new Chart(estadoCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Aceptadas', 'Emitidas', 'Rechazadas'],
+                    datasets: [{
+                        data: [estados.aceptada, estados.emitida, estados.rechazada],
+                        backgroundColor: ['#16a34a', '#f59e0b', '#dc2626'],
+                        borderColor: 'white',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+
+            // Gráfico de evolución
+            const evolucionCtx = document.getElementById('evolucionChart').getContext('2d');
+            new Chart(evolucionCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Sep', 'Oct', 'Nov'],
+                    datasets: [{
+                        label: 'Cotizaciones',
+                        data: [6, quotations.length, quotations.length + 2],
+                        borderColor: '#6366f1',
+                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                        tension: 0.4,
+                        borderWidth: 2,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: true } }
+                }
+            });
+
+            // Top clientes
+            const clienteCounts = {};
+            quotations.forEach(q => {
+                clienteCounts[q.cliente] = (clienteCounts[q.cliente] || 0) + 1;
+            });
+            const topClientes = Object.entries(clienteCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+
+            const clientesCtx = document.getElementById('clientesChart').getContext('2d');
+            new Chart(clientesCtx, {
+                type: 'bar',
+                data: {
+                    labels: topClientes.map(c => c[0].split(' ')[0]),
+                    datasets: [{
+                        label: 'Cotizaciones',
+                        data: topClientes.map(c => c[1]),
+                        backgroundColor: '#8b5cf6'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        // ============================================
+        // QUOTATIONS LIST
+        // ============================================
+
+        function renderQuotations() {
+            let search = document.getElementById('searchInput').value.toLowerCase();
+            let filtered = quotations.filter(q => {
+                const matchesSearch = q.numero.includes(search) || q.cliente.toLowerCase().includes(search) || q.proyecto.toLowerCase().includes(search);
+                const matchesFilter = currentFilter === 'todos' || q.estado === currentFilter;
+                return matchesSearch && matchesFilter;
+            });
+
+            if (filtered.length === 0) {
+                document.getElementById('quotationsList').innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">📭</div>
+                        <div class="empty-text">No hay cotizaciones</div>
+                    </div>
+                `;
+                return;
+            }
+
+            const html = filtered.map(q => `
+                <div class="quotation-card ${q.estado}" onclick="showDetail(${q.id})">
+                    <div class="quotation-header">
+                        <div class="quotation-number">COT-${q.numero}</div>
+                        <span class="quotation-badge">${getStatusBadge(q.estado)}</span>
+                    </div>
+                    <div class="quotation-client">${q.cliente}</div>
+                    <div class="quotation-project">${q.proyecto}</div>
+                    <div class="quotation-grid">
+                        <div class="quotation-item">
+                            <div class="quotation-item-label">Monto</div>
+                            <div class="quotation-item-value">S/ ${q.monto.toLocaleString('es-PE')}</div>
+                        </div>
+                        <div class="quotation-item">
+                            <div class="quotation-item-label">Items</div>
+                            <div class="quotation-item-value">${q.items}</div>
+                        </div>
+                        <div class="quotation-item">
+                            <div class="quotation-item-label">Fecha</div>
+                            <div class="quotation-item-value">${q.fecha}</div>
+                        </div>
+                        <div class="quotation-item">
+                            <div class="quotation-item-label">Contacto</div>
+                            <div class="quotation-item-value">${q.contacto}</div>
+                        </div>
+                    </div>
+                    <div class="quotation-actions">
+                        <button class="btn-small" onclick="event.stopPropagation(); shareWhatsApp('${q.numero}', ${q.monto})">💬</button>
+                        <button class="btn-small" onclick="event.stopPropagation(); shareEmail('${q.numero}', ${q.monto})">✉️</button>
+                        <button class="btn-small" onclick="event.stopPropagation(); downloadPDF('${q.numero}')">📥</button>
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('quotationsList').innerHTML = html;
+        }
+
+        function getStatusBadge(estado) {
+            const badges = {
+                aceptada: '✅ ACEPTADA',
+                emitida: '⏳ EMITIDA',
+                rechazada: '❌ RECHAZADA',
+                cancelada: '🚫 CANCELADA'
+            };
+            return badges[estado] || estado;
+        }
+
+        function filterByStatus(status) {
+            currentFilter = status;
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.textContent.includes(status === 'todos' ? 'Todas' : status === 'aceptada' ? '✅' : status === 'emitida' ? '⏳' : '❌'));
+            });
+            renderQuotations();
+        }
+
+        function filterQuotations() {
+            renderQuotations();
+        }
+
+        // ============================================
+        // MODAL & DETAIL VIEW
+        // ============================================
+
+        function showDetail(id) {
+            selectedQuotation = quotations.find(q => q.id === id);
+            if (!selectedQuotation) return;
+
+            const html = `
+                <div style="margin-bottom: 20px;">
+                    <div class="quotation-client">${selectedQuotation.cliente}</div>
+                    <div class="quotation-project">${selectedQuotation.proyecto}</div>
+                    <div style="font-size: 12px; color: #9ca3af; margin-top: 12px;">
+                        <div>📄 COT-${selectedQuotation.numero}</div>
+                        <div>📞 ${selectedQuotation.contacto}</div>
+                        <div>💰 S/ ${selectedQuotation.monto.toLocaleString('es-PE')}</div>
+                        <div>📅 ${selectedQuotation.fecha}</div>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <div class="section-title">Ensayos Incluidos</div>
+                    ${selectedQuotation.ensayos.map(e => `
+                        <div style="padding: 8px; background: #f9fafb; border-radius: 6px; margin-bottom: 6px; font-size: 12px;">
+                            ✓ ${e}
+                        </div>
+                    `).join('')}
+                </div>
+
+                <div class="status-timeline">
+                    <div class="section-title">Estado</div>
+                    <div class="status-item ${selectedQuotation.estado}">
+                        <div class="status-dot">${getStatusEmoji(selectedQuotation.estado)}</div>
+                        <div class="status-info">
+                            <div class="status-label">${getStatusLabel(selectedQuotation.estado)}</div>
+                            <div class="status-date">${selectedQuotation.fecha}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('modalBody').innerHTML = html;
+            document.getElementById('detailModal').classList.add('active');
+        }
+
+        function getStatusEmoji(estado) {
+            const emojis = {
+                aceptada: '✅',
+                emitida: '⏳',
+                rechazada: '❌',
+                cancelada: '🚫'
+            };
+            return emojis[estado] || '•';
+        }
+
+        function getStatusLabel(estado) {
+            const labels = {
+                aceptada: 'Aceptada',
+                emitida: 'Emitida',
+                rechazada: 'Rechazada',
+                cancelada: 'Cancelada'
+            };
+            return labels[estado] || estado;
+        }
+
+        function closeModal() {
+            document.getElementById('detailModal').classList.remove('active');
+        }
+
+        function updateStatus(newStatus) {
+            if (selectedQuotation) {
+                selectedQuotation.estado = newStatus;
+                const index = quotations.findIndex(q => q.id === selectedQuotation.id);
+                quotations[index] = selectedQuotation;
+                localStorage.setItem('quotations', JSON.stringify(quotations));
+                closeModal();
+                updateStatistics();
+                renderQuotations();
+            }
+        }
+
+        // ============================================
+        // HISTORIAL
+        // ============================================
+
+        function renderHistorial() {
+            const eventos = [
+                { icon: '✅', label: 'Aceptada', desc: 'Constructora ACME aceptó COT-2024-001', fecha: 'Hoy' },
+                { icon: '⏳', label: 'Emitida', desc: 'Nueva cotización COT-2024-003 emitida', fecha: 'Hoy' },
+                { icon: '✅', label: 'Aceptada', desc: 'Empresa Médica aceptó COT-2024-002', fecha: 'Ayer' },
+                { icon: '❌', label: 'Rechazada', desc: 'Servicios ABC rechazó COT-2024-004', fecha: '3 días' },
+                { icon: '📊', label: 'Creada', desc: 'Nueva cotización para Ing. Moderna', fecha: '1 semana' }
+            ];
+
+            const html = eventos.map(e => `
+                <div class="quotation-card">
+                    <div style="display: flex; gap: 12px;">
+                        <div style="font-size: 24px;">${e.icon}</div>
+                        <div style="flex: 1;">
+                            <div class="quotation-client">${e.label}</div>
+                            <div class="quotation-project">${e.desc}</div>
+                            <div style="font-size: 11px; color: #9ca3af; margin-top: 4px;">${e.fecha}</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('historialList').innerHTML = html;
+        }
+
+        // ============================================
+        // ACTIONS
+        // ============================================
+
+        function shareWhatsApp(numero, monto) {
+            const texto = `Hola, te comparto la cotización COT-${numero} por S/ ${monto.toLocaleString('es-PE')}. ¿Aceptas?`;
+            window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, '_blank');
+        }
+
+        function shareEmail(numero, monto) {
+            const subject = `Cotización COT-${numero} - GTQC`;
+            const body = `Estimado,\n\nA continuación te compartimos nuestra cotización:\n\nNúmero: COT-${numero}\nMonto: S/ ${monto.toLocaleString('es-PE')}\nValidez: 30 días\n\nSaludos,\nGTQC`;
+            window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
+        }
+
+        function downloadPDF(numero) {
+            alert('📥 Descargando COT-' + numero + '.pdf');
+        }
+
+        function exportData() {
+            const dataStr = JSON.stringify(quotations, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'cotizaciones_' + new Date().toISOString().split('T')[0] + '.json';
+            a.click();
+        }
+
+        function clearData() {
+            if (confirm('¿Eliminar todas las cotizaciones? Esta acción no se puede deshacer.')) {
+                quotations = [];
+                localStorage.setItem('quotations', JSON.stringify(quotations));
+                updateStatistics();
+            }
+        }
+
+        // ============================================
+        // INITIALIZE
+        // ============================================
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('data:application/javascript,' + encodeURIComponent(`
+                const CACHE = 'dashboard-v1';
+                self.addEventListener('install', e => {
+                    e.waitUntil(caches.open(CACHE).then(c => c.addAll(['/'])));
+                });
+                self.addEventListener('fetch', e => {
+                    e.respondWith(caches.match(e.request).then(r => r || fetch(e.request)));
+                });
+            `)).catch(() => {});
+        }
+
+        document.getElementById('headerDate').textContent = new Date().toLocaleDateString('es-PE');
+        updateStatistics();
+
+        document.addEventListener('touchmove', e => {
+            if (e.touches.length > 1) e.preventDefault();
+        }, { passive: false });
+
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', e => {
+            if (Date.now() - lastTouchEnd <= 300) e.preventDefault();
+            lastTouchEnd = Date.now();
+        }, false);
+    </script>
+</body>
+</html>

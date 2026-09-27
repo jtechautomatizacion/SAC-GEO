@@ -1,0 +1,592 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2010 1400" width="2010" height="1400" role="img" aria-label="Diagrama entidad-relación de la base de datos GTQC v3: clientes, cotizaciones, catálogo de ensayos, nube y seguridad, con el ámbito global o por tenant de cada tabla." xmlns:c2pa="http://c2pa.org/manifest"><metadata><c2pa:manifest>AAAWgmp1bWIAAAAeanVtZGMycGEAEQAQgAAAqgA4m3EDYzJwYQAAABZcanVtYgAAAEdqdW1kYzJtYQARABCAAACqADibcQN1cm46YzJwYToyNGU0ZTM2OS04MjQwLTQyZjAtYThjMy02NWM1YWEyNTI0NDUAAAADl2p1bWIAAAApanVtZGMyYXMAEQAQgAAAqgA4m3EDYzJwYS5hc3NlcnRpb25zAAAAALxqdW1iAAAARGp1bWRjYm9yABEAEIAAAKoAOJtxE2MycGEuaW5ncmVkaWVudC52MwAAAAAYYzJzaBS6KWyBWkDuOULrZ9yKPwkAAABwY2JvcqNpZGM6Zm9ybWF0bWltYWdlL3N2Zyt4bWxqaW5zdGFuY2VJRHgseG1wOmlpZDowZGVhMTg0OS1iMzA1LTQ0YmQtOTg4OS03ODU5ODBjZmY4NTJscmVsYXRpb25zaGlwaHBhcmVudE9mAAAB4mp1bWIAAABBanVtZGNib3IAEQAQgAAAqgA4m3ETYzJwYS5hY3Rpb25zLnYyAAAAABhjMnNoMh1oqbgU1vZKshaGxa0BigAAAZljYm9yomdhY3Rpb25zgqJmYWN0aW9ua2MycGEub3BlbmVkanBhcmFtZXRlcnOha2luZ3JlZGllbnRzgaJjdXJseC1zZWxmI2p1bWJmPWMycGEuYXNzZXJ0aW9ucy9jMnBhLmluZ3JlZGllbnQudjNkaGFzaFgg+O9RhVOfdfT9DJhgESiSlRHFgcZi4OLSdA7jmxsXjgOkZmFjdGlvbngdY29tLmFudGhyb3BpYy5jbGF1ZGUucHJvdmlkZWRqcGFyYW1ldGVyc6F4H2NvbS5hbnRocm9waWMub3JpZ2luLWNvbmZpZGVuY2VndW5rbm93bmtkZXNjcmlwdGlvbnhmQ2xhdWRlIHByb3ZpZGVkIHRoaXMgZmlsZSBhdCB0aGUgcmVxdWVzdCBvZiBhIHVzZXIgYW5kIG1heSBoYXZlIGNyZWF0ZWQgb3IgbW9kaWZpZWQgdGhlIGZpbGUgY29udGVudHMubXNvZnR3YXJlQWdlbnShZG5hbWVmQ2xhdWRlcmFsbEFjdGlvbnNJbmNsdWRlZPUAAADIanVtYgAAAEBqdW1kY2JvcgARABCAAACqADibcRNjMnBhLmhhc2guZGF0YQAAAAAYYzJzaAzsoUlpZGu0vnisLdpKMSoAAACAY2JvcqVjYWxnZnNoYTI1NmNwYWRMAAAAAAAAAAAAAAAAZGhhc2hYINp0J68NFSQ6Z19bhmWOJvw5Y/ASf8wTFuVuC+/rYJ+UZG5hbWVuanVtYmYgbWFuaWZlc3RqZXhjbHVzaW9uc4GiZXN0YXJ0GQFcZmxlbmd0aBkeBAAAAj5qdW1iAAAAJ2p1bWRjMmNsABEAEIAAAKoAOJtxA2MycGEuY2xhaW0udjIAAAACD2Nib3KlY2FsZ2ZzaGEyNTZpc2lnbmF0dXJleE1zZWxmI2p1bWJmPS9jMnBhL3VybjpjMnBhOjI0ZTRlMzY5LTgyNDAtNDJmMC1hOGMzLTY1YzVhYTI1MjQ0NS9jMnBhLnNpZ25hdHVyZWppbnN0YW5jZUlEeCx4bXA6aWlkOjc5ZDE0YzQwLWZlM2YtNDQyOC1hYmU4LTM4NWY2NmEwYTBlYnJjcmVhdGVkX2Fzc2VydGlvbnODomN1cmx4LXNlbGYjanVtYmY9YzJwYS5hc3NlcnRpb25zL2MycGEuaW5ncmVkaWVudC52M2RoYXNoWCD471GFU5919P0MmGARKJKVEcWBxmLg4tJ0DuObGxeOA6JjdXJseCpzZWxmI2p1bWJmPWMycGEuYXNzZXJ0aW9ucy9jMnBhLmFjdGlvbnMudjJkaGFzaFggSjt5RzbZoMG1mQEZ8wLVHwag20UpxLGVuSpoJLdV5EGiY3VybHgpc2VsZiNqdW1iZj1jMnBhLmFzc2VydGlvbnMvYzJwYS5oYXNoLmRhdGFkaGFzaFggmfMSoiIciMeDmw1C0K6x7m3RDoJy9rAX2PoJv2bydzZ0Y2xhaW1fZ2VuZXJhdG9yX2luZm+jZG5hbWVvQW50aHJvcGljIEZpbGVzZ3ZlcnNpb25lMS4wLjBrc3BlY1ZlcnNpb25lMi40LjAAABA4anVtYgAAAChqdW1kYzJjcwARABCAAACqADibcQNjMnBhLnNpZ25hdHVyZQAAABAIY2JvctKEWQISogEmGCFZAgowggIGMIIBjaADAgECAhRA5aAK7sI50L64g/oGQgU9Z1UTADAKBggqhkjOPQQDAzBJMRcwFQYDVQQKEw5BbnRocm9waWMsIFBCQzEuMCwGA1UEAxMlQW50aHJvcGljIENvbnRlbnQgQ3JlZGVudGlhbHMgUm9vdCBDQTAeFw0yNjA4MDcxODQzNTZaFw0yODA4MDYxOTQzNTZaMEQxFzAVBgNVBAoTDkFudGhyb3BpYywgUEJDMSkwJwYDVQQDEyBBbnRocm9waWMgQ2xhdWRlIENvbnRlbnQgU2lnbmluZzBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABJh6CmvLUBgFFNU0vUKlOVtE6djd17L5SuwX0LemFisBM3dkd/3cyjxFA3Qo5S46fX0/ihY0VZ7mfb9KF703t5OjWDBWMA4GA1UdDwEB/wQEAwIHgDAVBgNVHSUEDjAMBgorBgEEAYPoXgIBMAwGA1UdEwEB/wQCMAAwHwYDVR0jBBgwFoAUzlHiBIFOZFsj+OPEz5o+nMHXXMIwCgYIKoZIzj0EAwMDZwAwZAIwMXMdFJ4BetLLVY7ORuE9noqbbAZOZn/aArXyTwFAZfKrPzxF2vPoJNf1+UCdg1XGAjBwX1zd9WGqYkqmL5SFqw1QySjr1zJfpJM9+1rdDwSPLMOPOjKuiXjoU/pUUeG9RwmhY3BhZFkNngAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPZYQJtwSyzel4ce7+WlxHy3Q0VmCnjpAXRAU2QRrtW4zMVCorw4kHS/dHOxo8yifafrL1JTfpwAJS7C4PqqPwy+drY=</c2pa:manifest></metadata>
+<defs>
+  <marker id="one" viewBox="0 0 12 12" refX="6" refY="6" markerWidth="12" markerHeight="12" orient="auto-start-reverse">
+    <line x1="6" y1="1" x2="6" y2="11" stroke="#475569" stroke-width="1.8"/>
+  </marker>
+  <marker id="many" viewBox="0 0 16 16" refX="15" refY="8" markerWidth="16" markerHeight="16" orient="auto">
+    <path d="M15,1 L3,8 L15,15 M3,8 L15,8" fill="none" stroke="#475569" stroke-width="1.8"/>
+  </marker>
+  <filter id="sh" x="-5%" y="-5%" width="110%" height="115%">
+    <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#0f172a" flood-opacity=".10"/></filter>
+</defs>
+<rect width="2010" height="1400" fill="#ffffff"/>
+<rect x="48" y="140" width="344" height="756" rx="18" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.5"/>
+<text x="66" y="170" font-size="15" font-weight="800" letter-spacing=".06em" fill="#1d4ed8">👥 CLIENTES</text>
+<rect x="448" y="140" width="724" height="866" rx="18" fill="#f5f3ff" stroke="#ddd6fe" stroke-width="1.5"/>
+<text x="466" y="170" font-size="15" font-weight="800" letter-spacing=".06em" fill="#6d28d9">📋 COTIZACIONES</text>
+<rect x="1228" y="140" width="714" height="812" rx="18" fill="#fff7ed" stroke="#fed7aa" stroke-width="1.5"/>
+<text x="1246" y="170" font-size="15" font-weight="800" letter-spacing=".06em" fill="#c2410c">🧪 CATÁLOGO DE ENSAYOS  ·  ✏️ editable desde la app</text>
+<rect x="48" y="910" width="744" height="310" rx="18" fill="#ecfeff" stroke="#a5f3fc" stroke-width="1.5"/>
+<text x="66" y="940" font-size="15" font-weight="800" letter-spacing=".06em" fill="#0e7490">☁️ NUBE (Drive / Office 365)</text>
+<rect x="828" y="1010" width="1114" height="332" rx="18" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="846" y="1040" font-size="15" font-weight="800" letter-spacing=".06em" fill="#334155">🔒 SEGURIDAD Y AUDITORÍA</text>
+<path d="M370.0,284.6 L425.0,284.6 L425.0,613.0 L470.0,613.0" fill="none" stroke="#475569" stroke-width="1.8" marker-start="url(#one)" marker-end="url(#many)"/>
+<path d="M370.0,593.0 L405.0,593.0 L405.0,635.0 L470.0,635.0" fill="none" stroke="#475569" stroke-width="1.8" marker-start="url(#one)" marker-end="url(#many)"/>
+<path d="M370.0,747.9 L443.0,747.9 L443.0,657.0 L470.0,657.0" fill="none" stroke="#475569" stroke-width="1.8" marker-start="url(#one)" marker-end="url(#many)"/>
+<path d="M205.0,362.0 L205.0,440.0" fill="none" stroke="#475569" stroke-width="1.8" marker-start="url(#one)" marker-end="url(#many)"/>
+<path d="M70.0,293.2 L40.0,293.2 L40.0,1057.2 L70.0,1057.2" fill="none" stroke="#475569" stroke-width="1.8" marker-start="url(#one)" marker-end="url(#many)"/>
+<path d="M605.0,384.0 L605.0,460.0" fill="none" stroke="#475569" stroke-width="1.8" marker-start="url(#one)" marker-end="url(#many)"/>
+<path d="M770.0,547.0 L850.0,547.0" fill="none" stroke="#475569" stroke-width="1.8" marker-start="url(#one)" marker-end="url(#many)"/>
+<path d="M770.0,763.2 L815.0,763.2 L815.0,877.0 L850.0,877.0" fill="none" stroke="#475569" stroke-width="1.8" marker-start="url(#one)" marker-end="url(#many)"/>
+<path d="M635.0,786.0 L635.0,960.0" fill="none" stroke="#475569" stroke-width="1.8" marker-start="url(#one)" marker-end="url(#many)"/>
+<path d="M370.0,1113.0 L470.0,1113.0" fill="none" stroke="#475569" stroke-width="1.8" marker-start="url(#one)" marker-end="url(#many)"/>
+<path d="M1250.0,256.9 L1215.0,256.9 L1215.0,591.0 L1150.0,591.0" fill="none" stroke="#475569" stroke-width="1.8" marker-start="url(#one)" marker-end="url(#many)"/>
+<path d="M1620.0,409.0 L1195.0,409.0 L1195.0,613.0 L1150.0,613.0" fill="none" stroke="#475569" stroke-width="1.8" marker-start="url(#one)" marker-end="url(#many)"/>
+<path d="M1770.0,428.0 L1770.0,460.0" fill="none" stroke="#475569" stroke-width="1.8" marker-start="url(#one)" marker-end="url(#many)"/>
+<path d="M1620.0,566.7 L1585.0,566.7 L1585.0,343.0 L1550.0,343.0" fill="none" stroke="#475569" stroke-width="1.8" marker-start="url(#one)" marker-end="url(#many)"/>
+<path d="M1376.0,494.0 L1376.0,530.0" fill="none" stroke="#475569" stroke-width="1.8" marker-start="url(#one)" marker-end="url(#many)"/>
+<path d="M1550.0,448.0 L1596.0,448.0 L1596.0,787.0 L1620.0,787.0" fill="none" stroke="#475569" stroke-width="1.8" marker-start="url(#one)" marker-end="url(#many)"/>
+<path d="M1550.0,474.0 L1572.0,474.0 L1572.0,809.0 L1620.0,809.0" fill="none" stroke="#475569" stroke-width="1.8" marker-start="url(#one)" marker-end="url(#many)"/>
+<path d="M1620.0,1146.0 L1585.0,1146.0 L1585.0,1213.0 L1550.0,1213.0" fill="none" stroke="#475569" stroke-width="1.8" marker-start="url(#one)" marker-end="url(#many)"/>
+<path d="M1250.0,1250.4 L1215.0,1250.4 L1215.0,1279.0 L1150.0,1279.0" fill="none" stroke="#475569" stroke-width="1.8" marker-start="url(#one)" marker-end="url(#many)"/>
+<g filter="url(#sh)"><rect x="70" y="190" width="300" height="172" rx="12" fill="#fff" stroke="#bfdbfe" stroke-width="1.5"/></g>
+<path d="M70,202 a12,12 0 0 1 12,-12 h276 a12,12 0 0 1 12,12 v40 h-300 z" fill="#1d4ed8"/>
+<text x="84" y="212" font-size="15.5" font-weight="700" fill="#fff">🏢 Empresas</text>
+<text x="84" y="231" font-size="11" fill="#fff" fill-opacity=".78" font-family="DejaVu Sans Mono, monospace">empresas</text>
+<rect x="338" y="202" width="22" height="22" rx="7" fill="#d1fae5"/>
+<text x="349" y="218" font-size="13" font-weight="800" fill="#065f46" text-anchor="middle">T</text>
+<text x="80" y="259.0" font-size="11.5">🔑</text>
+<text x="100" y="259.0" font-size="11.5" font-weight="700" fill="#b45309" font-family="DejaVu Sans Mono, monospace">id</text>
+<text x="360" y="259.0" font-size="11" fill="#64748b" text-anchor="end">id técnico (interno)</text>
+<rect x="71.5" y="266" width="297" height="22" fill="#f8fafc"/>
+<text x="80" y="281.0" font-size="11.5">🆔</text>
+<text x="100" y="281.0" font-size="11.5" font-weight="700" fill="#7c3aed" font-family="DejaVu Sans Mono, monospace">public_id</text>
+<text x="360" y="281.0" font-size="11" fill="#64748b" text-anchor="end">id público (API / URL)</text>
+<text x="80" y="303.0" font-size="11.5">🏷️</text>
+<text x="100" y="303.0" font-size="11.5" font-weight="700" fill="#be123c" font-family="DejaVu Sans Mono, monospace">ruc</text>
+<text x="360" y="303.0" font-size="11" fill="#64748b" text-anchor="end">RUC — único por tenant</text>
+<rect x="71.5" y="310" width="297" height="22" fill="#f8fafc"/>
+<text x="100" y="325.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">razon_social</text>
+<text x="360" y="325.0" font-size="11" fill="#64748b" text-anchor="end">nombre legal</text>
+<text x="100" y="347.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">activo</text>
+<text x="360" y="347.0" font-size="11" fill="#64748b" text-anchor="end">baja lógica, nunca DELETE</text>
+<g filter="url(#sh)"><rect x="70" y="440" width="300" height="216" rx="12" fill="#fff" stroke="#bfdbfe" stroke-width="1.5"/></g>
+<path d="M70,452 a12,12 0 0 1 12,-12 h276 a12,12 0 0 1 12,12 v40 h-300 z" fill="#1d4ed8"/>
+<text x="84" y="462" font-size="15.5" font-weight="700" fill="#fff">🧑‍💼 Contactos</text>
+<text x="84" y="481" font-size="11" fill="#fff" fill-opacity=".78" font-family="DejaVu Sans Mono, monospace">contactos</text>
+<rect x="338" y="452" width="22" height="22" rx="7" fill="#d1fae5"/>
+<text x="349" y="468" font-size="13" font-weight="800" fill="#065f46" text-anchor="middle">T</text>
+<text x="80" y="509.0" font-size="11.5">🔑</text>
+<text x="100" y="509.0" font-size="11.5" font-weight="700" fill="#b45309" font-family="DejaVu Sans Mono, monospace">id</text>
+<text x="360" y="509.0" font-size="11" fill="#64748b" text-anchor="end">id técnico</text>
+<rect x="71.5" y="516" width="297" height="22" fill="#f8fafc"/>
+<text x="80" y="531.0" font-size="11.5">🆔</text>
+<text x="100" y="531.0" font-size="11.5" font-weight="700" fill="#7c3aed" font-family="DejaVu Sans Mono, monospace">public_id</text>
+<text x="360" y="531.0" font-size="11" fill="#64748b" text-anchor="end">id público</text>
+<text x="80" y="553.0" font-size="11.5">🔗</text>
+<text x="100" y="553.0" font-size="11.5" font-weight="700" fill="#1d4ed8" font-family="DejaVu Sans Mono, monospace">empresa_id</text>
+<text x="360" y="553.0" font-size="11" fill="#64748b" text-anchor="end">→ empresa (dueña)</text>
+<rect x="71.5" y="560" width="297" height="22" fill="#f8fafc"/>
+<text x="100" y="575.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">dni</text>
+<text x="360" y="575.0" font-size="11" fill="#64748b" text-anchor="end">DNI, único en su empresa</text>
+<text x="100" y="597.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">nombres</text>
+<text x="360" y="597.0" font-size="11" fill="#64748b" text-anchor="end">nombre y apellidos</text>
+<rect x="71.5" y="604" width="297" height="22" fill="#f8fafc"/>
+<text x="100" y="619.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">cargo</text>
+<text x="360" y="619.0" font-size="11" fill="#64748b" text-anchor="end">ej. Jefe de obra</text>
+<text x="100" y="641.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">activo</text>
+<text x="360" y="641.0" font-size="11" fill="#64748b" text-anchor="end">baja lógica</text>
+<g filter="url(#sh)"><rect x="70" y="680" width="300" height="194" rx="12" fill="#fff" stroke="#bfdbfe" stroke-width="1.5"/></g>
+<path d="M70,692 a12,12 0 0 1 12,-12 h276 a12,12 0 0 1 12,12 v40 h-300 z" fill="#1d4ed8"/>
+<text x="84" y="702" font-size="15.5" font-weight="700" fill="#fff">🙋 Personas naturales</text>
+<text x="84" y="721" font-size="11" fill="#fff" fill-opacity=".78" font-family="DejaVu Sans Mono, monospace">personas</text>
+<rect x="338" y="692" width="22" height="22" rx="7" fill="#d1fae5"/>
+<text x="349" y="708" font-size="13" font-weight="800" fill="#065f46" text-anchor="middle">T</text>
+<text x="80" y="749.0" font-size="11.5">🔑</text>
+<text x="100" y="749.0" font-size="11.5" font-weight="700" fill="#b45309" font-family="DejaVu Sans Mono, monospace">id</text>
+<text x="360" y="749.0" font-size="11" fill="#64748b" text-anchor="end">id técnico</text>
+<rect x="71.5" y="756" width="297" height="22" fill="#f8fafc"/>
+<text x="80" y="771.0" font-size="11.5">🆔</text>
+<text x="100" y="771.0" font-size="11.5" font-weight="700" fill="#7c3aed" font-family="DejaVu Sans Mono, monospace">public_id</text>
+<text x="360" y="771.0" font-size="11" fill="#64748b" text-anchor="end">id público</text>
+<text x="80" y="793.0" font-size="11.5">🏷️</text>
+<text x="100" y="793.0" font-size="11.5" font-weight="700" fill="#be123c" font-family="DejaVu Sans Mono, monospace">dni</text>
+<text x="360" y="793.0" font-size="11" fill="#64748b" text-anchor="end">DNI — único por tenant</text>
+<rect x="71.5" y="800" width="297" height="22" fill="#f8fafc"/>
+<text x="100" y="815.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">nombres</text>
+<text x="360" y="815.0" font-size="11" fill="#64748b" text-anchor="end">nombre y apellidos</text>
+<text x="100" y="837.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">celular / email</text>
+<text x="360" y="837.0" font-size="11" fill="#64748b" text-anchor="end">datos de contacto</text>
+<rect x="71.5" y="844" width="297" height="22" fill="#f8fafc"/>
+<text x="100" y="859.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">activo</text>
+<text x="360" y="859.0" font-size="11" fill="#64748b" text-anchor="end">baja lógica</text>
+<g filter="url(#sh)"><rect x="470" y="190" width="300" height="194" rx="12" fill="#fff" stroke="#ddd6fe" stroke-width="1.5"/></g>
+<path d="M470,202 a12,12 0 0 1 12,-12 h276 a12,12 0 0 1 12,12 v40 h-300 z" fill="#6d28d9"/>
+<text x="484" y="212" font-size="15.5" font-weight="700" fill="#fff">🧾 Plantillas</text>
+<text x="484" y="231" font-size="11" fill="#fff" fill-opacity=".78" font-family="DejaVu Sans Mono, monospace">plantillas_cotizacion</text>
+<rect x="738" y="202" width="22" height="22" rx="7" fill="#fef3c7"/>
+<text x="749" y="218" font-size="13" font-weight="800" fill="#92400e" text-anchor="middle">H</text>
+<text x="480" y="259.0" font-size="11.5">🔑</text>
+<text x="500" y="259.0" font-size="11.5" font-weight="700" fill="#b45309" font-family="DejaVu Sans Mono, monospace">id</text>
+<text x="760" y="259.0" font-size="11" fill="#64748b" text-anchor="end">id técnico</text>
+<rect x="471.5" y="266" width="297" height="22" fill="#f8fafc"/>
+<text x="480" y="281.0" font-size="11.5">🆔</text>
+<text x="500" y="281.0" font-size="11.5" font-weight="700" fill="#7c3aed" font-family="DejaVu Sans Mono, monospace">public_id</text>
+<text x="760" y="281.0" font-size="11" fill="#64748b" text-anchor="end">id público</text>
+<text x="480" y="303.0" font-size="11.5">🏷️</text>
+<text x="500" y="303.0" font-size="11.5" font-weight="700" fill="#be123c" font-family="DejaVu Sans Mono, monospace">slug</text>
+<text x="760" y="303.0" font-size="11" fill="#64748b" text-anchor="end">estandar / premium / express</text>
+<rect x="471.5" y="310" width="297" height="22" fill="#f8fafc"/>
+<text x="500" y="325.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">validez_dias_sugerida</text>
+<text x="760" y="325.0" font-size="11" fill="#64748b" text-anchor="end">validez por defecto</text>
+<text x="500" y="347.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">terminos_condiciones</text>
+<text x="760" y="347.0" font-size="11" fill="#64748b" text-anchor="end">texto del PDF</text>
+<rect x="471.5" y="354" width="297" height="22" fill="#f8fafc"/>
+<text x="500" y="369.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">activo</text>
+<text x="760" y="369.0" font-size="11" fill="#64748b" text-anchor="end">máximo 3 activas</text>
+<g filter="url(#sh)"><rect x="470" y="460" width="300" height="326" rx="12" fill="#fff" stroke="#ddd6fe" stroke-width="1.5"/></g>
+<path d="M470,472 a12,12 0 0 1 12,-12 h276 a12,12 0 0 1 12,12 v40 h-300 z" fill="#6d28d9"/>
+<text x="484" y="482" font-size="15.5" font-weight="700" fill="#fff">📄 Cotizaciones</text>
+<text x="484" y="501" font-size="11" fill="#fff" fill-opacity=".78" font-family="DejaVu Sans Mono, monospace">cotizaciones</text>
+<rect x="738" y="472" width="22" height="22" rx="7" fill="#d1fae5"/>
+<text x="749" y="488" font-size="13" font-weight="800" fill="#065f46" text-anchor="middle">T</text>
+<text x="480" y="529.0" font-size="11.5">🔑</text>
+<text x="500" y="529.0" font-size="11.5" font-weight="700" fill="#b45309" font-family="DejaVu Sans Mono, monospace">id</text>
+<text x="760" y="529.0" font-size="11" fill="#64748b" text-anchor="end">id técnico (nunca en la URL)</text>
+<rect x="471.5" y="536" width="297" height="22" fill="#f8fafc"/>
+<text x="480" y="551.0" font-size="11.5">🆔</text>
+<text x="500" y="551.0" font-size="11.5" font-weight="700" fill="#7c3aed" font-family="DejaVu Sans Mono, monospace">public_id</text>
+<text x="760" y="551.0" font-size="11" fill="#64748b" text-anchor="end">id público (URL y QR)</text>
+<text x="480" y="573.0" font-size="11.5">🏷️</text>
+<text x="500" y="573.0" font-size="11.5" font-weight="700" fill="#be123c" font-family="DejaVu Sans Mono, monospace">numero</text>
+<text x="760" y="573.0" font-size="11" fill="#64748b" text-anchor="end">COT-2026-001 — lo emite la BD</text>
+<rect x="471.5" y="580" width="297" height="22" fill="#f8fafc"/>
+<text x="480" y="595.0" font-size="11.5">📅</text>
+<text x="500" y="595.0" font-size="11.5" font-weight="700" fill="#047857" font-family="DejaVu Sans Mono, monospace">fecha_emision</text>
+<text x="760" y="595.0" font-size="11" fill="#64748b" text-anchor="end">fecha real (hora de Lima)</text>
+<text x="480" y="617.0" font-size="11.5">🔗</text>
+<text x="500" y="617.0" font-size="11.5" font-weight="700" fill="#1d4ed8" font-family="DejaVu Sans Mono, monospace">empresa_id</text>
+<text x="760" y="617.0" font-size="11" fill="#64748b" text-anchor="end">→ empresa  (o persona)</text>
+<rect x="471.5" y="624" width="297" height="22" fill="#f8fafc"/>
+<text x="480" y="639.0" font-size="11.5">🔗</text>
+<text x="500" y="639.0" font-size="11.5" font-weight="700" fill="#1d4ed8" font-family="DejaVu Sans Mono, monospace">contacto_id</text>
+<text x="760" y="639.0" font-size="11" fill="#64748b" text-anchor="end">→ contacto DE esa empresa</text>
+<text x="480" y="661.0" font-size="11.5">🔗</text>
+<text x="500" y="661.0" font-size="11.5" font-weight="700" fill="#1d4ed8" font-family="DejaVu Sans Mono, monospace">persona_id</text>
+<text x="760" y="661.0" font-size="11" fill="#64748b" text-anchor="end">→ persona  (o empresa)</text>
+<rect x="471.5" y="668" width="297" height="22" fill="#f8fafc"/>
+<text x="480" y="683.0" font-size="11.5">🔗</text>
+<text x="500" y="683.0" font-size="11.5" font-weight="700" fill="#1d4ed8" font-family="DejaVu Sans Mono, monospace">plantilla_id</text>
+<text x="760" y="683.0" font-size="11" fill="#64748b" text-anchor="end">→ plantilla</text>
+<text x="500" y="705.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">proyecto_nombre</text>
+<text x="760" y="705.0" font-size="11" fill="#64748b" text-anchor="end">nombre del proyecto</text>
+<rect x="471.5" y="712" width="297" height="22" fill="#f8fafc"/>
+<text x="500" y="727.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">subtotal / igv / total</text>
+<text x="760" y="727.0" font-size="11" fill="#64748b" text-anchor="end">cuadrado por CHECK</text>
+<text x="500" y="749.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">igv_tasa</text>
+<text x="760" y="749.0" font-size="11" fill="#64748b" text-anchor="end">la tasa viaja con el documento</text>
+<rect x="471.5" y="756" width="297" height="22" fill="#f8fafc"/>
+<text x="500" y="771.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">estado</text>
+<text x="760" y="771.0" font-size="11" fill="#64748b" text-anchor="end">borrador→emitida→aceptada…</text>
+<g filter="url(#sh)"><rect x="850" y="460" width="300" height="304" rx="12" fill="#fff" stroke="#ddd6fe" stroke-width="1.5"/></g>
+<path d="M850,472 a12,12 0 0 1 12,-12 h276 a12,12 0 0 1 12,12 v40 h-300 z" fill="#6d28d9"/>
+<text x="864" y="482" font-size="15.5" font-weight="700" fill="#fff">🧪 Ensayos cotizados  📌</text>
+<text x="864" y="501" font-size="11" fill="#fff" fill-opacity=".78" font-family="DejaVu Sans Mono, monospace">cotizacion_items</text>
+<rect x="1118" y="472" width="22" height="22" rx="7" fill="#d1fae5"/>
+<text x="1129" y="488" font-size="13" font-weight="800" fill="#065f46" text-anchor="middle">T</text>
+<text x="860" y="529.0" font-size="11.5">🔑</text>
+<text x="880" y="529.0" font-size="11.5" font-weight="700" fill="#b45309" font-family="DejaVu Sans Mono, monospace">id</text>
+<text x="1140" y="529.0" font-size="11" fill="#64748b" text-anchor="end">id técnico</text>
+<rect x="851.5" y="536" width="297" height="22" fill="#f8fafc"/>
+<text x="860" y="551.0" font-size="11.5">🔗</text>
+<text x="880" y="551.0" font-size="11.5" font-weight="700" fill="#1d4ed8" font-family="DejaVu Sans Mono, monospace">cotizacion_id</text>
+<text x="1140" y="551.0" font-size="11" fill="#64748b" text-anchor="end">→ cotización</text>
+<text x="880" y="573.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">orden</text>
+<text x="1140" y="573.0" font-size="11" fill="#64748b" text-anchor="end">orden en el PDF</text>
+<rect x="851.5" y="580" width="297" height="22" fill="#f8fafc"/>
+<text x="860" y="595.0" font-size="11.5">🔗</text>
+<text x="880" y="595.0" font-size="11.5" font-weight="700" fill="#1d4ed8" font-family="DejaVu Sans Mono, monospace">ensayo_id</text>
+<text x="1140" y="595.0" font-size="11" fill="#64748b" text-anchor="end">→ ensayo (solo informativo)</text>
+<text x="860" y="617.0" font-size="11.5">🔗</text>
+<text x="880" y="617.0" font-size="11.5" font-weight="700" fill="#1d4ed8" font-family="DejaVu Sans Mono, monospace">categoria_id</text>
+<text x="1140" y="617.0" font-size="11" fill="#64748b" text-anchor="end">→ categoría congelada</text>
+<rect x="851.5" y="624" width="297" height="22" fill="#f8fafc"/>
+<text x="880" y="639.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">codigo / nombre / norma</text>
+<text x="1140" y="639.0" font-size="11" fill="#64748b" text-anchor="end">FOTO del catálogo</text>
+<text x="880" y="661.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">unidad / categoría</text>
+<text x="1140" y="661.0" font-size="11" fill="#64748b" text-anchor="end">FOTO del catálogo</text>
+<rect x="851.5" y="668" width="297" height="22" fill="#f8fafc"/>
+<text x="880" y="683.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">acreditado_snapshot</text>
+<text x="1140" y="683.0" font-size="11" fill="#64748b" text-anchor="end">acreditación ese día</text>
+<text x="880" y="705.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">acreditado_override</text>
+<text x="1140" y="705.0" font-size="11" fill="#64748b" text-anchor="end">corregido a mano</text>
+<rect x="851.5" y="712" width="297" height="22" fill="#f8fafc"/>
+<text x="880" y="727.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">cantidad / precio</text>
+<text x="1140" y="727.0" font-size="11" fill="#64748b" text-anchor="end">lo que se cobró</text>
+<text x="880" y="749.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">componentes_snapshot</text>
+<text x="1140" y="749.0" font-size="11" fill="#64748b" text-anchor="end">FOTO del paquete</text>
+<g filter="url(#sh)"><rect x="850" y="790" width="300" height="194" rx="12" fill="#fff" stroke="#ddd6fe" stroke-width="1.5"/></g>
+<path d="M850,802 a12,12 0 0 1 12,-12 h276 a12,12 0 0 1 12,12 v40 h-300 z" fill="#6d28d9"/>
+<text x="864" y="812" font-size="15.5" font-weight="700" fill="#fff">🕒 Historial de estados  🔒</text>
+<text x="864" y="831" font-size="11" fill="#fff" fill-opacity=".78" font-family="DejaVu Sans Mono, monospace">cotizacion_historial_estados</text>
+<rect x="1118" y="802" width="22" height="22" rx="7" fill="#d1fae5"/>
+<text x="1129" y="818" font-size="13" font-weight="800" fill="#065f46" text-anchor="middle">T</text>
+<text x="860" y="859.0" font-size="11.5">🔑</text>
+<text x="880" y="859.0" font-size="11.5" font-weight="700" fill="#b45309" font-family="DejaVu Sans Mono, monospace">id</text>
+<text x="1140" y="859.0" font-size="11" fill="#64748b" text-anchor="end">id técnico</text>
+<rect x="851.5" y="866" width="297" height="22" fill="#f8fafc"/>
+<text x="860" y="881.0" font-size="11.5">🔗</text>
+<text x="880" y="881.0" font-size="11.5" font-weight="700" fill="#1d4ed8" font-family="DejaVu Sans Mono, monospace">cotizacion_id</text>
+<text x="1140" y="881.0" font-size="11" fill="#64748b" text-anchor="end">→ cotización</text>
+<text x="880" y="903.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">estado_anterior</text>
+<text x="1140" y="903.0" font-size="11" fill="#64748b" text-anchor="end">de dónde venía</text>
+<rect x="851.5" y="910" width="297" height="22" fill="#f8fafc"/>
+<text x="880" y="925.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">estado</text>
+<text x="1140" y="925.0" font-size="11" fill="#64748b" text-anchor="end">a dónde fue</text>
+<text x="880" y="947.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">nota</text>
+<text x="1140" y="947.0" font-size="11" fill="#64748b" text-anchor="end">ej. Orden de compra 4471</text>
+<rect x="851.5" y="954" width="297" height="22" fill="#f8fafc"/>
+<text x="860" y="969.0" font-size="11.5">🔗</text>
+<text x="880" y="969.0" font-size="11.5" font-weight="700" fill="#1d4ed8" font-family="DejaVu Sans Mono, monospace">registrado_por</text>
+<text x="1140" y="969.0" font-size="11" fill="#64748b" text-anchor="end">→ usuario</text>
+<g filter="url(#sh)"><rect x="1250" y="190" width="300" height="304" rx="12" fill="#fff" stroke="#fed7aa" stroke-width="1.5"/></g>
+<path d="M1250,202 a12,12 0 0 1 12,-12 h276 a12,12 0 0 1 12,12 v40 h-300 z" fill="#c2410c"/>
+<text x="1264" y="212" font-size="15.5" font-weight="700" fill="#fff">🔬 Ensayos (catálogo)</text>
+<text x="1264" y="231" font-size="11" fill="#fff" fill-opacity=".78" font-family="DejaVu Sans Mono, monospace">ensayos_catalogo</text>
+<rect x="1518" y="202" width="22" height="22" rx="7" fill="#d1fae5"/>
+<text x="1529" y="218" font-size="13" font-weight="800" fill="#065f46" text-anchor="middle">T</text>
+<text x="1260" y="259.0" font-size="11.5">🔑</text>
+<text x="1280" y="259.0" font-size="11.5" font-weight="700" fill="#b45309" font-family="DejaVu Sans Mono, monospace">id</text>
+<text x="1540" y="259.0" font-size="11" fill="#64748b" text-anchor="end">id técnico</text>
+<rect x="1251.5" y="266" width="297" height="22" fill="#f8fafc"/>
+<text x="1260" y="281.0" font-size="11.5">🆔</text>
+<text x="1280" y="281.0" font-size="11.5" font-weight="700" fill="#7c3aed" font-family="DejaVu Sans Mono, monospace">public_id</text>
+<text x="1540" y="281.0" font-size="11" fill="#64748b" text-anchor="end">id público</text>
+<text x="1260" y="303.0" font-size="11.5">🏷️</text>
+<text x="1280" y="303.0" font-size="11.5" font-weight="700" fill="#be123c" font-family="DejaVu Sans Mono, monospace">codigo</text>
+<text x="1540" y="303.0" font-size="11" fill="#64748b" text-anchor="end">SU-01 — prefijo + correlativo</text>
+<rect x="1251.5" y="310" width="297" height="22" fill="#f8fafc"/>
+<text x="1260" y="325.0" font-size="11.5">🔗</text>
+<text x="1280" y="325.0" font-size="11.5" font-weight="700" fill="#1d4ed8" font-family="DejaVu Sans Mono, monospace">categoria_id</text>
+<text x="1540" y="325.0" font-size="11" fill="#64748b" text-anchor="end">→ categoría</text>
+<text x="1260" y="347.0" font-size="11.5">🔗</text>
+<text x="1280" y="347.0" font-size="11.5" font-weight="700" fill="#1d4ed8" font-family="DejaVu Sans Mono, monospace">subcategoria_id</text>
+<text x="1540" y="347.0" font-size="11" fill="#64748b" text-anchor="end">→ subcategoría</text>
+<rect x="1251.5" y="354" width="297" height="22" fill="#f8fafc"/>
+<text x="1280" y="369.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">nombre / norma</text>
+<text x="1540" y="369.0" font-size="11" fill="#64748b" text-anchor="end">ej. ASTM D2216</text>
+<text x="1280" y="391.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">unidad</text>
+<text x="1540" y="391.0" font-size="11" fill="#64748b" text-anchor="end">UND, PUNT., DÍA…</text>
+<rect x="1251.5" y="398" width="297" height="22" fill="#f8fafc"/>
+<text x="1280" y="413.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">precio_base</text>
+<text x="1540" y="413.0" font-size="11" fill="#64748b" text-anchor="end">precio de lista S/</text>
+<text x="1280" y="435.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">acreditado</text>
+<text x="1540" y="435.0" font-size="11" fill="#64748b" text-anchor="end">estado ACTUAL (INACAL)</text>
+<rect x="1251.5" y="442" width="297" height="22" fill="#f8fafc"/>
+<text x="1280" y="457.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">es_paquete</text>
+<text x="1540" y="457.0" font-size="11" fill="#64748b" text-anchor="end">agrupa varios ensayos</text>
+<text x="1280" y="479.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">activo</text>
+<text x="1540" y="479.0" font-size="11" fill="#64748b" text-anchor="end">desactivar ≠ borrar</text>
+<g filter="url(#sh)"><rect x="1620" y="190" width="300" height="238" rx="12" fill="#fff" stroke="#fed7aa" stroke-width="1.5"/></g>
+<path d="M1620,202 a12,12 0 0 1 12,-12 h276 a12,12 0 0 1 12,12 v40 h-300 z" fill="#c2410c"/>
+<text x="1634" y="212" font-size="15.5" font-weight="700" fill="#fff">🗂️ Categorías  ✏️</text>
+<text x="1634" y="231" font-size="11" fill="#fff" fill-opacity=".78" font-family="DejaVu Sans Mono, monospace">categorias_ensayo</text>
+<rect x="1888" y="202" width="22" height="22" rx="7" fill="#d1fae5"/>
+<text x="1899" y="218" font-size="13" font-weight="800" fill="#065f46" text-anchor="middle">T</text>
+<text x="1630" y="259.0" font-size="11.5">🔑</text>
+<text x="1650" y="259.0" font-size="11.5" font-weight="700" fill="#b45309" font-family="DejaVu Sans Mono, monospace">id</text>
+<text x="1910" y="259.0" font-size="11" fill="#64748b" text-anchor="end">id técnico</text>
+<rect x="1621.5" y="266" width="297" height="22" fill="#f8fafc"/>
+<text x="1630" y="281.0" font-size="11.5">🆔</text>
+<text x="1650" y="281.0" font-size="11.5" font-weight="700" fill="#7c3aed" font-family="DejaVu Sans Mono, monospace">public_id</text>
+<text x="1910" y="281.0" font-size="11" fill="#64748b" text-anchor="end">id público</text>
+<text x="1630" y="303.0" font-size="11.5">🏷️</text>
+<text x="1650" y="303.0" font-size="11.5" font-weight="700" fill="#be123c" font-family="DejaVu Sans Mono, monospace">slug</text>
+<text x="1910" y="303.0" font-size="11" fill="#64748b" text-anchor="end">suelos, concreto…</text>
+<rect x="1621.5" y="310" width="297" height="22" fill="#f8fafc"/>
+<text x="1650" y="325.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">nombre</text>
+<text x="1910" y="325.0" font-size="11" fill="#64748b" text-anchor="end">único (sin mayúsculas)</text>
+<text x="1630" y="347.0" font-size="11.5">🏷️</text>
+<text x="1650" y="347.0" font-size="11.5" font-weight="700" fill="#be123c" font-family="DejaVu Sans Mono, monospace">prefijo_codigo</text>
+<text x="1910" y="347.0" font-size="11" fill="#64748b" text-anchor="end">SU, AG — fijo con ensayos</text>
+<rect x="1621.5" y="354" width="297" height="22" fill="#f8fafc"/>
+<text x="1650" y="369.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">color / icono</text>
+<text x="1910" y="369.0" font-size="11" fill="#64748b" text-anchor="end">cómo se ve en la app</text>
+<text x="1650" y="391.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">orden</text>
+<text x="1910" y="391.0" font-size="11" fill="#64748b" text-anchor="end">orden de pestañas</text>
+<rect x="1621.5" y="398" width="297" height="22" fill="#f8fafc"/>
+<text x="1650" y="413.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">activo</text>
+<text x="1910" y="413.0" font-size="11" fill="#64748b" text-anchor="end">desactivar ≠ borrar</text>
+<g filter="url(#sh)"><rect x="1620" y="460" width="300" height="194" rx="12" fill="#fff" stroke="#fed7aa" stroke-width="1.5"/></g>
+<path d="M1620,472 a12,12 0 0 1 12,-12 h276 a12,12 0 0 1 12,12 v40 h-300 z" fill="#c2410c"/>
+<text x="1634" y="482" font-size="15.5" font-weight="700" fill="#fff">📂 Subcategorías  ✏️</text>
+<text x="1634" y="501" font-size="11" fill="#fff" fill-opacity=".78" font-family="DejaVu Sans Mono, monospace">subcategorias_ensayo</text>
+<rect x="1888" y="472" width="22" height="22" rx="7" fill="#d1fae5"/>
+<text x="1899" y="488" font-size="13" font-weight="800" fill="#065f46" text-anchor="middle">T</text>
+<text x="1630" y="529.0" font-size="11.5">🔑</text>
+<text x="1650" y="529.0" font-size="11.5" font-weight="700" fill="#b45309" font-family="DejaVu Sans Mono, monospace">id</text>
+<text x="1910" y="529.0" font-size="11" fill="#64748b" text-anchor="end">id técnico</text>
+<rect x="1621.5" y="536" width="297" height="22" fill="#f8fafc"/>
+<text x="1630" y="551.0" font-size="11.5">🆔</text>
+<text x="1650" y="551.0" font-size="11.5" font-weight="700" fill="#7c3aed" font-family="DejaVu Sans Mono, monospace">public_id</text>
+<text x="1910" y="551.0" font-size="11" fill="#64748b" text-anchor="end">id público</text>
+<text x="1630" y="573.0" font-size="11.5">🔗</text>
+<text x="1650" y="573.0" font-size="11.5" font-weight="700" fill="#1d4ed8" font-family="DejaVu Sans Mono, monospace">categoria_id</text>
+<text x="1910" y="573.0" font-size="11" fill="#64748b" text-anchor="end">→ categoría</text>
+<rect x="1621.5" y="580" width="297" height="22" fill="#f8fafc"/>
+<text x="1650" y="595.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">nombre</text>
+<text x="1910" y="595.0" font-size="11" fill="#64748b" text-anchor="end">único en su categoría</text>
+<text x="1650" y="617.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">orden</text>
+<text x="1910" y="617.0" font-size="11" fill="#64748b" text-anchor="end">orden de los filtros</text>
+<rect x="1621.5" y="624" width="297" height="22" fill="#f8fafc"/>
+<text x="1650" y="639.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">activo</text>
+<text x="1910" y="639.0" font-size="11" fill="#64748b" text-anchor="end">desactivar ≠ borrar</text>
+<g filter="url(#sh)"><rect x="1250" y="530" width="300" height="194" rx="12" fill="#fff" stroke="#fed7aa" stroke-width="1.5"/></g>
+<path d="M1250,542 a12,12 0 0 1 12,-12 h276 a12,12 0 0 1 12,12 v40 h-300 z" fill="#c2410c"/>
+<text x="1264" y="552" font-size="15.5" font-weight="700" fill="#fff">✅ Historial de acreditación  🔒</text>
+<text x="1264" y="571" font-size="11" fill="#fff" fill-opacity=".78" font-family="DejaVu Sans Mono, monospace">ensayo_acreditacion_historial</text>
+<rect x="1518" y="542" width="22" height="22" rx="7" fill="#d1fae5"/>
+<text x="1529" y="558" font-size="13" font-weight="800" fill="#065f46" text-anchor="middle">T</text>
+<text x="1260" y="599.0" font-size="11.5">🔑</text>
+<text x="1280" y="599.0" font-size="11.5" font-weight="700" fill="#b45309" font-family="DejaVu Sans Mono, monospace">id</text>
+<text x="1540" y="599.0" font-size="11" fill="#64748b" text-anchor="end">id técnico</text>
+<rect x="1251.5" y="606" width="297" height="22" fill="#f8fafc"/>
+<text x="1260" y="621.0" font-size="11.5">🔗</text>
+<text x="1280" y="621.0" font-size="11.5" font-weight="700" fill="#1d4ed8" font-family="DejaVu Sans Mono, monospace">ensayo_id</text>
+<text x="1540" y="621.0" font-size="11" fill="#64748b" text-anchor="end">→ ensayo</text>
+<text x="1280" y="643.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">acreditado</text>
+<text x="1540" y="643.0" font-size="11" fill="#64748b" text-anchor="end">ganó / perdió el alcance</text>
+<rect x="1251.5" y="650" width="297" height="22" fill="#f8fafc"/>
+<text x="1280" y="665.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">motivo</text>
+<text x="1540" y="665.0" font-size="11" fill="#64748b" text-anchor="end">ej. Renovación INACAL</text>
+<text x="1260" y="687.0" font-size="11.5">📅</text>
+<text x="1280" y="687.0" font-size="11.5" font-weight="700" fill="#047857" font-family="DejaVu Sans Mono, monospace">vigente_desde</text>
+<text x="1540" y="687.0" font-size="11" fill="#64748b" text-anchor="end">una fila por ensayo y día</text>
+<rect x="1251.5" y="694" width="297" height="22" fill="#f8fafc"/>
+<text x="1260" y="709.0" font-size="11.5">🔗</text>
+<text x="1280" y="709.0" font-size="11.5" font-weight="700" fill="#1d4ed8" font-family="DejaVu Sans Mono, monospace">registrado_por</text>
+<text x="1540" y="709.0" font-size="11" fill="#64748b" text-anchor="end">→ usuario</text>
+<g filter="url(#sh)"><rect x="1620" y="700" width="300" height="194" rx="12" fill="#fff" stroke="#fed7aa" stroke-width="1.5"/></g>
+<path d="M1620,712 a12,12 0 0 1 12,-12 h276 a12,12 0 0 1 12,12 v40 h-300 z" fill="#c2410c"/>
+<text x="1634" y="722" font-size="15.5" font-weight="700" fill="#fff">📦 Ensayos de cada paquete</text>
+<text x="1634" y="741" font-size="11" fill="#fff" fill-opacity=".78" font-family="DejaVu Sans Mono, monospace">paquete_componentes</text>
+<rect x="1888" y="712" width="22" height="22" rx="7" fill="#d1fae5"/>
+<text x="1899" y="728" font-size="13" font-weight="800" fill="#065f46" text-anchor="middle">T</text>
+<text x="1630" y="769.0" font-size="11.5">🔑</text>
+<text x="1650" y="769.0" font-size="11.5" font-weight="700" fill="#b45309" font-family="DejaVu Sans Mono, monospace">id</text>
+<text x="1910" y="769.0" font-size="11" fill="#64748b" text-anchor="end">id técnico</text>
+<rect x="1621.5" y="776" width="297" height="22" fill="#f8fafc"/>
+<text x="1630" y="791.0" font-size="11.5">🔗</text>
+<text x="1650" y="791.0" font-size="11.5" font-weight="700" fill="#1d4ed8" font-family="DejaVu Sans Mono, monospace">ensayo_id</text>
+<text x="1910" y="791.0" font-size="11" fill="#64748b" text-anchor="end">→ el paquete</text>
+<text x="1630" y="813.0" font-size="11.5">🔗</text>
+<text x="1650" y="813.0" font-size="11.5" font-weight="700" fill="#1d4ed8" font-family="DejaVu Sans Mono, monospace">ensayo_componente_id</text>
+<text x="1910" y="813.0" font-size="11" fill="#64748b" text-anchor="end">→ ensayo incluido</text>
+<rect x="1621.5" y="820" width="297" height="22" fill="#f8fafc"/>
+<text x="1650" y="835.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">cantidad</text>
+<text x="1910" y="835.0" font-size="11" fill="#64748b" text-anchor="end">ej. 18 briquetas</text>
+<text x="1650" y="857.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">orden</text>
+<text x="1910" y="857.0" font-size="11" fill="#64748b" text-anchor="end">orden dentro del paquete</text>
+<rect x="1621.5" y="864" width="297" height="22" fill="#f8fafc"/>
+<text x="1650" y="879.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">nombre / norma</text>
+<text x="1910" y="879.0" font-size="11" fill="#64748b" text-anchor="end">solo si no está vinculado</text>
+<g filter="url(#sh)"><rect x="1250" y="780" width="300" height="150" rx="12" fill="#fff" stroke="#fed7aa" stroke-width="1.5"/></g>
+<path d="M1250,792 a12,12 0 0 1 12,-12 h276 a12,12 0 0 1 12,12 v40 h-300 z" fill="#c2410c"/>
+<text x="1264" y="802" font-size="15.5" font-weight="700" fill="#fff">🔢 Correlativos</text>
+<text x="1264" y="821" font-size="11" fill="#fff" fill-opacity=".78" font-family="DejaVu Sans Mono, monospace">correlativos</text>
+<rect x="1518" y="792" width="22" height="22" rx="7" fill="#d1fae5"/>
+<text x="1529" y="808" font-size="13" font-weight="800" fill="#065f46" text-anchor="middle">T</text>
+<text x="1260" y="849.0" font-size="11.5">🔑</text>
+<text x="1280" y="849.0" font-size="11.5" font-weight="700" fill="#b45309" font-family="DejaVu Sans Mono, monospace">ambito</text>
+<text x="1540" y="849.0" font-size="11" fill="#64748b" text-anchor="end">cotizacion / ensayo</text>
+<rect x="1251.5" y="856" width="297" height="22" fill="#f8fafc"/>
+<text x="1260" y="871.0" font-size="11.5">🔑</text>
+<text x="1280" y="871.0" font-size="11.5" font-weight="700" fill="#b45309" font-family="DejaVu Sans Mono, monospace">clave</text>
+<text x="1540" y="871.0" font-size="11" fill="#64748b" text-anchor="end">GLOBAL o prefijo (SU)</text>
+<text x="1260" y="893.0" font-size="11.5">🔑</text>
+<text x="1280" y="893.0" font-size="11.5" font-weight="700" fill="#b45309" font-family="DejaVu Sans Mono, monospace">periodo</text>
+<text x="1540" y="893.0" font-size="11" fill="#64748b" text-anchor="end">año, para reiniciar la serie</text>
+<rect x="1251.5" y="900" width="297" height="22" fill="#f8fafc"/>
+<text x="1280" y="915.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">ultimo</text>
+<text x="1540" y="915.0" font-size="11" fill="#64748b" text-anchor="end">contador atómico, sin MAX+1</text>
+<g filter="url(#sh)"><rect x="70" y="960" width="300" height="216" rx="12" fill="#fff" stroke="#a5f3fc" stroke-width="1.5"/></g>
+<path d="M70,972 a12,12 0 0 1 12,-12 h276 a12,12 0 0 1 12,12 v40 h-300 z" fill="#0e7490"/>
+<text x="84" y="982" font-size="15.5" font-weight="700" fill="#fff">🔗 Integraciones</text>
+<text x="84" y="1001" font-size="11" fill="#fff" fill-opacity=".78" font-family="DejaVu Sans Mono, monospace">integraciones</text>
+<rect x="338" y="972" width="22" height="22" rx="7" fill="#d1fae5"/>
+<text x="349" y="988" font-size="13" font-weight="800" fill="#065f46" text-anchor="middle">T</text>
+<text x="80" y="1029.0" font-size="11.5">🔑</text>
+<text x="100" y="1029.0" font-size="11.5" font-weight="700" fill="#b45309" font-family="DejaVu Sans Mono, monospace">id</text>
+<text x="360" y="1029.0" font-size="11" fill="#64748b" text-anchor="end">id técnico</text>
+<rect x="71.5" y="1036" width="297" height="22" fill="#f8fafc"/>
+<text x="80" y="1051.0" font-size="11.5">🆔</text>
+<text x="100" y="1051.0" font-size="11.5" font-weight="700" fill="#7c3aed" font-family="DejaVu Sans Mono, monospace">public_id</text>
+<text x="360" y="1051.0" font-size="11" fill="#64748b" text-anchor="end">id público</text>
+<text x="100" y="1073.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">titular</text>
+<text x="360" y="1073.0" font-size="11" fill="#64748b" text-anchor="end">laboratorio / cliente</text>
+<rect x="71.5" y="1080" width="297" height="22" fill="#f8fafc"/>
+<text x="80" y="1095.0" font-size="11.5">🔗</text>
+<text x="100" y="1095.0" font-size="11.5" font-weight="700" fill="#1d4ed8" font-family="DejaVu Sans Mono, monospace">empresa_id</text>
+<text x="360" y="1095.0" font-size="11" fill="#64748b" text-anchor="end">→ empresa (NULL = propia)</text>
+<text x="100" y="1117.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">proveedor</text>
+<text x="360" y="1117.0" font-size="11" fill="#64748b" text-anchor="end">Google Drive / Office 365</text>
+<rect x="71.5" y="1124" width="297" height="22" fill="#f8fafc"/>
+<text x="100" y="1139.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">token_ref</text>
+<text x="360" y="1139.0" font-size="11" fill="#64748b" text-anchor="end">referencia al vault, NO el token</text>
+<text x="100" y="1161.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">estado</text>
+<text x="360" y="1161.0" font-size="11" fill="#64748b" text-anchor="end">activa / revocada / expirada</text>
+<g filter="url(#sh)"><rect x="470" y="960" width="300" height="238" rx="12" fill="#fff" stroke="#a5f3fc" stroke-width="1.5"/></g>
+<path d="M470,972 a12,12 0 0 1 12,-12 h276 a12,12 0 0 1 12,12 v40 h-300 z" fill="#0e7490"/>
+<text x="484" y="982" font-size="15.5" font-weight="700" fill="#fff">📁 Documentos emitidos</text>
+<text x="484" y="1001" font-size="11" fill="#fff" fill-opacity=".78" font-family="DejaVu Sans Mono, monospace">documentos_externos</text>
+<rect x="738" y="972" width="22" height="22" rx="7" fill="#d1fae5"/>
+<text x="749" y="988" font-size="13" font-weight="800" fill="#065f46" text-anchor="middle">T</text>
+<text x="480" y="1029.0" font-size="11.5">🔑</text>
+<text x="500" y="1029.0" font-size="11.5" font-weight="700" fill="#b45309" font-family="DejaVu Sans Mono, monospace">id</text>
+<text x="760" y="1029.0" font-size="11" fill="#64748b" text-anchor="end">id técnico</text>
+<rect x="471.5" y="1036" width="297" height="22" fill="#f8fafc"/>
+<text x="480" y="1051.0" font-size="11.5">🆔</text>
+<text x="500" y="1051.0" font-size="11.5" font-weight="700" fill="#7c3aed" font-family="DejaVu Sans Mono, monospace">public_id</text>
+<text x="760" y="1051.0" font-size="11" fill="#64748b" text-anchor="end">id público</text>
+<text x="480" y="1073.0" font-size="11.5">🔗</text>
+<text x="500" y="1073.0" font-size="11.5" font-weight="700" fill="#1d4ed8" font-family="DejaVu Sans Mono, monospace">cotizacion_id</text>
+<text x="760" y="1073.0" font-size="11" fill="#64748b" text-anchor="end">→ cotización</text>
+<rect x="471.5" y="1080" width="297" height="22" fill="#f8fafc"/>
+<text x="500" y="1095.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">origen</text>
+<text x="760" y="1095.0" font-size="11" fill="#64748b" text-anchor="end">local o nube</text>
+<text x="480" y="1117.0" font-size="11.5">🔗</text>
+<text x="500" y="1117.0" font-size="11.5" font-weight="700" fill="#1d4ed8" font-family="DejaVu Sans Mono, monospace">integracion_id</text>
+<text x="760" y="1117.0" font-size="11" fill="#64748b" text-anchor="end">→ integración (si es nube)</text>
+<rect x="471.5" y="1124" width="297" height="22" fill="#f8fafc"/>
+<text x="500" y="1139.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">tipo_documento</text>
+<text x="760" y="1139.0" font-size="11" fill="#64748b" text-anchor="end">PDF, certificado, O/C</text>
+<text x="500" y="1161.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">nombre_archivo</text>
+<text x="760" y="1161.0" font-size="11" fill="#64748b" text-anchor="end">nombre del archivo</text>
+<rect x="471.5" y="1168" width="297" height="22" fill="#f8fafc"/>
+<text x="500" y="1183.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">hash_sha256</text>
+<text x="760" y="1183.0" font-size="11" fill="#64748b" text-anchor="end">huella del archivo</text>
+<g filter="url(#sh)"><rect x="850" y="1060" width="300" height="260" rx="12" fill="#fff" stroke="#cbd5e1" stroke-width="1.5"/></g>
+<path d="M850,1072 a12,12 0 0 1 12,-12 h276 a12,12 0 0 1 12,12 v40 h-300 z" fill="#334155"/>
+<text x="864" y="1082" font-size="15.5" font-weight="700" fill="#fff">🛡️ Auditoría  🔒</text>
+<text x="864" y="1101" font-size="11" fill="#fff" fill-opacity=".78" font-family="DejaVu Sans Mono, monospace">auditoria</text>
+<rect x="1118" y="1072" width="22" height="22" rx="7" fill="#d1fae5"/>
+<text x="1129" y="1088" font-size="13" font-weight="800" fill="#065f46" text-anchor="middle">T</text>
+<text x="860" y="1129.0" font-size="11.5">🔑</text>
+<text x="880" y="1129.0" font-size="11.5" font-weight="700" fill="#b45309" font-family="DejaVu Sans Mono, monospace">id</text>
+<text x="1140" y="1129.0" font-size="11" fill="#64748b" text-anchor="end">id técnico</text>
+<rect x="851.5" y="1136" width="297" height="22" fill="#f8fafc"/>
+<text x="880" y="1151.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">tabla / registro_id</text>
+<text x="1140" y="1151.0" font-size="11" fill="#64748b" text-anchor="end">qué se tocó</text>
+<text x="860" y="1173.0" font-size="11.5">🆔</text>
+<text x="880" y="1173.0" font-size="11.5" font-weight="700" fill="#7c3aed" font-family="DejaVu Sans Mono, monospace">registro_public_id</text>
+<text x="1140" y="1173.0" font-size="11" fill="#64748b" text-anchor="end">rastreo desde la API</text>
+<rect x="851.5" y="1180" width="297" height="22" fill="#f8fafc"/>
+<text x="880" y="1195.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">accion</text>
+<text x="1140" y="1195.0" font-size="11" fill="#64748b" text-anchor="end">INSERT / UPDATE / DELETE</text>
+<text x="880" y="1217.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">campos_cambiados</text>
+<text x="1140" y="1217.0" font-size="11" fill="#64748b" text-anchor="end">qué campos exactamente</text>
+<rect x="851.5" y="1224" width="297" height="22" fill="#f8fafc"/>
+<text x="880" y="1239.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">datos_anteriores</text>
+<text x="1140" y="1239.0" font-size="11" fill="#64748b" text-anchor="end">cómo estaba</text>
+<text x="880" y="1261.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">datos_nuevos</text>
+<text x="1140" y="1261.0" font-size="11" fill="#64748b" text-anchor="end">cómo quedó</text>
+<rect x="851.5" y="1268" width="297" height="22" fill="#f8fafc"/>
+<text x="860" y="1283.0" font-size="11.5">🔗</text>
+<text x="880" y="1283.0" font-size="11.5" font-weight="700" fill="#1d4ed8" font-family="DejaVu Sans Mono, monospace">usuario_id</text>
+<text x="1140" y="1283.0" font-size="11" fill="#64748b" text-anchor="end">→ usuario real (de la sesión)</text>
+<text x="880" y="1305.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">ip_origen</text>
+<text x="1140" y="1305.0" font-size="11" fill="#64748b" text-anchor="end">desde dónde</text>
+<g filter="url(#sh)"><rect x="1250" y="1060" width="300" height="238" rx="12" fill="#fff" stroke="#cbd5e1" stroke-width="1.5"/></g>
+<path d="M1250,1072 a12,12 0 0 1 12,-12 h276 a12,12 0 0 1 12,12 v40 h-300 z" fill="#334155"/>
+<text x="1264" y="1082" font-size="15.5" font-weight="700" fill="#fff">👤 Usuarios</text>
+<text x="1264" y="1101" font-size="11" fill="#fff" fill-opacity=".78" font-family="DejaVu Sans Mono, monospace">usuarios</text>
+<rect x="1518" y="1072" width="22" height="22" rx="7" fill="#d1fae5"/>
+<text x="1529" y="1088" font-size="13" font-weight="800" fill="#065f46" text-anchor="middle">T</text>
+<text x="1260" y="1129.0" font-size="11.5">🔑</text>
+<text x="1280" y="1129.0" font-size="11.5" font-weight="700" fill="#b45309" font-family="DejaVu Sans Mono, monospace">id</text>
+<text x="1540" y="1129.0" font-size="11" fill="#64748b" text-anchor="end">id técnico</text>
+<rect x="1251.5" y="1136" width="297" height="22" fill="#f8fafc"/>
+<text x="1260" y="1151.0" font-size="11.5">🆔</text>
+<text x="1280" y="1151.0" font-size="11.5" font-weight="700" fill="#7c3aed" font-family="DejaVu Sans Mono, monospace">public_id</text>
+<text x="1540" y="1151.0" font-size="11" fill="#64748b" text-anchor="end">id público</text>
+<text x="1280" y="1173.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">nombres</text>
+<text x="1540" y="1173.0" font-size="11" fill="#64748b" text-anchor="end">nombre y apellidos</text>
+<rect x="1251.5" y="1180" width="297" height="22" fill="#f8fafc"/>
+<text x="1260" y="1195.0" font-size="11.5">🏷️</text>
+<text x="1280" y="1195.0" font-size="11.5" font-weight="700" fill="#be123c" font-family="DejaVu Sans Mono, monospace">email</text>
+<text x="1540" y="1195.0" font-size="11" fill="#64748b" text-anchor="end">acceso, único en el sistema</text>
+<text x="1260" y="1217.0" font-size="11.5">🔗</text>
+<text x="1280" y="1217.0" font-size="11.5" font-weight="700" fill="#1d4ed8" font-family="DejaVu Sans Mono, monospace">rol_id</text>
+<text x="1540" y="1217.0" font-size="11" fill="#64748b" text-anchor="end">→ rol</text>
+<rect x="1251.5" y="1224" width="297" height="22" fill="#f8fafc"/>
+<text x="1280" y="1239.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">password_hash</text>
+<text x="1540" y="1239.0" font-size="11" fill="#64748b" text-anchor="end">SOLO hash, nunca la clave</text>
+<text x="1280" y="1261.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">ultimo_acceso_en</text>
+<text x="1540" y="1261.0" font-size="11" fill="#64748b" text-anchor="end">preparado para el login</text>
+<rect x="1251.5" y="1268" width="297" height="22" fill="#f8fafc"/>
+<text x="1280" y="1283.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">activo</text>
+<text x="1540" y="1283.0" font-size="11" fill="#64748b" text-anchor="end">no se elimina, se desactiva</text>
+<g filter="url(#sh)"><rect x="1620" y="1060" width="300" height="172" rx="12" fill="#fff" stroke="#cbd5e1" stroke-width="1.5"/></g>
+<path d="M1620,1072 a12,12 0 0 1 12,-12 h276 a12,12 0 0 1 12,12 v40 h-300 z" fill="#334155"/>
+<text x="1634" y="1082" font-size="15.5" font-weight="700" fill="#fff">🎫 Roles</text>
+<text x="1634" y="1101" font-size="11" fill="#fff" fill-opacity=".78" font-family="DejaVu Sans Mono, monospace">roles</text>
+<rect x="1888" y="1072" width="22" height="22" rx="7" fill="#e0e7ff"/>
+<text x="1899" y="1088" font-size="13" font-weight="800" fill="#3730a3" text-anchor="middle">G</text>
+<text x="1630" y="1129.0" font-size="11.5">🔑</text>
+<text x="1650" y="1129.0" font-size="11.5" font-weight="700" fill="#b45309" font-family="DejaVu Sans Mono, monospace">id</text>
+<text x="1910" y="1129.0" font-size="11" fill="#64748b" text-anchor="end">id técnico</text>
+<rect x="1621.5" y="1136" width="297" height="22" fill="#f8fafc"/>
+<text x="1630" y="1151.0" font-size="11.5">🏷️</text>
+<text x="1650" y="1151.0" font-size="11.5" font-weight="700" fill="#be123c" font-family="DejaVu Sans Mono, monospace">codigo</text>
+<text x="1910" y="1151.0" font-size="11" fill="#64748b" text-anchor="end">admin, comercial,</text>
+<text x="1650" y="1173.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace"></text>
+<text x="1910" y="1173.0" font-size="11" fill="#64748b" text-anchor="end">laboratorio, lectura</text>
+<rect x="1621.5" y="1180" width="297" height="22" fill="#f8fafc"/>
+<text x="1650" y="1195.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">nombre</text>
+<text x="1910" y="1195.0" font-size="11" fill="#64748b" text-anchor="end">etiqueta para la interfaz</text>
+<text x="1650" y="1217.0" font-size="11.5" font-weight="500" fill="#0f172a" font-family="DejaVu Sans Mono, monospace">es_sistema</text>
+<text x="1910" y="1217.0" font-size="11" fill="#64748b" text-anchor="end">rol base: no se elimina</text>
+<rect x="404.8" y="290.0" width="40.4" height="20" rx="10" fill="#fff" stroke="#cbd5e1"/>
+<text x="425.0" y="304.0" font-size="11.5" font-style="italic" fill="#334155" text-anchor="middle">pide</text>
+<rect x="368.3" y="530.0" width="73.4" height="20" rx="10" fill="#fff" stroke="#cbd5e1"/>
+<text x="405.0" y="544.0" font-size="11.5" font-style="italic" fill="#334155" text-anchor="middle">la recibe</text>
+<rect x="422.8" y="680.0" width="40.4" height="20" rx="10" fill="#fff" stroke="#cbd5e1"/>
+<text x="443.0" y="694.0" font-size="11.5" font-style="italic" fill="#334155" text-anchor="middle">pide</text>
+<rect x="181.5" y="391.0" width="47.0" height="20" rx="10" fill="#fff" stroke="#cbd5e1"/>
+<text x="205.0" y="405.0" font-size="11.5" font-style="italic" fill="#334155" text-anchor="middle">tiene</text>
+<rect x="61.5" y="898.0" width="113.0" height="20" rx="10" fill="#fff" stroke="#cbd5e1"/>
+<text x="118.0" y="912.0" font-size="11.5" font-style="italic" fill="#334155" text-anchor="middle">conecta su nube</text>
+<rect x="565.0" y="412.0" width="80.0" height="20" rx="10" fill="#fff" stroke="#cbd5e1"/>
+<text x="605.0" y="426.0" font-size="11.5" font-style="italic" fill="#334155" text-anchor="middle">da formato</text>
+<rect x="779.9" y="537.0" width="60.2" height="20" rx="10" fill="#fff" stroke="#cbd5e1"/>
+<text x="810.0" y="551.0" font-size="11.5" font-style="italic" fill="#334155" text-anchor="middle">congela</text>
+<rect x="781.6" y="780.0" width="66.8" height="20" rx="10" fill="#fff" stroke="#cbd5e1"/>
+<text x="815.0" y="794.0" font-size="11.5" font-style="italic" fill="#334155" text-anchor="middle">registra</text>
+<rect x="585.1" y="863.0" width="99.8" height="20" rx="10" fill="#fff" stroke="#cbd5e1"/>
+<text x="635.0" y="877.0" font-size="11.5" font-style="italic" fill="#334155" text-anchor="middle">se archiva en</text>
+<rect x="399.8" y="1103.0" width="40.4" height="20" rx="10" fill="#fff" stroke="#cbd5e1"/>
+<text x="420.0" y="1117.0" font-size="11.5" font-style="italic" fill="#334155" text-anchor="middle">sube</text>
+<rect x="1178.3" y="320.0" width="73.4" height="20" rx="10" fill="#fff" stroke="#cbd5e1"/>
+<text x="1215.0" y="334.0" font-size="11.5" font-style="italic" fill="#334155" text-anchor="middle">se cotiza</text>
+<rect x="1158.3" y="550.0" width="73.4" height="20" rx="10" fill="#fff" stroke="#cbd5e1"/>
+<text x="1195.0" y="564.0" font-size="11.5" font-style="italic" fill="#334155" text-anchor="middle">clasifica</text>
+<rect x="1743.2" y="434.0" width="53.6" height="20" rx="10" fill="#fff" stroke="#cbd5e1"/>
+<text x="1770.0" y="448.0" font-size="11.5" font-style="italic" fill="#334155" text-anchor="middle">agrupa</text>
+<rect x="1551.6" y="410.0" width="66.8" height="20" rx="10" fill="#fff" stroke="#cbd5e1"/>
+<text x="1585.0" y="424.0" font-size="11.5" font-style="italic" fill="#334155" text-anchor="middle">contiene</text>
+<rect x="1299.7" y="502.0" width="152.6" height="20" rx="10" fill="#fff" stroke="#cbd5e1"/>
+<text x="1376.0" y="516.0" font-size="11.5" font-style="italic" fill="#334155" text-anchor="middle">gana / pierde alcance</text>
+<rect x="1554.9" y="692.0" width="60.2" height="20" rx="10" fill="#fff" stroke="#cbd5e1"/>
+<text x="1585.0" y="706.0" font-size="11.5" font-style="italic" fill="#334155" text-anchor="middle">incluye</text>
+<rect x="1551.6" y="645.0" width="66.8" height="20" rx="10" fill="#fff" stroke="#cbd5e1"/>
+<text x="1585.0" y="659.0" font-size="11.5" font-style="italic" fill="#334155" text-anchor="middle">es parte</text>
+<rect x="1558.2" y="1110.0" width="53.6" height="20" rx="10" fill="#fff" stroke="#cbd5e1"/>
+<text x="1585.0" y="1124.0" font-size="11.5" font-style="italic" fill="#334155" text-anchor="middle">asigna</text>
+<rect x="1151.9" y="1235.0" width="126.2" height="20" rx="10" fill="#fff" stroke="#cbd5e1"/>
+<text x="1215.0" y="1249.0" font-size="11.5" font-style="italic" fill="#334155" text-anchor="middle">firma cada cambio</text>
+<text x="48" y="44" font-size="26" font-weight="800" fill="#0f172a">Base de datos GTQC v3 — Entidades y relaciones</text>
+<text x="48" y="70" font-size="13.5" fill="#475569">18 tablas en 5 áreas. Cada caja es una tabla; cada línea, una relación uno → muchos. El badge dice si la tabla será del producto o de cada laboratorio.</text>
+<text x="48" y="90" font-size="13.5" fill="#475569">📌 snapshot: copia congelada, no cambia nunca.  🔒 append-only: solo se agregan filas, no se corrigen.  ✏️ lo edita el usuario desde la app.</text>
+<rect x="1180" y="18" width="790" height="86" rx="12" fill="#f8fafc" stroke="#e2e8f0"/>
+<text x="1196" y="42" font-size="12">🔑</text><text x="1214" y="42" font-size="12" fill="#334155">id técnico</text>
+<text x="1310" y="42" font-size="12">🆔</text><text x="1328" y="42" font-size="12" fill="#334155">id público (UUID)</text>
+<text x="1470" y="42" font-size="12">🏷️</text><text x="1488" y="42" font-size="12" fill="#334155">código de negocio</text>
+<text x="1630" y="42" font-size="12">🔗</text><text x="1648" y="42" font-size="12" fill="#334155">relación</text>
+<text x="1740" y="42" font-size="12">📅</text><text x="1758" y="42" font-size="12" fill="#334155">fecha del filtro Desde/Hasta</text>
+<rect x="1194" y="52" width="22" height="20" rx="7" fill="#d1fae5"/><text x="1205" y="67" font-size="12.5" font-weight="800" fill="#065f46" text-anchor="middle">T</text><text x="1224" y="67" font-size="12" fill="#334155">de cada laboratorio (tenant)</text>
+<rect x="1430" y="52" width="22" height="20" rx="7" fill="#e0e7ff"/><text x="1441" y="67" font-size="12.5" font-weight="800" fill="#3730a3" text-anchor="middle">G</text><text x="1460" y="67" font-size="12" fill="#334155">del producto (global)</text>
+<rect x="1630" y="52" width="22" height="20" rx="7" fill="#fef3c7"/><text x="1641" y="67" font-size="12.5" font-weight="800" fill="#92400e" text-anchor="middle">H</text><text x="1660" y="67" font-size="12" fill="#334155">híbrida (base + propia)</text>
+<line x1="1198" y1="88" x2="1268" y2="88" stroke="#475569" stroke-width="1.8" marker-start="url(#one)" marker-end="url(#many)"/>
+<text x="1280" y="92" font-size="12" fill="#334155"><tspan font-weight="700">uno → muchos</tspan>  (una empresa pide muchas cotizaciones)</text>
+<text x="48" y="1382" font-size="11.5" fill="#64748b">Toda tabla guarda además quién creó y modificó cada registro y cuándo (→ usuarios), y todo cambio queda en Auditoría. Motor: PostgreSQL 14+. Multi-tenant: estructura preparada, sin aplicar (migración 0003).</text>
+</svg>

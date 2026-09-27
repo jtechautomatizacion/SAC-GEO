@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PWA Cotización - Arquitectura Normalizada</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .phone-frame {
+            width: 390px;
+            height: 844px;
+            border: 14px solid #1e293b;
+            border-radius: 48px;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.8), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+            overflow: hidden;
+            background: #ffffff;
+            position: relative;
+        }
+
+        .phone-frame::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 150px;
+            height: 28px;
+            background: #0f172a;
+            border-radius: 0 0 28px 28px;
+            z-index: 50;
+        }
+
+        .phone-content {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            background: #ffffff;
+            overflow: hidden;
+        }
+
+        .status-bar {
+            height: 44px;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 16px 0;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .main-header {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            padding: 20px;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .header-title h1 {
+            font-size: 22px;
+            font-weight: 800;
+            margin-bottom: 2px;
+        }
+
+        .header-title p {
+            font-size: 12px;
+            opacity: 0.85;
+        }
+
+        .progress-stepper {
+            display: flex;
+            gap: 4px;
+            margin-top: 12px;
+        }
+
+        .stepper-segment {
+            flex: 1;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 2px;
+        }
+
+        .stepper-segment.active {
+            background: white;
+        }
+
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: none;
+        }
+
+        .main-content.active {
+            display: block;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #475569;
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            background: #f8fafc;
+            transition: all 0.2s;
+        }
+
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: #6366f1;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .form-input.success {
+            border-color: #10b981;
+            background: #f0fdf4;
+        }
+
+        .form-input.error {
+            border-color: #ef4444;
+            background: #fef2f2;
+        }
+
+        .autocomplete-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            max-height: 180px;
+            overflow-y: auto;
+            z-index: 100;
+            display: none;
+        }
+
+        .autocomplete-dropdown.active {
+            display: block;
+        }
+
+        .autocomplete-item {
+            padding: 10px 12px;
+            border-bottom: 1px solid #f1f5f9;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .autocomplete-item:hover {
+            background: #f8fafc;
+        }
+
+        .autocomplete-item-main {
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .autocomplete-item-sub {
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .tab-btn {
+            padding: 12px 16px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            color: #64748b;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .tab-btn.active {
+            color: #6366f1;
+            border-bottom-color: #6366f1;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .info-badge {
+            background: #eff6ff;
+            border-left: 3px solid #3b82f6;
+            padding: 10px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            color: #1e40af;
+            margin-bottom: 16px;
+        }
+
+        .error-message {
+            color: #ef4444;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+
+        .success-message {
+            color: #10b981;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+
+        .btn {
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-secondary {
+            background: #f1f5f9;
+            color: #475569;
+        }
+
+        .placeholder-section {
+            background: #f8fafc;
+            border: 2px dashed #cbd5e1;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            color: #64748b;
+        }
+
+        .db-structure {
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 12px;
+            font-family: 'Courier New', monospace;
+            margin: 16px 0;
+            max-height: 150px;
+            overflow-y: auto;
+            color: #334155;
+        }
+
+        .row-two-cols {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .row-two-cols .form-group {
+            margin-bottom: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="phone-frame">
+        <div class="phone-content">
+            <!-- Status Bar -->
+            <div class="status-bar">
+                <span>9:41</span>
+                <span>●●●●●</span>
+            </div>
+
+            <!-- Header -->
+            <div class="main-header">
+                <div class="header-title">
+                    <h1>Cotización</h1>
+                    <p>Sistema de Ensayos Técnicos</p>
+                </div>
+                <div class="progress-stepper">
+                    <div class="stepper-segment active"></div>
+                    <div class="stepper-segment"></div>
+                    <div class="stepper-segment"></div>
+                    <div class="stepper-segment"></div>
+                </div>
+            </div>
+
+            <!-- Section 1: Cliente -->
+            <div class="main-content active" id="section1">
+                <div class="section-title">
+                    <i class="fas fa-user"></i> Identificar Cliente
+                </div>
+
+                <div class="info-badge">
+                    <i class="fas fa-info-circle"></i> Estructura BD normalizada: EMPRESAS → CONTACTOS → PERSONAS
+                </div>
+
+                <!-- TABS -->
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="switchClientType('ruc')">
+                        <i class="fas fa-building"></i> Empresa (RUC)
+                    </button>
+                    <button class="tab-btn" onclick="switchClientType('dni')">
+                        <i class="fas fa-id-card"></i> Persona (DNI)
+                    </button>
+                </div>
+
+                <!-- TAB 1: RUC -->
+                <div class="tab-content active" id="tab-ruc">
+                    <div class="form-group">
+                        <label class="form-label">Número de RUC</label>
+                        <div style="position: relative;">
+                            <input type="text" class="form-input" id="rucInput"
+                                   placeholder="Ej: 20123456789"
+                                   oninput="buscarEmpresa()">
+                            <div class="autocomplete-dropdown" id="rucDropdown"></div>
+                        </div>
+                        <div id="rucError" class="error-message"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Razón Social</label>
+                        <input type="text" class="form-input" id="razonSocialInput"
+                               readonly placeholder="Se llenará automáticamente">
+                    </div>
+
+                    <!-- CONTACTOS: Nombre y Apellido separados -->
+                    <div class="row-two-cols">
+                        <div class="form-group">
+                            <label class="form-label">Nombre Contacto</label>
+                            <input type="text" class="form-input" id="nombreContacto"
+                                   placeholder="Ej: Juan">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Apellido Contacto</label>
+                            <input type="text" class="form-input" id="apellidoContacto"
+                                   placeholder="Ej: García">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Celular Contacto</label>
+                        <input type="tel" class="form-input" id="celularContacto"
+                               placeholder="+51 999 999 999">
+                    </div>
+
+                    <div class="info-badge">
+                        <i class="fas fa-database"></i> Datos de: <strong>EMPRESAS_DB</strong> + <strong>CONTACTOS_DB</strong>
+                    </div>
+                </div>
+
+                <!-- TAB 2: DNI -->
+                <div class="tab-content" id="tab-dni">
+                    <div class="form-group">
+                        <label class="form-label">Número de DNI</label>
+                        <input type="text" class="form-input" id="dniInput"
+                               placeholder="Ej: 12345678"
+                               maxlength="8">
+                        <div id="dniError" class="error-message"></div>
+                    </div>
+
+                    <div class="row-two-cols">
+                        <div class="form-group">
+                            <label class="form-label">Nombre</label>
+                            <input type="text" class="form-input" id="nombreDni"
+                                   placeholder="Ej: Juan">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Apellido</label>
+                            <input type="text" class="form-input" id="apellidoDni"
+                                   placeholder="Ej: García">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Celular</label>
+                        <input type="tel" class="form-input" id="celularDni"
+                               placeholder="+51 999 999 999">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Empresa Asociada (Opcional)</label>
+                        <input type="text" class="form-input" id="empresaAsociada"
+                               placeholder="Si trabaja en alguna empresa">
+                    </div>
+
+                    <div class="info-badge">
+                        <i class="fas fa-database"></i> Datos de: <strong>PERSONAS_DB</strong>
+                    </div>
+                </div>
+
+                <!-- CAMPOS COMUNES -->
+                <div style="margin-top: 20px; border-top: 1px solid #e2e8f0; padding-top: 16px;">
+                    <div class="section-title">
+                        <i class="fas fa-file-alt"></i> Información de Cotización
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-input" id="email"
+                               placeholder="correo@empresa.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Proyecto / Obra</label>
+                        <input type="text" class="form-input" id="proyecto"
+                               placeholder="Nombre del proyecto">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Validez de Cotización (días)</label>
+                        <input type="number" class="form-input" id="validez"
+                               placeholder="30" value="30">
+                    </div>
+                </div>
+
+                <!-- Base de Datos Visualizada -->
+                <div style="margin-top: 20px;">
+                    <div class="section-title">
+                        <i class="fas fa-sitemap"></i> Estructura de Datos Actual
+                    </div>
+                    <div class="db-structure">
+STATE.CLIENT = {
+  tipo: 'ruc' | 'dni',
+  // Si RUC:
+  ruc: '20123456789',
+  razonSocial: 'Constructora ABC',
+  nombreContacto: 'Juan',
+  apellidoContacto: 'García',
+  celularContacto: '+51987654321',
+  // Si DNI:
+  dni: '12345678',
+  nombreDni: 'Juan',
+  apellidoDni: 'García',
+  celularDni: '+51998765432',
+  empresaAsociada: 'XYZ',
+  // Comunes:
+  email: 'juan@empresa.com',
+  proyecto: 'Proyecto 2024',
+  validez: 30
+}
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px; display: flex; gap: 12px;">
+                    <button class="btn btn-secondary" onclick="limpiarFormulario()">
+                        <i class="fas fa-redo"></i> Limpiar
+                    </button>
+                    <button class="btn btn-primary" onclick="siguientePantalla()">
+                        Siguiente <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Sections 2-4: Placeholders -->
+            <div class="main-content" id="section2">
+                <div class="placeholder-section">
+                    <i class="fas fa-list" style="font-size: 32px; color: #94a3b8; margin-bottom: 10px;"></i>
+                    <p><strong>Sección 2: Detalle de Cotización</strong></p>
+                    <p style="font-size: 12px; margin-top: 8px;">Ensayos individuales y paquetes</p>
+                </div>
+            </div>
+
+            <div class="main-content" id="section3">
+                <div class="placeholder-section">
+                    <i class="fas fa-percent" style="font-size: 32px; color: #94a3b8; margin-bottom: 10px;"></i>
+                    <p><strong>Sección 3: Descuentos</strong></p>
+                    <p style="font-size: 12px; margin-top: 8px;">Porcentaje, monto fijo o volumen</p>
+                </div>
+            </div>
+
+            <div class="main-content" id="section4">
+                <div class="placeholder-section">
+                    <i class="fas fa-download" style="font-size: 32px; color: #94a3b8; margin-bottom: 10px;"></i>
+                    <p><strong>Sección 4: Descargar/Compartir</strong></p>
+                    <p style="font-size: 12px; margin-top: 8px;">PDF, WhatsApp, Email</p>
+                </div>
+            </div>
+
+            <!-- Footer Navigation -->
+            <div style="padding: 16px 20px; border-top: 1px solid #e2e8f0; display: flex; gap: 12px;">
+                <button class="btn btn-secondary" id="btnAtrás" style="display: none;" onclick="pantallasAnterior()">
+                    ← Atrás
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // BASES DE DATOS NORMALIZADAS
+        // ============================================
+
+        const EMPRESAS_DB = {
+            "20123456789": {
+                ruc: "20123456789",
+                razonSocial: "Constructora ABC S.A.C.",
+                direccion: "Av. Principal 123",
+                telefonoEmpresa: "+51987654321"
+            },
+            "20987654321": {
+                ruc: "20987654321",
+                razonSocial: "Ingeniería & Diseño E.I.R.L.",
+                direccion: "Calle Secundaria 456",
+                telefonoEmpresa: "+51912345678"
+            },
+            "20111111111": {
+                ruc: "20111111111",
+                razonSocial: "Supervisora Técnica S.A.",
+                direccion: "Jirón Tercera 789",
+                telefonoEmpresa: "+51945678901"
+            },
+            "20555555555": {
+                ruc: "20555555555",
+                razonSocial: "Constructora Alianza",
+                direccion: "Av. Cuarta 321",
+                telefonoEmpresa: "+51965432108"
+            },
+            "20666666666": {
+                ruc: "20666666666",
+                razonSocial: "Empresa de Obras Civiles",
+                direccion: "Calle Quinta 654",
+                telefonoEmpresa: "+51978901234"
+            },
+            "20777777777": {
+                ruc: "20777777777",
+                razonSocial: "Consultores en Ingeniería",
+                direccion: "Av. Sexta 987",
+                telefonoEmpresa: "+51956789012"
+            }
+        };
+
+        // CONTACTOS asociados a EMPRESAS
+        const CONTACTOS_DB = {
+            "CNT_001": {
+                id: "CNT_001",
+                empresaRuc: "20123456789",
+                nombre: "Juan",
+                apellido: "García",
+                cargo: "Gerente de Proyectos",
+                celular: "+51912345678"
+            },
+            "CNT_002": {
+                id: "CNT_002",
+                empresaRuc: "20123456789",
+                nombre: "María",
+                apellido: "López",
+                cargo: "Coordinadora",
+                celular: "+51987654321"
+            },
+            "CNT_003": {
+                id: "CNT_003",
+                empresaRuc: "20987654321",
+                nombre: "Carlos",
+                apellido: "Ruiz",
+                cargo: "Director Técnico",
+                celular: "+51945678901"
+            },
+            "CNT_004": {
+                id: "CNT_004",
+                empresaRuc: "20111111111",
+                nombre: "Pedro",
+                apellido: "Fernández",
+                cargo: "Supervisor",
+                celular: "+51965432108"
+            },
+            "CNT_005": {
+                id: "CNT_005",
+                empresaRuc: "20555555555",
+                nombre: "Roberto",
+                apellido: "Díaz",
+                cargo: "Jefe de Calidad",
+                celular: "+51978901234"
+            },
+            "CNT_006": {
+                id: "CNT_006",
+                empresaRuc: "20666666666",
+                nombre: "Ana",
+                apellido: "Martínez",
+                cargo: "Responsable de Proyectos",
+                celular: "+51956789012"
+            }
+        };
+
+        // PERSONAS independientes
+        const PERSONAS_DB = {
+            "12345678": {
+                dni: "12345678",
+                nombre: "Juan",
+                apellido: "García",
+                celular: "+51912345678",
+                empresaAsociada: "Constructora ABC"
+            },
+            "87654321": {
+                dni: "87654321",
+                nombre: "María",
+                apellido: "López",
+                celular: "+51987654321",
+                empresaAsociada: ""
+            }
+        };
+
+        // ============================================
+        // STATE CENTRALIZADO
+        // ============================================
+
+        const state = {
+            currentSection: 1,
+            clientType: 'ruc',
+            client: {
+                tipo: 'ruc',
+                // RUC fields
+                ruc: '',
+                razonSocial: '',
+                nombreContacto: '',
+                apellidoContacto: '',
+                celularContacto: '',
+                // DNI fields
+                dni: '',
+                nombreDni: '',
+                apellidoDni: '',
+                celularDni: '',
+                empresaAsociada: '',
+                // Common fields
+                email: '',
+                proyecto: '',
+                validez: 30
+            }
+        };
+
+        // ============================================
+        // FUNCIONES
+        // ============================================
+
+        function switchClientType(type) {
+            state.clientType = type;
+            state.client.tipo = type;
+
+            // Update tabs
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+
+            if (type === 'ruc') {
+                document.querySelectorAll('.tab-btn')[0].classList.add('active');
+                document.getElementById('tab-ruc').classList.add('active');
+            } else {
+                document.querySelectorAll('.tab-btn')[1].classList.add('active');
+                document.getElementById('tab-dni').classList.add('active');
+            }
+        }
+
+        function buscarEmpresa() {
+            const input = document.getElementById('rucInput').value;
+            const dropdown = document.getElementById('rucDropdown');
+
+            if (input.length === 0) {
+                dropdown.classList.remove('active');
+                return;
+            }
+
+            const resultados = Object.values(EMPRESAS_DB).filter(emp =>
+                emp.ruc.includes(input) || emp.razonSocial.toLowerCase().includes(input.toLowerCase())
+            );
+
+            dropdown.innerHTML = resultados.map(emp => `
+                <div class="autocomplete-item" onclick="seleccionarEmpresa('${emp.ruc}')">
+                    <div class="autocomplete-item-main">${emp.razonSocial}</div>
+                    <div class="autocomplete-item-sub">RUC: ${emp.ruc}</div>
+                </div>
+            `).join('');
+
+            dropdown.classList.toggle('active', resultados.length > 0);
+        }
+
+        function seleccionarEmpresa(ruc) {
+            const empresa = EMPRESAS_DB[ruc];
+            if (!empresa) return;
+
+            state.client.ruc = empresa.ruc;
+            state.client.razonSocial = empresa.razonSocial;
+
+            document.getElementById('rucInput').value = empresa.ruc;
+            document.getElementById('razonSocialInput').value = empresa.razonSocial;
+            document.getElementById('rucInput').classList.add('success');
+
+            // Buscar contactos de esta empresa
+            const contactos = Object.values(CONTACTOS_DB).filter(c => c.empresaRuc === ruc);
+            if (contactos.length > 0) {
+                const contacto = contactos[0];
+                state.client.nombreContacto = contacto.nombre;
+                state.client.apellidoContacto = contacto.apellido;
+                state.client.celularContacto = contacto.celular;
+
+                document.getElementById('nombreContacto').value = contacto.nombre;
+                document.getElementById('apellidoContacto').value = contacto.apellido;
+                document.getElementById('celularContacto').value = contacto.celular;
+            }
+
+            document.getElementById('rucDropdown').classList.remove('active');
+            actualizarState();
+        }
+
+        function actualizarState() {
+            if (state.clientType === 'ruc') {
+                state.client.nombreContacto = document.getElementById('nombreContacto').value;
+                state.client.apellidoContacto = document.getElementById('apellidoContacto').value;
+                state.client.celularContacto = document.getElementById('celularContacto').value;
+            } else {
+                state.client.dni = document.getElementById('dniInput').value;
+                state.client.nombreDni = document.getElementById('nombreDni').value;
+                state.client.apellidoDni = document.getElementById('apellidoDni').value;
+                state.client.celularDni = document.getElementById('celularDni').value;
+                state.client.empresaAsociada = document.getElementById('empresaAsociada').value;
+            }
+            state.client.email = document.getElementById('email').value;
+            state.client.proyecto = document.getElementById('proyecto').value;
+            state.client.validez = parseInt(document.getElementById('validez').value);
+        }
+
+        function limpiarFormulario() {
+            state.client = {
+                tipo: 'ruc',
+                ruc: '', razonSocial: '', nombreContacto: '', apellidoContacto: '', celularContacto: '',
+                dni: '', nombreDni: '', apellidoDni: '', celularDni: '', empresaAsociada: '',
+                email: '', proyecto: '', validez: 30
+            };
+
+            document.querySelectorAll('.form-input').forEach(input => {
+                input.value = '';
+                input.classList.remove('success', 'error');
+            });
+        }
+
+        function siguientePantalla() {
+            actualizarState();
+            if (state.currentSection < 4) {
+                state.currentSection++;
+                mostrarPantalla();
+            }
+        }
+
+        function pantallasAnterior() {
+            if (state.currentSection > 1) {
+                state.currentSection--;
+                mostrarPantalla();
+            }
+        }
+
+        function mostrarPantalla() {
+            document.querySelectorAll('.main-content').forEach(sec => sec.classList.remove('active'));
+            document.getElementById(`section${state.currentSection}`).classList.add('active');
+
+            document.querySelectorAll('.stepper-segment').forEach((seg, idx) => {
+                seg.classList.toggle('active', idx < state.currentSection);
+            });
+
+            document.getElementById('btnAtrás').style.display = state.currentSection > 1 ? 'block' : 'none';
+        }
+    </script>
+</body>
+</html>

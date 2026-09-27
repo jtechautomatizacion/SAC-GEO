@@ -1,0 +1,1368 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cotizador PWA v3 - Sistema Completo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* ============================================
+           PHONE FRAME (Mobile-First)
+           ============================================ */
+
+        .phone-frame {
+            width: 390px;
+            height: 844px;
+            border: 12px solid #1a1a2e;
+            border-radius: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            background: white;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .notch {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 150px;
+            height: 28px;
+            background: #1a1a2e;
+            border-radius: 0 0 20px 20px;
+            z-index: 100;
+        }
+
+        .app-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* ============================================
+           HEADER
+           ============================================ */
+
+        .header {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            padding: 16px 20px;
+            padding-top: 32px;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .header-title {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .template-selector {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .template-selector:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: white;
+            transition: width 0.3s;
+        }
+
+        .progress-stepper {
+            display: flex;
+            justify-content: space-between;
+            gap: 4px;
+        }
+
+        .step {
+            flex: 1;
+            text-align: center;
+        }
+
+        .step-number {
+            font-size: 10px;
+            font-weight: 600;
+            opacity: 0.7;
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .step.active .step-number,
+        .step.completed .step-number {
+            opacity: 1;
+        }
+
+        .step-indicator {
+            width: 6px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+            margin: 0 auto;
+        }
+
+        .step.active .step-indicator {
+            background: white;
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
+        }
+
+        .step.completed .step-indicator {
+            background: rgba(34, 197, 94, 0.8);
+        }
+
+        /* ============================================
+           CONTENT AREA
+           ============================================ */
+
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            padding-bottom: 80px;
+        }
+
+        .screen {
+            display: none;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ============================================
+           SECTIONS & CARDS
+           ============================================ */
+
+        .section {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            border-left: 4px solid #6366f1;
+            box-shadow: 0 1px 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .section h2 {
+            font-size: 14px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section p {
+            font-size: 12px;
+            color: #64748b;
+            line-height: 1.4;
+        }
+
+        /* ============================================
+           FORM ELEMENTS
+           ============================================ */
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 11px;
+            font-weight: 600;
+            color: #4b5563;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            margin-bottom: 6px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #e0e7ff;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #6366f1;
+            background: #f8f9ff;
+        }
+
+        /* ============================================
+           TABS
+           ============================================ */
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            border-bottom: 2px solid #e0e7ff;
+        }
+
+        .tab {
+            padding: 10px 12px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            color: #94a3b8;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.2s;
+        }
+
+        .tab.active {
+            color: #6366f1;
+            border-bottom-color: #6366f1;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* ============================================
+           ITEM CARDS
+           ============================================ */
+
+        .item-card {
+            background: #f8f9ff;
+            border: 1px solid #e0e7ff;
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 3px solid #6366f1;
+        }
+
+        .item-card:active {
+            background: #e0e7ff;
+            border-left-color: #4f46e5;
+        }
+
+        .item-info h3 {
+            font-size: 13px;
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 2px;
+        }
+
+        .item-info p {
+            font-size: 11px;
+            color: #64748b;
+        }
+
+        .item-norma {
+            font-size: 10px;
+            color: #6366f1;
+            font-weight: 600;
+            margin-top: 6px;
+            padding-top: 6px;
+            border-top: 1px solid #e0e7ff;
+        }
+
+        .item-price {
+            font-size: 15px;
+            font-weight: 700;
+            color: #6366f1;
+            text-align: right;
+        }
+
+        /* ============================================
+           SELECTED ITEMS
+           ============================================ */
+
+        .selected-items-list {
+            background: #f8f9ff;
+            border-radius: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #e0e7ff;
+        }
+
+        .selected-item {
+            background: white;
+            padding: 10px;
+            margin: 8px;
+            border-radius: 8px;
+            border-left: 3px solid #6366f1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            font-size: 12px;
+        }
+
+        .selected-item-info h4 {
+            font-size: 12px;
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 2px;
+        }
+
+        .selected-item-info p {
+            font-size: 10px;
+            color: #94a3b8;
+        }
+
+        .qty-controls {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .qty-btn {
+            width: 24px;
+            height: 24px;
+            border: 1px solid #e0e7ff;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            color: #6366f1;
+            transition: all 0.2s;
+        }
+
+        .qty-btn:active {
+            background: #e0e7ff;
+        }
+
+        .delete-btn {
+            width: 24px;
+            height: 24px;
+            border: none;
+            background: #fee2e2;
+            color: #dc2626;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .delete-btn:active {
+            background: #fecaca;
+        }
+
+        /* ============================================
+           SUMMARY
+           ============================================ */
+
+        .summary-table {
+            width: 100%;
+            font-size: 13px;
+            margin-bottom: 10px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e0e7ff;
+        }
+
+        .summary-row.total {
+            font-weight: 700;
+            color: #6366f1;
+            font-size: 15px;
+            border-top: 2px solid #6366f1;
+            padding-top: 12px;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        .summary-row.igv {
+            color: #8b5cf6;
+        }
+
+        /* ============================================
+           PDF PREVIEW
+           ============================================ */
+
+        .pdf-preview {
+            background: white;
+            border: 1px solid #e0e7ff;
+            border-radius: 10px;
+            padding: 14px;
+            font-size: 11px;
+            line-height: 1.6;
+        }
+
+        .pdf-header {
+            text-align: center;
+            border-bottom: 2px solid #6366f1;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
+
+        .pdf-header h1 {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+
+        .pdf-section {
+            margin-bottom: 10px;
+        }
+
+        .pdf-section-title {
+            font-weight: 700;
+            color: #6366f1;
+            font-size: 11px;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .pdf-line {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            border-bottom: 1px solid #f0f4ff;
+        }
+
+        /* ============================================
+           BUTTONS
+           ============================================ */
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            padding: 16px 20px;
+            border-top: 1px solid #e0e7ff;
+            background: white;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+        }
+
+        .btn-primary:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.2);
+        }
+
+        .btn-secondary {
+            background: #e0e7ff;
+            color: #6366f1;
+        }
+
+        .btn-secondary:active {
+            background: #c7d2fe;
+        }
+
+        /* ============================================
+           ACTION CARDS (Screen 5)
+           ============================================ */
+
+        .action-cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .action-card {
+            background: white;
+            border: 2px solid #e0e7ff;
+            border-radius: 12px;
+            padding: 14px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .action-card:active {
+            transform: scale(0.98);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .action-card.download-offline {
+            border-color: #6366f1;
+            background: #f0f4ff;
+        }
+
+        .action-card.download-online {
+            border-color: #0284c7;
+            background: #f0f9ff;
+        }
+
+        .action-card.whatsapp {
+            border-color: #22c55e;
+            background: #f0fdf4;
+        }
+
+        .action-card.email {
+            border-color: #d946ef;
+            background: #fdf2f8;
+        }
+
+        .action-card-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .action-card-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 4px;
+        }
+
+        .action-card-desc {
+            font-size: 11px;
+            color: #64748b;
+        }
+
+        /* ============================================
+           MODAL
+           ============================================ */
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            width: 90%;
+            max-width: 380px;
+            max-height: 80vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            border-bottom: 2px solid #e0e7ff;
+            padding-bottom: 12px;
+        }
+
+        .modal-header h2 {
+            font-size: 15px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 22px;
+            cursor: pointer;
+            color: #94a3b8;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .modal-footer .btn {
+            font-size: 12px;
+            padding: 10px;
+        }
+
+        /* ============================================
+           SEARCH & BADGES
+           ============================================ */
+
+        .search-box {
+            margin-bottom: 12px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #e0e7ff;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .info-badge {
+            background: #dbeafe;
+            color: #1e40af;
+            padding: 8px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 20px;
+            color: #94a3b8;
+            font-size: 12px;
+        }
+
+        /* ============================================
+           RESPONSIVE (Tablet/Desktop)
+           ============================================ */
+
+        @media (min-width: 481px) and (max-width: 768px) {
+            .phone-frame {
+                width: 100%;
+                height: auto;
+                border-radius: 0;
+                border: none;
+                box-shadow: none;
+            }
+
+            .notch {
+                display: none;
+            }
+
+            .content {
+                padding-bottom: 100px;
+            }
+
+            .action-cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .section {
+                padding: 20px;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .phone-frame {
+                width: 100%;
+                height: auto;
+                border-radius: 0;
+                border: none;
+                box-shadow: none;
+            }
+
+            .notch {
+                display: none;
+            }
+
+            .content {
+                padding: 30px;
+                padding-bottom: 100px;
+            }
+
+            .button-group {
+                padding: 20px 30px;
+            }
+
+            .action-cards {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="phone-frame">
+        <div class="notch"></div>
+        <div class="app-wrapper">
+            <!-- HEADER -->
+            <div class="header">
+                <div class="header-top">
+                    <div class="header-title">💼 Cotizador</div>
+                    <select class="template-selector" id="plantilla-selector" onchange="cambiarPlantilla()">
+                        <option value="PL001">🧪 Estándar</option>
+                        <option value="PL002">⭐ Premium</option>
+                        <option value="PL003">⚡ Express</option>
+                    </select>
+                </div>
+
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill" style="width: 20%;"></div>
+                </div>
+
+                <div class="progress-stepper">
+                    <div class="step active" data-step="1">
+                        <span class="step-number">1</span>
+                        <div class="step-indicator"></div>
+                    </div>
+                    <div class="step" data-step="2">
+                        <span class="step-number">2</span>
+                        <div class="step-indicator"></div>
+                    </div>
+                    <div class="step" data-step="3">
+                        <span class="step-number">3</span>
+                        <div class="step-indicator"></div>
+                    </div>
+                    <div class="step" data-step="4">
+                        <span class="step-number">4</span>
+                        <div class="step-indicator"></div>
+                    </div>
+                    <div class="step" data-step="5">
+                        <span class="step-number">5</span>
+                        <div class="step-indicator"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CONTENT -->
+            <div class="content">
+                <!-- SCREEN 1: CLIENTE -->
+                <div class="screen active" data-screen="1">
+                    <div class="section">
+                        <h2>👤 Tipo de Cliente</h2>
+                        <div class="tabs">
+                            <button class="tab active" data-tab="ruc" onclick="switchTab(this, 'ruc')">RUC (Empresa)</button>
+                            <button class="tab" data-tab="dni" onclick="switchTab(this, 'dni')">DNI (Persona)</button>
+                        </div>
+
+                        <div class="tab-content active" id="tab-ruc">
+                            <div class="form-group">
+                                <label>RUC</label>
+                                <input type="text" id="ruc-input" placeholder="20123456789" maxlength="11">
+                            </div>
+                            <div class="form-group">
+                                <label>Razón Social</label>
+                                <input type="text" id="razon-social" placeholder="Automático" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label>Contacto</label>
+                                <select id="contacto-select">
+                                    <option value="">Selecciona contacto</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Celular</label>
+                                <input type="tel" id="celular-ruc" placeholder="987654321">
+                            </div>
+                            <div class="form-group">
+                                <label>Email</label>
+                                <input type="email" id="email-ruc" placeholder="correo@empresa.com">
+                            </div>
+                        </div>
+
+                        <div class="tab-content" id="tab-dni">
+                            <div class="form-group">
+                                <label>DNI</label>
+                                <input type="text" id="dni-input" placeholder="12345678" maxlength="8">
+                            </div>
+                            <div class="form-group">
+                                <label>Nombre</label>
+                                <input type="text" id="nombre-dni" placeholder="Automático" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label>Apellido</label>
+                                <input type="text" id="apellido-dni" placeholder="Automático" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label>Celular</label>
+                                <input type="tel" id="celular-dni" placeholder="987654321">
+                            </div>
+                            <div class="form-group">
+                                <label>Email</label>
+                                <input type="email" id="email-dni" placeholder="correo@personal.com">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <h2>🏗️ Proyecto</h2>
+                        <div class="form-group">
+                            <label>Nombre del Proyecto</label>
+                            <input type="text" id="proyecto-nombre" placeholder="Ej: Edificio Central">
+                        </div>
+                        <div class="form-group">
+                            <label>Validez (días)</label>
+                            <input type="number" id="validez-dias" value="30" min="1">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SCREEN 2: ENSAYOS -->
+                <div class="screen" data-screen="2">
+                    <div class="section">
+                        <h2>🔍 Buscar</h2>
+                        <div class="search-box">
+                            <input type="text" id="search-ensayos" placeholder="Buscar ensayos...">
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <h2>📦 Paquetes</h2>
+                        <div id="paquetes-list"></div>
+                    </div>
+
+                    <div class="section">
+                        <h2>🧪 Ensayos</h2>
+                        <div id="ensayos-list"></div>
+                    </div>
+                </div>
+
+                <!-- SCREEN 3: DESCUENTOS -->
+                <div class="screen" data-screen="3">
+                    <div class="section">
+                        <h2>📋 Items Seleccionados</h2>
+                        <div id="selected-items-container">
+                            <div class="empty-state">No hay items</div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <h2>🏷️ Descuento</h2>
+                        <div class="form-group">
+                            <label>Tipo</label>
+                            <select id="descuento-tipo" onchange="updateCalculos()">
+                                <option value="">Sin descuento</option>
+                                <option value="porcentaje">Porcentaje (%)</option>
+                                <option value="monto">Monto Fijo (S/)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Valor</label>
+                            <input type="number" id="descuento-valor" placeholder="0" min="0" step="0.01" onchange="updateCalculos()">
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <h2>📊 Cálculo</h2>
+                        <div class="summary-table">
+                            <div class="summary-row">
+                                <span>Subtotal:</span>
+                                <span id="subtotal-display">S/ 0.00</span>
+                            </div>
+                            <div class="summary-row">
+                                <span>Descuento:</span>
+                                <span id="descuento-display">S/ 0.00</span>
+                            </div>
+                            <div class="summary-row igv">
+                                <span>IGV (18%):</span>
+                                <span id="igv-display">S/ 0.00</span>
+                            </div>
+                            <div class="summary-row total">
+                                <span>TOTAL:</span>
+                                <span id="total-display">S/ 0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SCREEN 4: RESUMEN -->
+                <div class="screen" data-screen="4">
+                    <div class="pdf-preview" id="pdf-preview">
+                        <div class="pdf-header">
+                            <h1>COTIZACIÓN</h1>
+                            <p>Laboratorio de Testing - GTQC</p>
+                        </div>
+
+                        <div class="pdf-section">
+                            <div class="pdf-section-title">Cliente</div>
+                            <div class="pdf-line">
+                                <span>Razón Social:</span>
+                                <span id="pdf-cliente">-</span>
+                            </div>
+                            <div class="pdf-line">
+                                <span>Contacto:</span>
+                                <span id="pdf-contacto">-</span>
+                            </div>
+                            <div class="pdf-line">
+                                <span>Email:</span>
+                                <span id="pdf-email">-</span>
+                            </div>
+                        </div>
+
+                        <div class="pdf-section">
+                            <div class="pdf-section-title">Proyecto</div>
+                            <div class="pdf-line">
+                                <span>Nombre:</span>
+                                <span id="pdf-proyecto">-</span>
+                            </div>
+                            <div class="pdf-line">
+                                <span>Validez:</span>
+                                <span id="pdf-validez">30 días</span>
+                            </div>
+                        </div>
+
+                        <div class="pdf-section">
+                            <div class="pdf-section-title">Items</div>
+                            <div id="pdf-items">
+                                <div style="font-size: 11px; color: #94a3b8; padding: 10px 0;">No hay items</div>
+                            </div>
+                        </div>
+
+                        <div class="pdf-section">
+                            <div class="pdf-section-title">Totales</div>
+                            <div class="pdf-line">
+                                <span>Subtotal:</span>
+                                <span id="pdf-subtotal">S/ 0.00</span>
+                            </div>
+                            <div class="pdf-line">
+                                <span>Descuento:</span>
+                                <span id="pdf-descuento">S/ 0.00</span>
+                            </div>
+                            <div class="pdf-line">
+                                <span>IGV (18%):</span>
+                                <span id="pdf-igv">S/ 0.00</span>
+                            </div>
+                            <div class="pdf-line" style="font-weight: 700; border-top: 2px solid #6366f1; padding-top: 8px; border-bottom: none;">
+                                <span>TOTAL:</span>
+                                <span id="pdf-total">S/ 0.00</span>
+                            </div>
+                        </div>
+
+                        <div class="pdf-section">
+                            <div class="pdf-section-title">Términos</div>
+                            <div id="pdf-terminos" style="font-size: 10px; line-height: 1.4; color: #475569; white-space: pre-wrap;">
+                                Términos según plantilla...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SCREEN 5: ACCIONES -->
+                <div class="screen" data-screen="5">
+                    <div class="section">
+                        <h2>✅ Cotización Lista</h2>
+                        <p>Elige cómo proceder con tu cotización</p>
+                    </div>
+
+                    <div class="action-cards">
+                        <div class="action-card download-offline" onclick="descargarOffline()">
+                            <div class="action-card-icon">📥</div>
+                            <div class="action-card-title">Descargar</div>
+                            <div class="action-card-desc">Offline</div>
+                        </div>
+
+                        <div class="action-card download-online" onclick="descargarOnline()">
+                            <div class="action-card-icon">☁️</div>
+                            <div class="action-card-title">Descargar</div>
+                            <div class="action-card-desc">Online</div>
+                        </div>
+
+                        <div class="action-card whatsapp" onclick="enviarWhatsApp()">
+                            <div class="action-card-icon">💬</div>
+                            <div class="action-card-title">WhatsApp</div>
+                            <div class="action-card-desc">Enviar</div>
+                        </div>
+
+                        <div class="action-card email" onclick="enviarEmail()">
+                            <div class="action-card-icon">📧</div>
+                            <div class="action-card-title">Email</div>
+                            <div class="action-card-desc">Enviar</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BUTTONS -->
+            <div class="button-group">
+                <button class="btn btn-secondary" id="btn-prev" style="display: none;" onclick="prevScreen()">← Anterior</button>
+                <button class="btn btn-primary" id="btn-next" onclick="nextScreen()">Siguiente →</button>
+                <button class="btn btn-primary" id="btn-pdf" style="display: none;" onclick="window.print()">📄 PDF</button>
+                <button class="btn btn-primary" id="btn-finalizar" style="display: none;" onclick="finalizarCotizacion()">✓ Finalizar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        // DATABASE
+        // ============================================================
+
+        const DB = {
+            EMPRESAS: [
+                { ruc: '20123456789', razonSocial: 'Constructora ACME S.A.C.', telefonoEmpresa: '01-2345678' },
+                { ruc: '20987654321', razonSocial: 'Ingeniería Moderna E.I.R.L.', telefonoEmpresa: '01-9876543' },
+                { ruc: '20111222333', razonSocial: 'Proyectos Andinos S.A.', telefonoEmpresa: '054-1234567' },
+            ],
+            CONTACTOS: [
+                { id: 'C001', empresaRuc: '20123456789', dni: '12345678', nombre: 'Juan', apellido: 'García López', cargo: 'Gerente', celular: '987654321', email: 'juan@acme.com' },
+                { id: 'C002', empresaRuc: '20987654321', dni: '11223344', nombre: 'Carlos', apellido: 'Pérez', cargo: 'Director', celular: '987456789', email: 'carlos@moderna.com' },
+            ],
+            PERSONAS: [
+                { dni: '12345678', nombre: 'Juan', apellido: 'García López', celular: '987654321', email: 'juan@personal.com' },
+                { dni: '98765432', nombre: 'Roberto', apellido: 'Martínez', celular: '987111222', email: 'roberto@email.com' },
+            ],
+            ENSAYOS: [
+                { id: 'E001', nombre: 'Resistencia a la Compresión', precioBase: 150, norma: 'NTP 339.034', descripcion: 'Ensayo de compresión' },
+                { id: 'E002', nombre: 'Módulo de Rotura', precioBase: 200, norma: 'NTP 339.079', descripcion: 'Ensayo de flexión' },
+                { id: 'E003', nombre: 'Densidad y Absorción', precioBase: 120, norma: 'NTP 400.021', descripcion: 'Ensayo para agregados' },
+                { id: 'E004', nombre: 'Análisis Granulométrico', precioBase: 100, norma: 'NTP 400.012', descripcion: 'Tamizado' },
+                { id: 'E005', nombre: 'Contenido de Humedad', precioBase: 80, norma: 'NTP 400.011', descripcion: 'Humedad' },
+                { id: 'E006', nombre: 'Revenimiento (Slump)', precioBase: 50, norma: 'NTP 339.114', descripcion: 'Consistencia' },
+            ],
+            PAQUETES: [
+                { id: 'P001', nombre: 'Paquete Básico Concreto', precioBase: 350, descripcion: 'Ensayos esenciales', ensayos: ['E001', 'E006'] },
+                { id: 'P002', nombre: 'Paquete Agregados', precioBase: 280, descripcion: 'Análisis completo', ensayos: ['E003', 'E004', 'E005'] },
+            ],
+            PLANTILLAS: [
+                { id: 'PL001', nombre: 'Estándar', terminos: 'Términos Estándar:\n• Validez: 30 días\n• Pago: 50-50\n• Sin transporte' },
+                { id: 'PL002', nombre: 'Premium', terminos: 'Términos Premium:\n• Validez: 45 días\n• Pago: Flexible\n• Incluye transporte' },
+                { id: 'PL003', nombre: 'Express', terminos: 'Términos Express:\n• Validez: 15 días\n• Pago: 100% adelanto\n• Entrega 48h' },
+            ]
+        };
+
+        // ============================================================
+        // STATE
+        // ============================================================
+
+        const STATE = {
+            currentScreen: 1,
+            plantilla: 'PL001',
+            cliente: {
+                tipo: null,
+                ruc: null,
+                dni: null,
+                razonSocial: null,
+                nombre: null,
+                apellido: null,
+                celular: null,
+                email: null,
+            },
+            proyecto: {
+                nombre: null,
+                validez: 30,
+            },
+            items: [],
+            descuento: { tipo: '', valor: 0 },
+            calculos: {
+                subtotal: 0,
+                descuentoMonto: 0,
+                igv: 0,
+                total: 0,
+            }
+        };
+
+        // ============================================================
+        // INIT & RENDER
+        // ============================================================
+
+        function init() {
+            renderEnsayos();
+            setupEventListeners();
+        }
+
+        function setupEventListeners() {
+            document.getElementById('ruc-input').addEventListener('input', (e) => {
+                const empresa = DB.EMPRESAS.find(e => e.ruc === e.target.value);
+                if (empresa) {
+                    document.getElementById('razon-social').value = empresa.razonSocial;
+                    STATE.cliente.ruc = empresa.ruc;
+                    STATE.cliente.razonSocial = empresa.razonSocial;
+                    loadContactos(empresa.ruc);
+                }
+            });
+
+            document.getElementById('dni-input').addEventListener('input', (e) => {
+                const persona = DB.PERSONAS.find(p => p.dni === e.target.value);
+                if (persona) {
+                    document.getElementById('nombre-dni').value = persona.nombre;
+                    document.getElementById('apellido-dni').value = persona.apellido;
+                    STATE.cliente.dni = persona.dni;
+                    STATE.cliente.nombre = persona.nombre;
+                    STATE.cliente.apellido = persona.apellido;
+                    STATE.cliente.celular = persona.celular;
+                    STATE.cliente.email = persona.email;
+                }
+            });
+
+            document.getElementById('search-ensayos').addEventListener('input', (e) => {
+                renderEnsayos(e.target.value);
+            });
+        }
+
+        function switchTab(btn, tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            btn.classList.add('active');
+
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById(`tab-${tab}`).classList.add('active');
+
+            STATE.cliente.tipo = tab;
+        }
+
+        function renderEnsayos(search = '') {
+            const paquetesList = document.getElementById('paquetes-list');
+            const ensayosList = document.getElementById('ensayos-list');
+
+            const paquetesFiltrados = DB.PAQUETES.filter(p => p.nombre.toLowerCase().includes(search.toLowerCase()));
+            paquetesList.innerHTML = paquetesFiltrados.map(p => `
+                <div class="item-card" onclick="addItem('paquete', '${p.id}', '${p.nombre}', ${p.precioBase})">
+                    <div class="item-info">
+                        <h3>📦 ${p.nombre}</h3>
+                        <p>${p.descripcion}</p>
+                    </div>
+                    <div class="item-price">S/ ${p.precioBase}</div>
+                </div>
+            `).join('') || '<div class="empty-state">No hay paquetes</div>';
+
+            const ensayosFiltrados = DB.ENSAYOS.filter(e => e.nombre.toLowerCase().includes(search.toLowerCase()));
+            ensayosList.innerHTML = ensayosFiltrados.map(e => `
+                <div class="item-card" onclick="addItem('ensayo', '${e.id}', '${e.nombre}', ${e.precioBase}, '${e.norma}')">
+                    <div class="item-info">
+                        <h3>🧪 ${e.nombre}</h3>
+                        <p>${e.descripcion}</p>
+                        <div class="item-norma">📋 ${e.norma}</div>
+                    </div>
+                    <div class="item-price">S/ ${e.precioBase}</div>
+                </div>
+            `).join('') || '<div class="empty-state">No hay ensayos</div>';
+        }
+
+        function loadContactos(ruc) {
+            const contactos = DB.CONTACTOS.filter(c => c.empresaRuc === ruc);
+            const select = document.getElementById('contacto-select');
+            select.innerHTML = '<option value="">Selecciona contacto</option>' +
+                contactos.map(c => `<option value="${c.id}" data-nombre="${c.nombre}" data-apellido="${c.apellido}" data-email="${c.email}" data-celular="${c.celular}">${c.nombre} ${c.apellido}</option>`).join('');
+
+            select.addEventListener('change', (e) => {
+                const opt = e.target.selectedOptions[0];
+                STATE.cliente.nombre = opt.dataset.nombre || '';
+                STATE.cliente.apellido = opt.dataset.apellido || '';
+                STATE.cliente.email = opt.dataset.email || '';
+                STATE.cliente.celular = opt.dataset.celular || '';
+            });
+        }
+
+        function addItem(tipo, id, nombre, precio, norma = '') {
+            const item = STATE.items.find(i => i.id === id);
+            if (item) {
+                item.cantidad++;
+                item.subtotal = item.cantidad * item.precio;
+            } else {
+                STATE.items.push({ id, tipo, nombre, precio, norma, cantidad: 1, subtotal: precio });
+            }
+            updateCalculos();
+            renderSelectedItems();
+        }
+
+        function removeItem(id) {
+            STATE.items = STATE.items.filter(i => i.id !== id);
+            updateCalculos();
+            renderSelectedItems();
+        }
+
+        function updateQuantity(id, change) {
+            const item = STATE.items.find(i => i.id === id);
+            if (item) {
+                item.cantidad = Math.max(1, item.cantidad + change);
+                item.subtotal = item.cantidad * item.precio;
+                updateCalculos();
+                renderSelectedItems();
+            }
+        }
+
+        function renderSelectedItems() {
+            const container = document.getElementById('selected-items-container');
+            if (STATE.items.length === 0) {
+                container.innerHTML = '<div class="empty-state">No hay items seleccionados</div>';
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="selected-items-list">
+                    ${STATE.items.map(item => `
+                        <div class="selected-item">
+                            <div class="selected-item-info">
+                                <h4>${item.nombre}</h4>
+                                <p>${item.tipo === 'paquete' ? '📦 Paquete' : '🧪 Ensayo'}</p>
+                            </div>
+                            <div class="qty-controls">
+                                <button class="qty-btn" onclick="updateQuantity('${item.id}', -1)">−</button>
+                                <span style="width: 24px; text-align: center; font-size: 12px;">${item.cantidad}</span>
+                                <button class="qty-btn" onclick="updateQuantity('${item.id}', 1)">+</button>
+                                <button class="delete-btn" onclick="removeItem('${item.id}')">🗑️</button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function updateCalculos() {
+            STATE.calculos.subtotal = STATE.items.reduce((sum, i) => sum + i.subtotal, 0);
+            STATE.calculos.igv = STATE.calculos.subtotal * 0.18;
+
+            const totalAntesDescuento = STATE.calculos.subtotal + STATE.calculos.igv;
+            const descuentoTipo = document.getElementById('descuento-tipo').value;
+            const descuentoValor = parseFloat(document.getElementById('descuento-valor').value) || 0;
+
+            STATE.calculos.descuentoMonto = descuentoTipo === 'porcentaje'
+                ? totalAntesDescuento * (descuentoValor / 100)
+                : descuentoTipo === 'monto' ? descuentoValor : 0;
+
+            STATE.calculos.total = totalAntesDescuento - STATE.calculos.descuentoMonto;
+
+            updateUI();
+        }
+
+        function updateUI() {
+            document.getElementById('subtotal-display').textContent = `S/ ${STATE.calculos.subtotal.toFixed(2)}`;
+            document.getElementById('descuento-display').textContent = `S/ ${STATE.calculos.descuentoMonto.toFixed(2)}`;
+            document.getElementById('igv-display').textContent = `S/ ${STATE.calculos.igv.toFixed(2)}`;
+            document.getElementById('total-display').textContent = `S/ ${STATE.calculos.total.toFixed(2)}`;
+
+            // PDF
+            const clienteNombre = STATE.cliente.tipo === 'ruc' ? STATE.cliente.razonSocial : `${STATE.cliente.nombre || ''} ${STATE.cliente.apellido || ''}`;
+            document.getElementById('pdf-cliente').textContent = clienteNombre || '-';
+            document.getElementById('pdf-contacto').textContent = STATE.cliente.nombre ? `${STATE.cliente.nombre} ${STATE.cliente.apellido}` : '-';
+            document.getElementById('pdf-email').textContent = STATE.cliente.email || '-';
+            document.getElementById('pdf-proyecto').textContent = document.getElementById('proyecto-nombre').value || '-';
+
+            const pdfItems = STATE.items.map(i => `
+                <div class="pdf-line">
+                    <span>${i.nombre}</span>
+                    <span>${i.cantidad}x S/ ${i.subtotal.toFixed(2)}</span>
+                </div>
+                ${i.norma ? `<div class="pdf-line"><span style="font-size: 10px; color: #6366f1;">📋 ${i.norma}</span><span></span></div>` : ''}
+            `).join('');
+            document.getElementById('pdf-items').innerHTML = pdfItems || '<div style="font-size: 11px; color: #94a3b8;">No hay items</div>';
+
+            document.getElementById('pdf-subtotal').textContent = `S/ ${STATE.calculos.subtotal.toFixed(2)}`;
+            document.getElementById('pdf-descuento').textContent = `S/ ${STATE.calculos.descuentoMonto.toFixed(2)}`;
+            document.getElementById('pdf-igv').textContent = `S/ ${STATE.calculos.igv.toFixed(2)}`;
+            document.getElementById('pdf-total').textContent = `S/ ${STATE.calculos.total.toFixed(2)}`;
+
+            const plantilla = DB.PLANTILLAS.find(p => p.id === STATE.plantilla);
+            if (plantilla) {
+                document.getElementById('pdf-terminos').textContent = plantilla.terminos;
+            }
+        }
+
+        function nextScreen() {
+            if (STATE.currentScreen < 5) STATE.currentScreen++;
+            updateScreenDisplay();
+        }
+
+        function prevScreen() {
+            if (STATE.currentScreen > 1) STATE.currentScreen--;
+            updateScreenDisplay();
+        }
+
+        function updateScreenDisplay() {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.querySelector(`[data-screen="${STATE.currentScreen}"]`).classList.add('active');
+
+            document.querySelectorAll('.step').forEach((step, idx) => {
+                const stepNum = idx + 1;
+                step.classList.remove('active', 'completed');
+                if (stepNum === STATE.currentScreen) step.classList.add('active');
+                else if (stepNum < STATE.currentScreen) step.classList.add('completed');
+            });
+
+            document.getElementById('progressFill').style.width = (STATE.currentScreen * 20) + '%';
+            document.getElementById('btn-prev').style.display = STATE.currentScreen > 1 ? 'block' : 'none';
+            document.getElementById('btn-next').style.display = STATE.currentScreen < 5 ? 'block' : 'none';
+            document.getElementById('btn-pdf').style.display = STATE.currentScreen === 4 ? 'block' : 'none';
+            document.getElementById('btn-finalizar').style.display = STATE.currentScreen === 5 ? 'block' : 'none';
+
+            document.querySelector('.content').scrollTop = 0;
+        }
+
+        function cambiarPlantilla() {
+            STATE.plantilla = document.getElementById('plantilla-selector').value;
+            updateUI();
+        }
+
+        // Screen 5 Actions
+        function descargarOffline() { alert('📥 PDF descargado localmente'); }
+        function descargarOnline() { alert('☁️ Subiendo a servidor'); }
+        function enviarWhatsApp() { alert('💬 Enviando a WhatsApp'); }
+        function enviarEmail() { alert('📧 Enviando por Email'); }
+        function finalizarCotizacion() { alert('✅ ¡Cotización lista!'); STATE.currentScreen = 1; updateScreenDisplay(); }
+
+        // Init
+        init();
+    </script>
+</body>
+</html>

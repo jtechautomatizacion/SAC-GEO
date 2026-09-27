@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PWA Cotización - Sistema Integrado</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .phone-frame {
+            width: 390px;
+            height: 844px;
+            border: 14px solid #1e293b;
+            border-radius: 48px;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.8), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+            overflow: hidden;
+            background: #ffffff;
+            position: relative;
+        }
+
+        .phone-frame::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 150px;
+            height: 28px;
+            background: #0f172a;
+            border-radius: 0 0 28px 28px;
+            z-index: 50;
+        }
+
+        .phone-content {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            background: #ffffff;
+            overflow: hidden;
+        }
+
+        .status-bar {
+            height: 44px;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 16px 0;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .main-header {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            padding: 20px;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .header-title h1 {
+            font-size: 22px;
+            font-weight: 800;
+            margin-bottom: 2px;
+        }
+
+        .header-title p {
+            font-size: 12px;
+            opacity: 0.85;
+        }
+
+        .sync-indicator {
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .progress-stepper {
+            display: flex;
+            gap: 4px;
+            margin-top: 12px;
+        }
+
+        .stepper-segment {
+            flex: 1;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 2px;
+        }
+
+        .stepper-segment.active {
+            background: white;
+        }
+
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: none;
+        }
+
+        .main-content.active {
+            display: block;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #475569;
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            background: #f8fafc;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: #6366f1;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .form-input.success {
+            border-color: #10b981;
+            background: #f0fdf4;
+        }
+
+        .form-input.error {
+            border-color: #ef4444;
+            background: #fef2f2;
+        }
+
+        .error-message {
+            color: #ef4444;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+
+        .success-message {
+            color: #10b981;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+
+        .btn {
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-secondary {
+            background: #f1f5f9;
+            color: #475569;
+            border: 1px solid #e2e8f0;
+            width: 100%;
+        }
+
+        .btn-secondary:hover {
+            background: #e2e8f0;
+        }
+
+        .selector-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .selector-tab {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+
+        .selector-tab.active {
+            border-color: #6366f1;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+            color: #6366f1;
+        }
+
+        .alert {
+            padding: 12px 14px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 13px;
+            display: none;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        .alert.show {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .alert-success {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+
+        .input-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .input-row.full {
+            grid-template-columns: 1fr;
+        }
+
+        .autocomplete-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 10;
+            display: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .autocomplete-dropdown.show {
+            display: block;
+        }
+
+        .autocomplete-item {
+            padding: 10px 12px;
+            border-bottom: 1px solid #f1f5f9;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .autocomplete-item:hover {
+            background: #f8fafc;
+        }
+
+        .autocomplete-item.selected {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+            color: #6366f1;
+            font-weight: 600;
+        }
+
+        .autocomplete-item-title {
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .autocomplete-item-subtitle {
+            font-size: 11px;
+            color: #64748b;
+            margin-top: 2px;
+        }
+
+        .bottom-bar {
+            padding: 12px 20px 20px;
+            background: white;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        .bottom-bar .btn {
+            margin: 0;
+        }
+
+        .phone-content::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .phone-content::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+
+        .phone-content::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+
+        .phone-content::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .info-badge {
+            display: inline-block;
+            background: #dbeafe;
+            color: #0c2340;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="phone-frame">
+        <div class="phone-content">
+            <!-- STATUS BAR -->
+            <div class="status-bar">
+                <span>9:41</span>
+                <div style="display: flex; gap: 4px;">
+                    <span><i class="fas fa-signal"></i></span>
+                    <span><i class="fas fa-wifi"></i></span>
+                    <span><i class="fas fa-battery-full"></i></span>
+                </div>
+            </div>
+
+            <!-- HEADER -->
+            <div class="main-header">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                    <div class="header-title">
+                        <h1>Cotización</h1>
+                        <p id="headerSubtitle">Cliente</p>
+                    </div>
+                    <div class="sync-indicator"></div>
+                </div>
+                <div class="progress-stepper">
+                    <div class="stepper-segment active"></div>
+                    <div class="stepper-segment"></div>
+                    <div class="stepper-segment"></div>
+                    <div class="stepper-segment"></div>
+                </div>
+            </div>
+
+            <!-- ALERTAS -->
+            <div id="alert" class="alert"></div>
+
+            <!-- SECCIÓN 1: DATOS DEL CLIENTE (MEJORADA) -->
+            <div class="main-content active" id="section1">
+                <div class="section-title">
+                    <i class="fas fa-id-card"></i> Identificación del Cliente
+                </div>
+
+                <div class="selector-tabs">
+                    <div class="selector-tab active" onclick="setClientType('ruc')">
+                        <i class="fas fa-building"></i> RUC
+                    </div>
+                    <div class="selector-tab" onclick="setClientType('dni')">
+                        <i class="fas fa-user"></i> DNI
+                    </div>
+                </div>
+
+                <!-- ===== TAB RUC (EMPRESA) ===== -->
+                <div id="tabRuc" style="display: block;">
+                    <div class="form-group">
+                        <label class="form-label">Número de RUC <span style="color: #ef4444;">*</span></label>
+                        <div style="position: relative;">
+                            <input type="text" class="form-input" id="rucInput" placeholder="Ej: 20123456789" maxlength="11" oninput="searchRucAutocomplete()">
+                            <div class="autocomplete-dropdown" id="rucDropdown"></div>
+                        </div>
+                        <div id="rucError" class="error-message"></div>
+                        <div id="rucSuccess" class="success-message"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Razón Social</label>
+                        <input type="text" class="form-input" id="empresaRuc" placeholder="Auto-completado desde SUNAT" readonly>
+                    </div>
+
+                    <div class="input-row">
+                        <div class="form-group">
+                            <label class="form-label">Contacto</label>
+                            <input type="text" class="form-input" id="contactoRuc" placeholder="Nombre contacto">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Celular</label>
+                            <input type="tel" class="form-input" id="celularRuc" placeholder="+51 9 xxxx xxxx">
+                        </div>
+                    </div>
+
+                    <div class="info-badge">
+                        <i class="fas fa-info-circle"></i> Datos traídos del padrón reducido SUNAT
+                    </div>
+                </div>
+
+                <!-- ===== TAB DNI (PERSONA) ===== -->
+                <div id="tabDni" style="display: none;">
+                    <div class="input-row">
+                        <div class="form-group">
+                            <label class="form-label">DNI <span style="color: #ef4444;">*</span></label>
+                            <input type="text" class="form-input" id="dniInput" placeholder="Ej: 12345678" maxlength="8" oninput="validateDni()">
+                            <div id="dniError" class="error-message"></div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Celular <span style="color: #ef4444;">*</span></label>
+                            <input type="tel" class="form-input" id="celularDni" placeholder="+51 9 xxxx xxxx">
+                        </div>
+                    </div>
+
+                    <div class="input-row">
+                        <div class="form-group">
+                            <label class="form-label">Apellidos <span style="color: #ef4444;">*</span></label>
+                            <input type="text" class="form-input" id="apellidos" placeholder="Apellidos">
+                            <div id="apellidosError" class="error-message"></div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Nombres <span style="color: #ef4444;">*</span></label>
+                            <input type="text" class="form-input" id="nombres" placeholder="Nombres">
+                            <div id="nombresError" class="error-message"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Empresa <span style="color: #ef4444;">*</span></label>
+                        <input type="text" class="form-input" id="empresaDni" placeholder="Empresa o proyecto">
+                        <div id="empresaDniError" class="error-message"></div>
+                    </div>
+
+                    <div class="info-badge">
+                        <i class="fas fa-info-circle"></i> Datos personales vinculados a la cotización
+                    </div>
+                </div>
+
+                <!-- ===== CAMPOS COMUNES ===== -->
+                <div class="form-group">
+                    <label class="form-label">Email <span style="color: #ef4444;">*</span></label>
+                    <input type="email" class="form-input" id="email" placeholder="cliente@empresa.com">
+                    <div id="emailError" class="error-message"></div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Proyecto / Obra <span style="color: #ef4444;">*</span></label>
+                    <input type="text" class="form-input" id="proyecto" placeholder="Nombre del proyecto">
+                    <div id="proyectoError" class="error-message"></div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Validez de la Cotización (días) <span style="color: #ef4444;">*</span></label>
+                    <input type="number" class="form-input" id="validez" value="30" min="1" max="365">
+                </div>
+            </div>
+
+            <!-- SECCIÓN 2: DETALLE DE COTIZACIÓN (Placeholder) -->
+            <div class="main-content" id="section2" style="text-align: center; padding: 40px 20px;">
+                <i class="fas fa-file-contract" style="font-size: 48px; color: #cbd5e1; margin-bottom: 16px;"></i>
+                <h2 style="color: #1e293b; margin-bottom: 8px;">Detalle de Cotización</h2>
+                <p style="color: #64748b; font-size: 14px;">Esta sección se construye con los datos del cliente</p>
+            </div>
+
+            <!-- SECCIÓN 3: DESCUENTOS (Placeholder) -->
+            <div class="main-content" id="section3" style="text-align: center; padding: 40px 20px;">
+                <i class="fas fa-percent" style="font-size: 48px; color: #cbd5e1; margin-bottom: 16px;"></i>
+                <h2 style="color: #1e293b; margin-bottom: 8px;">Descuentos</h2>
+                <p style="color: #64748b; font-size: 14px;">Gestiona descuentos de la cotización</p>
+            </div>
+
+            <!-- SECCIÓN 4: DESCARGAS (Placeholder) -->
+            <div class="main-content" id="section4" style="text-align: center; padding: 40px 20px;">
+                <i class="fas fa-download" style="font-size: 48px; color: #cbd5e1; margin-bottom: 16px;"></i>
+                <h2 style="color: #1e293b; margin-bottom: 8px;">Descargas</h2>
+                <p style="color: #64748b; font-size: 14px;">Descarga y comparte la cotización</p>
+            </div>
+
+            <!-- BOTTOM BAR -->
+            <div class="bottom-bar">
+                <button class="btn btn-secondary btn-small" id="prevBtn" style="display: none; flex: 0 0 auto; width: auto; padding: 10px 16px;" onclick="previousSection()">
+                    ← Atrás
+                </button>
+                <button class="btn btn-primary" id="nextBtn" onclick="nextSection()">
+                    Siguiente →
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===================== BASE DE DATOS MOCK =====================
+
+        // TABLA: EMPRESAS (RUC)
+        const EMPRESAS_DB = {
+            '20123456789': {
+                ruc: '20123456789',
+                razonSocial: 'ACME Corporation SAC',
+                direccion: 'Jr. Principal 123, Lima',
+                telefono: '+51 1 2345678',
+                contacto: 'Juan García'
+            },
+            '20987654321': {
+                ruc: '20987654321',
+                razonSocial: 'Tech Solutions EIRL',
+                direccion: 'Av. Innovación 456, Lima',
+                telefono: '+51 1 9876543',
+                contacto: 'María López'
+            },
+            '20111111111': {
+                ruc: '20111111111',
+                razonSocial: 'Laboratorio Central SA',
+                direccion: 'Calle Lab 789, Lima',
+                telefono: '+51 1 1111111',
+                contacto: 'Carlos Ruiz'
+            },
+            '20555555555': {
+                ruc: '20555555555',
+                razonSocial: 'Constructor Vial SRL',
+                direccion: 'Av. Vial 321, Lima',
+                telefono: '+51 1 5555555',
+                contacto: 'Pedro Fernández'
+            },
+            '20666666666': {
+                ruc: '20666666666',
+                razonSocial: 'Empresa Constructora ABC',
+                direccion: 'Jr. Construcción 555, Lima',
+                telefono: '+51 1 6666666',
+                contacto: 'Roberto Díaz'
+            },
+            '20777777777': {
+                ruc: '20777777777',
+                razonSocial: 'Servicios de Ingeniería XYZ',
+                direccion: 'Av. Ingeniería 777, Lima',
+                telefono: '+51 1 7777777',
+                contacto: 'Ana Martínez'
+            }
+        };
+
+        // TABLA: PERSONAS (DNI) - Opcional para futuro vinculo con empresas
+        const PERSONAS_DB = {
+            '12345678': {
+                dni: '12345678',
+                apellidos: 'García López',
+                nombres: 'Juan Carlos',
+                celular: '+51 987654321',
+                empresa: 'ACME Corporation SAC'
+            },
+            '87654321': {
+                dni: '87654321',
+                apellidos: 'López García',
+                nombres: 'María Rosa',
+                celular: '+51 912345678',
+                empresa: 'Tech Solutions EIRL'
+            }
+        };
+
+        // ===================== STATE =====================
+        const state = {
+            currentSection: 1,
+            clientType: 'ruc', // 'ruc' o 'dni'
+            client: {
+                tipo: 'ruc', // ruc o dni
+                // Datos RUC
+                ruc: '',
+                razonSocial: '',
+                contactoRuc: '',
+                celularRuc: '',
+                // Datos DNI
+                dni: '',
+                apellidos: '',
+                nombres: '',
+                empresaDni: '',
+                celularDni: '',
+                // Comunes
+                email: '',
+                proyecto: '',
+                validez: 30
+            }
+        };
+
+        // ===================== FUNCIONES CLIENTE TYPE =====================
+
+        function setClientType(type) {
+            state.clientType = type;
+            state.client.tipo = type;
+
+            const tabs = document.querySelectorAll('.selector-tab');
+            tabs.forEach(t => t.classList.remove('active'));
+            event.target.closest('.selector-tab').classList.add('active');
+
+            document.getElementById('tabRuc').style.display = type === 'ruc' ? 'block' : 'none';
+            document.getElementById('tabDni').style.display = type === 'dni' ? 'block' : 'none';
+
+            // Limpiar errores
+            clearErrors();
+        }
+
+        // ===================== FUNCIONES BÚSQUEDA RUC =====================
+
+        function searchRucAutocomplete() {
+            const query = document.getElementById('rucInput').value.trim();
+            const dropdown = document.getElementById('rucDropdown');
+            const errorDiv = document.getElementById('rucError');
+            const successDiv = document.getElementById('rucSuccess');
+
+            errorDiv.textContent = '';
+            successDiv.textContent = '';
+
+            if (query.length === 0) {
+                dropdown.classList.remove('show');
+                return;
+            }
+
+            if (!/^\d{0,11}$/.test(query)) {
+                errorDiv.textContent = 'Solo números, máximo 11 dígitos';
+                dropdown.classList.remove('show');
+                return;
+            }
+
+            // Filtrar empresas que coincidan
+            const resultados = Object.values(EMPRESAS_DB).filter(emp =>
+                emp.ruc.includes(query) ||
+                emp.razonSocial.toLowerCase().includes(query.toLowerCase())
+            );
+
+            if (resultados.length === 0) {
+                dropdown.classList.remove('show');
+                if (query.length === 11) {
+                    errorDiv.textContent = 'RUC no encontrado en padrón SUNAT';
+                }
+                return;
+            }
+
+            // Mostrar autocomplete
+            dropdown.innerHTML = resultados.map(emp => `
+                <div class="autocomplete-item" onclick="selectRuc('${emp.ruc}')">
+                    <div class="autocomplete-item-title">${emp.razonSocial}</div>
+                    <div class="autocomplete-item-subtitle">RUC: ${emp.ruc} | ${emp.direccion}</div>
+                </div>
+            `).join('');
+            dropdown.classList.add('show');
+        }
+
+        function selectRuc(ruc) {
+            const empresa = EMPRESAS_DB[ruc];
+            if (!empresa) return;
+
+            state.client.ruc = empresa.ruc;
+            state.client.razonSocial = empresa.razonSocial;
+            state.client.contactoRuc = empresa.contacto;
+            state.client.celularRuc = empresa.telefono;
+
+            document.getElementById('rucInput').value = empresa.ruc;
+            document.getElementById('rucInput').classList.add('success');
+            document.getElementById('empresaRuc').value = empresa.razonSocial;
+            document.getElementById('contactoRuc').value = empresa.contacto;
+            document.getElementById('celularRuc').value = empresa.telefono;
+
+            document.getElementById('rucDropdown').classList.remove('show');
+            document.getElementById('rucError').textContent = '';
+            document.getElementById('rucSuccess').textContent = '✓ RUC validado y datos traídos de SUNAT';
+
+            showAlert('✓ Empresa validada desde padrón SUNAT', 'success');
+        }
+
+        // ===================== FUNCIONES DNI =====================
+
+        function validateDni() {
+            const dni = document.getElementById('dniInput').value.trim();
+            const errorDiv = document.getElementById('dniError');
+
+            errorDiv.textContent = '';
+
+            if (dni.length === 0) return;
+
+            if (!/^\d{8}$/.test(dni)) {
+                errorDiv.textContent = 'DNI debe tener 8 dígitos';
+                return;
+            }
+
+            if (PERSONAS_DB[dni]) {
+                const persona = PERSONAS_DB[dni];
+                document.getElementById('apellidos').value = persona.apellidos;
+                document.getElementById('nombres').value = persona.nombres;
+                document.getElementById('celularDni').value = persona.celular;
+                document.getElementById('empresaDni').value = persona.empresa;
+
+                state.client.dni = persona.dni;
+                state.client.apellidos = persona.apellidos;
+                state.client.nombres = persona.nombres;
+                state.client.celularDni = persona.celular;
+                state.client.empresaDni = persona.empresa;
+
+                document.getElementById('dniInput').classList.add('success');
+                showAlert('✓ Datos de persona recuperados', 'success');
+            } else {
+                document.getElementById('dniInput').classList.remove('success');
+                errorDiv.textContent = 'DNI no registrado - completar datos manualmente';
+            }
+        }
+
+        // ===================== NAVEGACIÓN =====================
+
+        function validateSection1() {
+            const errors = [];
+
+            if (state.clientType === 'ruc') {
+                if (!state.client.ruc) {
+                    errors.push('Selecciona un RUC válido');
+                    document.getElementById('rucError').textContent = 'Requerido';
+                }
+            } else {
+                if (!document.getElementById('dniInput').value.trim()) {
+                    errors.push('DNI requerido');
+                    document.getElementById('dniError').textContent = 'Requerido';
+                }
+                if (!document.getElementById('apellidos').value.trim()) {
+                    errors.push('Apellidos requeridos');
+                    document.getElementById('apellidosError').textContent = 'Requerido';
+                }
+                if (!document.getElementById('nombres').value.trim()) {
+                    errors.push('Nombres requeridos');
+                    document.getElementById('nombresError').textContent = 'Requerido';
+                }
+                if (!document.getElementById('empresaDni').value.trim()) {
+                    errors.push('Empresa requerida');
+                    document.getElementById('empresaDniError').textContent = 'Requerido';
+                }
+            }
+
+            if (!document.getElementById('email').value.trim()) {
+                errors.push('Email requerido');
+                document.getElementById('emailError').textContent = 'Requerido';
+            }
+
+            if (!document.getElementById('proyecto').value.trim()) {
+                errors.push('Proyecto requerido');
+                document.getElementById('proyectoError').textContent = 'Requerido';
+            }
+
+            return errors.length === 0;
+        }
+
+        function nextSection() {
+            if (state.currentSection === 1) {
+                if (!validateSection1()) {
+                    showAlert('⚠ Completa los datos requeridos', 'error');
+                    return;
+                }
+                // Guardar datos comunes
+                state.client.email = document.getElementById('email').value;
+                state.client.proyecto = document.getElementById('proyecto').value;
+                state.client.validez = parseInt(document.getElementById('validez').value);
+
+                if (state.clientType === 'dni') {
+                    state.client.dni = document.getElementById('dniInput').value;
+                    state.client.apellidos = document.getElementById('apellidos').value;
+                    state.client.nombres = document.getElementById('nombres').value;
+                    state.client.empresaDni = document.getElementById('empresaDni').value;
+                    state.client.celularDni = document.getElementById('celularDni').value;
+                }
+            }
+
+            showSection(state.currentSection + 1);
+        }
+
+        function previousSection() {
+            if (state.currentSection > 1) {
+                showSection(state.currentSection - 1);
+            }
+        }
+
+        function showSection(num) {
+            state.currentSection = num;
+
+            document.querySelectorAll('.main-content').forEach(el => el.classList.remove('active'));
+            document.getElementById(`section${num}`).classList.add('active');
+
+            const titles = ['Cliente', 'Cotización', 'Descuentos', 'Descargas'];
+            document.getElementById('headerSubtitle').textContent = titles[num - 1];
+
+            document.querySelectorAll('.stepper-segment').forEach((seg, i) => {
+                seg.classList.toggle('active', i < num);
+            });
+
+            document.getElementById('prevBtn').style.display = num > 1 ? 'block' : 'none';
+            document.getElementById('nextBtn').textContent = num === 4 ? 'Completado ✓' : 'Siguiente →';
+            document.getElementById('nextBtn').style.display = num === 4 ? 'none' : 'block';
+
+            document.querySelector('.phone-content').scrollTop = 0;
+        }
+
+        // ===================== UTILIDADES =====================
+
+        function showAlert(message, type) {
+            const alert = document.getElementById('alert');
+            alert.className = `alert show alert-${type}`;
+            alert.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i> ${message}`;
+            setTimeout(() => alert.classList.remove('show'), 4000);
+        }
+
+        function clearErrors() {
+            document.querySelectorAll('.error-message').forEach(el => el.textContent = '');
+            document.getElementById('rucError').textContent = '';
+            document.getElementById('rucSuccess').textContent = '';
+        }
+
+        // ===================== INICIALIZACIÓN =====================
+        document.addEventListener('DOMContentLoaded', () => {
+            showSection(1);
+
+            // Cerrar dropdown al hacer click afuera
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('#rucInput') && !e.target.closest('#rucDropdown')) {
+                    document.getElementById('rucDropdown').classList.remove('show');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

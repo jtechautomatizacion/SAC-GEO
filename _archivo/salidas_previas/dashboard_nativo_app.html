@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Dashboard GTQC">
+    <meta name="theme-color" content="#6366f1">
+    <meta name="description" content="Dashboard de cotizaciones GTQC">
+    <meta name="msapplication-TileColor" content="#6366f1">
+    <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22Dashboard GTQC%22,%22short_name%22:%22Dashboard%22,%22start_url%22:%22/%22,%22display%22:%22standalone%22,%22background_color%22:%22%23ffffff%22,%22theme_color%22:%22%236366f1%22,%22orientation%22:%22portrait%22,%22icons%22:[{%22src%22:%22data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 192 192%27%3E%3Crect fill=%27%236366f1%27 width=%27192%27 height=%27192%27/%3E%3Ctext x=%2750%25%27 y=%2750%25%27 font-size=%27100%27 fill=%27white%27 text-anchor=%27middle%27 dominant-baseline=%27central%27 font-weight=%27bold%27%3EDG%3C/text%3E%3C/svg%3E%22,%22sizes%22:%22192x192%22,%22type%22:%22image/svg+xml%22}]}">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Crect fill=%27%236366f1%27 width=%27100%27 height=%27100%27/%3E%3Ctext x=%2750%27 y=%2750%27 font-size=%2750%27 fill=%27white%27 text-anchor=%27middle%27 dominant-baseline=%27central%27 font-weight=%27bold%27%3EDG%3C/text%3E%3C/svg%3E">
+    <title>Dashboard GTQC - Nativo</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: white;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: #1a1a2e;
+            position: fixed;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .status-bar {
+            height: max(20px, env(safe-area-inset-top));
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        }
+
+        .app-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            padding-bottom: max(0px, env(safe-area-inset-bottom));
+        }
+
+        /* ============================================
+           HEADER
+           ============================================ */
+
+        .header {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            padding: 16px 20px;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+        }
+
+        .header-title {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+
+        .header-subtitle {
+            font-size: 11px;
+            opacity: 0.85;
+            margin-top: 4px;
+        }
+
+        /* ============================================
+           CONTENT AREA
+           ============================================ */
+
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+            padding: 0;
+        }
+
+        .view {
+            display: none;
+            width: 100%;
+            min-height: 100%;
+            padding: 20px;
+            padding-bottom: 100px;
+            animation: slideIn 0.3s ease;
+        }
+
+        .view.active {
+            display: block;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ============================================
+           SECTION STYLING
+           ============================================ */
+
+        .section {
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            opacity: 0.6;
+        }
+
+        /* ============================================
+           STAT CARDS
+           ============================================ */
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 16px;
+            border-left: 4px solid #6366f1;
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.05);
+            transition: all 0.2s ease;
+        }
+
+        .stat-card:active {
+            transform: scale(0.98);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #9ca3af;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-top: 8px;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-card.total { border-left-color: #6366f1; }
+        .stat-card.aceptadas { border-left-color: #16a34a; }
+        .stat-card.rechazadas { border-left-color: #dc2626; }
+        .stat-card.valor { border-left-color: #f59e0b; }
+
+        /* ============================================
+           LEGEND / STATUS CARDS
+           ============================================ */
+
+        .legend-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        .legend-card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-left: 4px solid;
+            border-radius: 12px;
+            padding: 14px;
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.05);
+            transition: all 0.2s ease;
+        }
+
+        .legend-card:active {
+            transform: scale(0.98);
+        }
+
+        .legend-card.aceptada { border-left-color: #16a34a; }
+        .legend-card.emitida { border-left-color: #f59e0b; }
+        .legend-card.rechazada { border-left-color: #dc2626; }
+        .legend-card.cancelada { border-left-color: #6b7280; }
+
+        .legend-header {
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: #1a1a2e;
+        }
+
+        .legend-desc {
+            font-size: 12px;
+            color: #6b7280;
+            margin-bottom: 8px;
+        }
+
+        .legend-badge {
+            display: inline-block;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 4px 8px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .legend-card.aceptada .legend-badge {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .legend-card.emitida .legend-badge {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .legend-card.rechazada .legend-badge {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .legend-card.cancelada .legend-badge {
+            background: #f3f4f6;
+            color: #374151;
+        }
+
+        /* ============================================
+           CHARTS
+           ============================================ */
+
+        .chart-card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.05);
+        }
+
+        .chart-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 12px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 200px;
+            margin-bottom: 12px;
+        }
+
+        /* ============================================
+           QUOTATION CARDS
+           ============================================ */
+
+        .quotation-card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-left: 4px solid #6366f1;
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.05);
+            transition: all 0.2s ease;
+        }
+
+        .quotation-card:active {
+            transform: scale(0.98);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);
+        }
+
+        .quotation-card.aceptada { border-left-color: #16a34a; }
+        .quotation-card.emitida { border-left-color: #f59e0b; }
+        .quotation-card.rechazada { border-left-color: #dc2626; }
+
+        .quotation-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .quotation-number {
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+
+        .quotation-badge {
+            font-size: 10px;
+            font-weight: 700;
+            padding: 4px 8px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .quotation-card.aceptada .quotation-badge {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .quotation-card.emitida .quotation-badge {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .quotation-card.rechazada .quotation-badge {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .quotation-project {
+            font-size: 13px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 4px;
+        }
+
+        .quotation-client {
+            font-size: 12px;
+            color: #6b7280;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .quotation-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-bottom: 12px;
+            font-size: 12px;
+        }
+
+        .quotation-item {
+            padding: 8px;
+            background: #f9fafb;
+            border-radius: 6px;
+        }
+
+        .quotation-item-label {
+            font-weight: 600;
+            color: #6b7280;
+            margin-bottom: 2px;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.2px;
+        }
+
+        .quotation-item-value {
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+
+        .quotation-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #e5e7eb;
+            background: white;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #6366f1;
+        }
+
+        .btn:active {
+            background: #f9fafb;
+            transform: scale(0.95);
+        }
+
+        /* ============================================
+           FILTER BAR
+           ============================================ */
+
+        .filter-bar {
+            background: white;
+            padding: 12px 20px;
+            margin-bottom: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .filter-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 13px;
+            background: #f9fafb;
+            color: #1a1a2e;
+        }
+
+        .filter-input::placeholder {
+            color: #9ca3af;
+        }
+
+        .filter-select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 13px;
+            background: white;
+            color: #1a1a2e;
+            cursor: pointer;
+        }
+
+        /* ============================================
+           BOTTOM NAVIGATION
+           ============================================ */
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 70px;
+            background: white;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-start;
+            padding-top: 10px;
+            padding-bottom: max(10px, env(safe-area-inset-bottom));
+            box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.05);
+            z-index: 999;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            color: #9ca3af;
+            transition: all 0.2s ease;
+            flex: 1;
+            font-weight: 600;
+        }
+
+        .nav-item.active {
+            color: #6366f1;
+        }
+
+        .nav-icon {
+            font-size: 24px;
+            line-height: 1;
+        }
+
+        /* ============================================
+           RESPONSIVE
+           ============================================ */
+
+        @media (min-width: 481px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .legend-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .quotation-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+
+            .chart-container {
+                height: 250px;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .stats-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+
+            .legend-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .chart-container {
+                height: 300px;
+            }
+        }
+
+        @supports (padding: max(0px)) {
+            .header {
+                padding-left: max(16px, env(safe-area-inset-left));
+                padding-right: max(16px, env(safe-area-inset-right));
+            }
+
+            .content {
+                padding-left: max(0px, env(safe-area-inset-left));
+                padding-right: max(0px, env(safe-area-inset-right));
+            }
+
+            .bottom-nav {
+                padding-left: max(0px, env(safe-area-inset-left));
+                padding-right: max(0px, env(safe-area-inset-right));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="status-bar"></div>
+
+    <div class="app-container">
+        <div class="header">
+            <div class="header-title">📊 Dashboard</div>
+            <div class="header-subtitle">GTQC Laboratorio • 24 Sep 2026</div>
+        </div>
+
+        <div class="content">
+            <!-- VIEW 1: DASHBOARD -->
+            <div class="view active">
+                <!-- Stats -->
+                <div class="stats-grid">
+                    <div class="stat-card total">
+                        <div class="stat-label">Total Cotizaciones</div>
+                        <div class="stat-value">8</div>
+                    </div>
+                    <div class="stat-card aceptadas">
+                        <div class="stat-label">Aceptadas</div>
+                        <div class="stat-value">5</div>
+                    </div>
+                    <div class="stat-card rechazadas">
+                        <div class="stat-label">Rechazadas</div>
+                        <div class="stat-value">2</div>
+                    </div>
+                    <div class="stat-card valor">
+                        <div class="stat-label">Valor Total</div>
+                        <div class="stat-value" style="font-size: 20px;">S/ 45K</div>
+                    </div>
+                </div>
+
+                <!-- Legend -->
+                <div class="section">
+                    <div class="section-title">Estados</div>
+                    <div class="legend-grid">
+                        <div class="legend-card aceptada">
+                            <div class="legend-header">🟢 Aceptada</div>
+                            <div class="legend-desc">Cliente aprobó la cotización</div>
+                            <span class="legend-badge">✅ Activa</span>
+                        </div>
+                        <div class="legend-card emitida">
+                            <div class="legend-header">🟡 Emitida</div>
+                            <div class="legend-desc">Esperando respuesta del cliente</div>
+                            <span class="legend-badge">⏳ Pendiente</span>
+                        </div>
+                        <div class="legend-card rechazada">
+                            <div class="legend-header">🔴 Rechazada</div>
+                            <div class="legend-desc">Cliente rechazó la propuesta</div>
+                            <span class="legend-badge">❌ Cerrada</span>
+                        </div>
+                        <div class="legend-card cancelada">
+                            <div class="legend-header">⚫ Cancelada</div>
+                            <div class="legend-desc">Anulada internamente</div>
+                            <span class="legend-badge">🚫 Archivada</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts -->
+                <div class="section">
+                    <div class="section-title">Análisis</div>
+
+                    <div class="chart-card">
+                        <div class="chart-title">📊 Estado de Cotizaciones</div>
+                        <div class="chart-container">
+                            <canvas id="estadoChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-card">
+                        <div class="chart-title">📈 Evolución Mensual</div>
+                        <div class="chart-container">
+                            <canvas id="evolucionChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-card">
+                        <div class="chart-title">🎯 Top Proyectos</div>
+                        <div class="chart-container">
+                            <canvas id="proyectosChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-card">
+                        <div class="chart-title">📅 Monto por Mes</div>
+                        <div class="chart-container">
+                            <canvas id="mensualChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW 2: MIS COTIZACIONES -->
+            <div class="view">
+                <div class="filter-bar">
+                    <input type="text" class="filter-input" placeholder="🔍 Buscar cotización...">
+                    <select class="filter-select">
+                        <option>Todos los estados</option>
+                        <option>Aceptadas</option>
+                        <option>Emitidas</option>
+                        <option>Rechazadas</option>
+                    </select>
+                </div>
+
+                <div style="padding: 0 20px; padding-bottom: 100px;">
+                    <div class="section">
+                        <div class="quotation-card aceptada">
+                            <div class="quotation-header">
+                                <div class="quotation-number">COT-2024-001</div>
+                                <span class="quotation-badge">✅ ACEPTADA</span>
+                            </div>
+                            <div class="quotation-project">Edificio Central Lima</div>
+                            <div class="quotation-client">👤 Constructora ACME S.A.C.</div>
+                            <div class="quotation-grid">
+                                <div class="quotation-item">
+                                    <div class="quotation-item-label">Monto</div>
+                                    <div class="quotation-item-value">S/ 8.5k</div>
+                                </div>
+                                <div class="quotation-item">
+                                    <div class="quotation-item-label">Validez</div>
+                                    <div class="quotation-item-value">30 días</div>
+                                </div>
+                                <div class="quotation-item">
+                                    <div class="quotation-item-label">Emisión</div>
+                                    <div class="quotation-item-value">1 Sep</div>
+                                </div>
+                                <div class="quotation-item">
+                                    <div class="quotation-item-label">Items</div>
+                                    <div class="quotation-item-value">5</div>
+                                </div>
+                            </div>
+                            <div class="quotation-actions">
+                                <button class="btn">👁️ Ver</button>
+                                <button class="btn">📥 PDF</button>
+                            </div>
+                        </div>
+
+                        <div class="quotation-card aceptada">
+                            <div class="quotation-header">
+                                <div class="quotation-number">COT-2024-002</div>
+                                <span class="quotation-badge">✅ ACEPTADA</span>
+                            </div>
+                            <div class="quotation-project">Centro Comercial Arequipa</div>
+                            <div class="quotation-client">👤 Ing. Moderna E.I.R.L.</div>
+                            <div class="quotation-grid">
+                                <div class="quotation-item">
+                                    <div class="quotation-item-label">Monto</div>
+                                    <div class="quotation-item-value">S/ 12.3k</div>
+                                </div>
+                                <div class="quotation-item">
+                                    <div class="quotation-item-label">Validez</div>
+                                    <div class="quotation-item-value">30 días</div>
+                                </div>
+                                <div class="quotation-item">
+                                    <div class="quotation-item-label">Emisión</div>
+                                    <div class="quotation-item-value">5 Sep</div>
+                                </div>
+                                <div class="quotation-item">
+                                    <div class="quotation-item-label">Items</div>
+                                    <div class="quotation-item-value">8</div>
+                                </div>
+                            </div>
+                            <div class="quotation-actions">
+                                <button class="btn">👁️ Ver</button>
+                                <button class="btn">📥 PDF</button>
+                            </div>
+                        </div>
+
+                        <div class="quotation-card emitida">
+                            <div class="quotation-header">
+                                <div class="quotation-number">COT-2024-003</div>
+                                <span class="quotation-badge">⏳ EMITIDA</span>
+                            </div>
+                            <div class="quotation-project">Clínica San Juan</div>
+                            <div class="quotation-client">👤 Empresa Médica del Perú</div>
+                            <div class="quotation-grid">
+                                <div class="quotation-item">
+                                    <div class="quotation-item-label">Monto</div>
+                                    <div class="quotation-item-value">S/ 9.8k</div>
+                                </div>
+                                <div class="quotation-item">
+                                    <div class="quotation-item-label">Validez</div>
+                                    <div class="quotation-item-value">30 días</div>
+                                </div>
+                                <div class="quotation-item">
+                                    <div class="quotation-item-label">Emisión</div>
+                                    <div class="quotation-item-value">8 Sep</div>
+                                </div>
+                                <div class="quotation-item">
+                                    <div class="quotation-item-label">Items</div>
+                                    <div class="quotation-item-value">6</div>
+                                </div>
+                            </div>
+                            <div class="quotation-actions">
+                                <button class="btn">👁️ Ver</button>
+                                <button class="btn">📥 PDF</button>
+                            </div>
+                        </div>
+
+                        <div class="quotation-card rechazada">
+                            <div class="quotation-header">
+                                <div class="quotation-number">COT-2024-004</div>
+                                <span class="quotation-badge">❌ RECHAZADA</span>
+                            </div>
+                            <div class="quotation-project">Oficinas Centro</div>
+                            <div class="quotation-client">👤 Servicios Empresariales ABC</div>
+                            <div class="quotation-grid">
+                                <div class="quotation-item">
+                                    <div class="quotation-item-label">Monto</div>
+                                    <div class="quotation-item-value">S/ 5.2k</div>
+                                </div>
+                                <div class="quotation-item">
+                                    <div class="quotation-item-label">Validez</div>
+                                    <div class="quotation-item-value">15 días</div>
+                                </div>
+                                <div class="quotation-item">
+                                    <div class="quotation-item-label">Emisión</div>
+                                    <div class="quotation-item-value">3 Sep</div>
+                                </div>
+                                <div class="quotation-item">
+                                    <div class="quotation-item-label">Items</div>
+                                    <div class="quotation-item-value">4</div>
+                                </div>
+                            </div>
+                            <div class="quotation-actions">
+                                <button class="btn">👁️ Ver</button>
+                                <button class="btn">📥 PDF</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW 3: REPORTES -->
+            <div class="view">
+                <div style="padding: 20px; padding-bottom: 100px;">
+                    <div class="section">
+                        <div style="text-align: center; padding: 40px 0;">
+                            <div style="font-size: 48px; margin-bottom: 12px;">📊</div>
+                            <div style="font-size: 16px; font-weight: 700; color: #1a1a2e;">Reportes Avanzados</div>
+                            <div style="font-size: 13px; color: #9ca3af; margin-top: 8px;">
+                                Análisis detallado de cotizaciones<br>y tendencias de negocio
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 24px; display: grid; gap: 12px;">
+                            <div class="quotation-card">
+                                <div class="quotation-project">📈 Reporte de Tendencias</div>
+                                <div class="quotation-client">Análisis mensual y anual</div>
+                            </div>
+                            <div class="quotation-card">
+                                <div class="quotation-project">👥 Clientes Principales</div>
+                                <div class="quotation-client">Top 10 empresas por monto</div>
+                            </div>
+                            <div class="quotation-card">
+                                <div class="quotation-project">💰 Rentabilidad</div>
+                                <div class="quotation-client">Márgenes y ganancias</div>
+                            </div>
+                            <div class="quotation-card">
+                                <div class="quotation-project">⏳ Tiempos de Respuesta</div>
+                                <div class="quotation-client">Análisis de ciclos</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW 4: CONFIGURACIÓN -->
+            <div class="view">
+                <div style="padding: 20px; padding-bottom: 100px;">
+                    <div class="section">
+                        <div style="text-align: center; padding: 40px 0;">
+                            <div style="font-size: 48px; margin-bottom: 12px;">⚙️</div>
+                            <div style="font-size: 16px; font-weight: 700; color: #1a1a2e;">Configuración</div>
+                            <div style="font-size: 13px; color: #9ca3af; margin-top: 8px;">
+                                Opciones de la aplicación<br>y preferencias personales
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 24px; display: grid; gap: 12px;">
+                            <div class="quotation-card">
+                                <div class="quotation-project">👤 Perfil</div>
+                                <div class="quotation-client">Edita tu información personal</div>
+                            </div>
+                            <div class="quotation-card">
+                                <div class="quotation-project">🔔 Notificaciones</div>
+                                <div class="quotation-client">Alertas y recordatorios</div>
+                            </div>
+                            <div class="quotation-card">
+                                <div class="quotation-project">🌙 Apariencia</div>
+                                <div class="quotation-client">Modo oscuro y temas</div>
+                            </div>
+                            <div class="quotation-card">
+                                <div class="quotation-project">🔐 Seguridad</div>
+                                <div class="quotation-client">Contraseña y autenticación</div>
+                            </div>
+                            <div class="quotation-card">
+                                <div class="quotation-project">📱 Sobre GTQC</div>
+                                <div class="quotation-client">Versión 1.0 • Nativo PWA</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <div class="nav-item active" onclick="switchView(0)">
+            <div class="nav-icon">📊</div>
+            <div>Dashboard</div>
+        </div>
+        <div class="nav-item" onclick="switchView(1)">
+            <div class="nav-icon">📋</div>
+            <div>Cotizaciones</div>
+        </div>
+        <div class="nav-item" onclick="switchView(2)">
+            <div class="nav-icon">📈</div>
+            <div>Reportes</div>
+        </div>
+        <div class="nav-item" onclick="switchView(3)">
+            <div class="nav-icon">⚙️</div>
+            <div>Más</div>
+        </div>
+    </div>
+
+    <script>
+        // Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('data:application/javascript,' + encodeURIComponent(`
+                const CACHE = 'dashboard-v1';
+                self.addEventListener('install', e => {
+                    e.waitUntil(caches.open(CACHE).then(c => c.addAll(['/'])));
+                });
+                self.addEventListener('fetch', e => {
+                    e.respondWith(caches.match(e.request).then(r => r || fetch(e.request)));
+                });
+            `)).catch(() => {});
+        }
+
+        let currentView = 0;
+        const views = document.querySelectorAll('.view');
+
+        function switchView(index) {
+            views.forEach((view, i) => view.classList.toggle('active', i === index));
+            document.querySelectorAll('.nav-item').forEach((item, i) => item.classList.toggle('active', i === index));
+            currentView = index;
+            localStorage.setItem('dashboard_view', index);
+            document.querySelector('.content').scrollTop = 0;
+        }
+
+        // Restore view
+        const savedView = localStorage.getItem('dashboard_view');
+        if (savedView) switchView(parseInt(savedView));
+
+        // Charts initialization
+        const chartConfig = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: true, position: 'top' } }
+        };
+
+        new Chart(document.getElementById('estadoChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Aceptadas', 'Emitidas', 'Rechazadas'],
+                datasets: [{
+                    data: [5, 1, 2],
+                    backgroundColor: ['#16a34a', '#f59e0b', '#dc2626'],
+                    borderColor: 'white',
+                    borderWidth: 2
+                }]
+            },
+            options: chartConfig
+        });
+
+        new Chart(document.getElementById('evolucionChart'), {
+            type: 'line',
+            data: {
+                labels: ['Ago', 'Sep', 'Oct'],
+                datasets: [{
+                    label: 'Cotizaciones',
+                    data: [6, 8, 10],
+                    borderColor: '#6366f1',
+                    backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                    tension: 0.4,
+                    borderWidth: 2
+                }]
+            },
+            options: chartConfig
+        });
+
+        new Chart(document.getElementById('proyectosChart'), {
+            type: 'bar',
+            data: {
+                labels: ['Proyectos', 'Servicios', 'Análisis'],
+                datasets: [{
+                    label: 'Cantidad',
+                    data: [4, 3, 1],
+                    backgroundColor: '#6366f1'
+                }]
+            },
+            options: chartConfig
+        });
+
+        new Chart(document.getElementById('mensualChart'), {
+            type: 'bar',
+            data: {
+                labels: ['Ago', 'Sep', 'Oct'],
+                datasets: [{
+                    label: 'Monto (S/)',
+                    data: [18000, 45000, 52000],
+                    backgroundColor: '#8b5cf6'
+                }]
+            },
+            options: chartConfig
+        });
+
+        // Prevent pull-to-refresh
+        document.addEventListener('touchmove', e => {
+            if (e.touches.length > 1) e.preventDefault();
+        }, { passive: false });
+
+        // Prevent double-tap zoom
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', e => {
+            const now = Date.now();
+            if (now - lastTouchEnd <= 300) e.preventDefault();
+            lastTouchEnd = now;
+        }, false);
+    </script>
+</body>
+</html>

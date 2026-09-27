@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arquitectura BD - Diagrama Visual</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-light: #e0e7ff;
+            --success: #10b981;
+            --success-light: #d1fae5;
+            --warning: #f59e0b;
+            --warning-light: #fef3c7;
+            --slate-50: #f8fafc;
+            --slate-100: #f1f5f9;
+            --slate-200: #e2e8f0;
+            --slate-400: #94a3b8;
+            --slate-600: #475569;
+            --slate-900: #0f172a;
+            --text: var(--slate-900);
+            --bg: #ffffff;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root:not([data-theme="light"]) {
+                --primary: #818cf8;
+                --primary-light: #312e81;
+                --success: #34d399;
+                --success-light: #064e3b;
+                --warning: #fbbf24;
+                --warning-light: #78350f;
+                --slate-50: #f8fafc;
+                --slate-100: #1e293b;
+                --slate-200: #334155;
+                --slate-400: #64748b;
+                --slate-600: #cbd5e1;
+                --slate-900: #f8fafc;
+                --text: var(--slate-900);
+                --bg: #0f172a;
+            }
+        }
+
+        :root[data-theme="dark"] {
+            --primary: #818cf8;
+            --primary-light: #312e81;
+            --success: #34d399;
+            --success-light: #064e3b;
+            --warning: #fbbf24;
+            --warning-light: #78350f;
+            --slate-50: #f8fafc;
+            --slate-100: #1e293b;
+            --slate-200: #334155;
+            --slate-400: #64748b;
+            --slate-600: #cbd5e1;
+            --slate-900: #f8fafc;
+            --text: var(--slate-900);
+            --bg: #0f172a;
+            color-scheme: dark;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            padding: 40px 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: var(--slate-600);
+            margin-bottom: 40px;
+            font-size: 16px;
+        }
+
+        .section {
+            margin-bottom: 60px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        /* Diagrama SVG */
+        .diagram-container {
+            background: var(--slate-50);
+            border: 1px solid var(--slate-200);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            overflow-x: auto;
+        }
+
+        svg {
+            display: block;
+            margin: 0 auto;
+        }
+
+        /* Tablas */
+        .tables-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .table-card {
+            background: var(--slate-50);
+            border: 2px solid var(--slate-200);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .table-header {
+            background: linear-gradient(135deg, var(--primary) 0%, #8b5cf6 100%);
+            color: white;
+            padding: 16px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .table-body {
+            padding: 16px;
+        }
+
+        .field {
+            padding: 8px 0;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid var(--slate-200);
+        }
+
+        .field:last-child {
+            border-bottom: none;
+        }
+
+        .field-type {
+            background: var(--slate-100);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-family: 'IBM Plex Mono', monospace;
+            color: var(--slate-600);
+            white-space: nowrap;
+            font-weight: 600;
+        }
+
+        .field-name {
+            font-weight: 600;
+            color: var(--text);
+            font-family: 'IBM Plex Mono', monospace;
+            min-width: 120px;
+        }
+
+        .field-label {
+            color: var(--slate-600);
+            font-size: 12px;
+        }
+
+        /* Ejemplos */
+        .examples {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .example-card {
+            background: var(--slate-50);
+            border: 1px solid var(--slate-200);
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .example-title {
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .example-content {
+            font-size: 13px;
+            font-family: 'IBM Plex Mono', monospace;
+            color: var(--slate-600);
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        /* Flujo */
+        .flow-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 30px;
+        }
+
+        .flow-box {
+            background: var(--slate-50);
+            border: 2px solid var(--primary);
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+            font-weight: 600;
+            position: relative;
+        }
+
+        .flow-box::after {
+            content: '→';
+            position: absolute;
+            right: -30px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 24px;
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        .flow-box:last-child::after {
+            display: none;
+        }
+
+        .note-box {
+            background: var(--warning-light);
+            border-left: 4px solid var(--warning);
+            padding: 16px;
+            border-radius: 6px;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+
+        .tip-box {
+            background: var(--success-light);
+            border-left: 4px solid var(--success);
+            padding: 16px;
+            border-radius: 6px;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+
+        .icon {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+        }
+
+        .highlight {
+            background: var(--primary-light);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Arquitectura de Base de Datos</h1>
+        <p class="subtitle">Cómo se relacionan los datos en el sistema de Cotizaciones</p>
+
+        <!-- DIAGRAMA VISUAL -->
+        <div class="section">
+            <h2 class="section-title">🔗 Relaciones Entre Tablas</h2>
+            <div class="diagram-container">
+                <svg viewBox="0 0 1000 300" xmlns="http://www.w3.org/2000/svg" style="max-width: 100%; height: auto;">
+                    <!-- EMPRESAS_DB -->
+                    <g>
+                        <rect x="20" y="80" width="240" height="140" fill="#e0e7ff" stroke="#6366f1" stroke-width="2" rx="8"/>
+                        <rect x="20" y="80" width="240" height="35" fill="#6366f1" rx="8"/>
+                        <text x="140" y="103" font-size="16" font-weight="700" fill="white" text-anchor="middle">EMPRESAS_DB</text>
+
+                        <text x="35" y="135" font-size="12" font-weight="600" fill="#0f172a">📌 RUC (id único)</text>
+                        <text x="35" y="155" font-size="12" fill="#334155">Razón Social</text>
+                        <text x="35" y="172" font-size="12" fill="#334155">Dirección</text>
+                        <text x="35" y="189" font-size="12" fill="#334155">Teléfono Empresa</text>
+                        <text x="35" y="206" font-size="12" fill="#334155">Estado</text>
+                    </g>
+
+                    <!-- Flecha 1:N -->
+                    <path d="M 260 150 L 320 150" stroke="#6366f1" stroke-width="3" fill="none" marker-end="url(#arrowhead)"/>
+                    <text x="290" y="140" font-size="11" fill="#6366f1" font-weight="600">1:N</text>
+
+                    <!-- CONTACTOS_DB -->
+                    <g>
+                        <rect x="320" y="80" width="240" height="140" fill="#d1fae5" stroke="#10b981" stroke-width="2" rx="8"/>
+                        <rect x="320" y="80" width="240" height="35" fill="#10b981" rx="8"/>
+                        <text x="440" y="103" font-size="16" font-weight="700" fill="white" text-anchor="middle">CONTACTOS_DB</text>
+
+                        <text x="335" y="135" font-size="12" font-weight="600" fill="#0f172a">📌 ID (id único)</text>
+                        <text x="335" y="155" font-size="12" fill="#334155">FK: empresaRuc</text>
+                        <text x="335" y="172" font-size="12" fill="#334155">Nombre</text>
+                        <text x="335" y="189" font-size="12" fill="#334155">Apellido</text>
+                        <text x="335" y="206" font-size="12" fill="#334155">Celular</text>
+                    </g>
+
+                    <!-- Flecha 1:N -->
+                    <path d="M 560 150 L 620 150" stroke="#6366f1" stroke-width="3" fill="none" marker-end="url(#arrowhead)"/>
+                    <text x="590" y="140" font-size="11" fill="#6366f1" font-weight="600">1:N</text>
+
+                    <!-- PERSONAS_DB -->
+                    <g>
+                        <rect x="620" y="80" width="240" height="140" fill="#fef3c7" stroke="#f59e0b" stroke-width="2" rx="8"/>
+                        <rect x="620" y="80" width="240" height="35" fill="#f59e0b" rx="8"/>
+                        <text x="740" y="103" font-size="16" font-weight="700" fill="white" text-anchor="middle">PERSONAS_DB</text>
+
+                        <text x="635" y="135" font-size="12" font-weight="600" fill="#0f172a">📌 DNI (id único)</text>
+                        <text x="635" y="155" font-size="12" fill="#334155">Nombre</text>
+                        <text x="635" y="172" font-size="12" fill="#334155">Apellido</text>
+                        <text x="635" y="189" font-size="12" fill="#334155">Celular</text>
+                        <text x="635" y="206" font-size="12" fill="#334155">Empresa Asociada</text>
+                    </g>
+
+                    <!-- Leyenda -->
+                    <text x="920" y="230" font-size="11" fill="#64748b">📌 = Llave primaria (id único)</text>
+                    <text x="920" y="250" font-size="11" fill="#64748b">FK = Llave foránea (referencia)</text>
+
+                    <!-- Define arrow marker -->
+                    <defs>
+                        <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                            <polygon points="0 0, 10 3, 0 6" fill="#6366f1"/>
+                        </marker>
+                    </defs>
+                </svg>
+            </div>
+
+            <div class="note-box">
+                <strong>💡 Nota importante:</strong> Un RUC puede tener múltiples contactos. Cuando una empresa "Constructora ABC" tiene a Juan García y María López como contactos, ambos registros apuntan al mismo RUC.
+            </div>
+        </div>
+
+        <!-- TABLA DE DATOS -->
+        <div class="section">
+            <h2 class="section-title">📑 Estructura de Cada Tabla</h2>
+            <div class="tables-grid">
+                <!-- EMPRESAS -->
+                <div class="table-card">
+                    <div class="table-header">🏢 EMPRESAS_DB</div>
+                    <div class="table-body">
+                        <div class="field">
+                            <span class="field-name">ruc</span>
+                            <span class="field-type">texto</span>
+                            <span class="field-label">11 dígitos, única</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">razonSocial</span>
+                            <span class="field-type">texto</span>
+                            <span class="field-label">Nombre legal</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">direccion</span>
+                            <span class="field-type">texto</span>
+                            <span class="field-label">Domicilio fiscal</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">telefonoEmpresa</span>
+                            <span class="field-type">texto</span>
+                            <span class="field-label">+51...</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">estado</span>
+                            <span class="field-type">texto</span>
+                            <span class="field-label">'activa' o 'inactiva'</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CONTACTOS -->
+                <div class="table-card">
+                    <div class="table-header">👥 CONTACTOS_DB</div>
+                    <div class="table-body">
+                        <div class="field">
+                            <span class="field-name">id</span>
+                            <span class="field-type">texto</span>
+                            <span class="field-label">Ej: CNT_001</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">empresaRuc</span>
+                            <span class="field-type">FK</span>
+                            <span class="field-label">apunta a RUC</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">nombre</span>
+                            <span class="field-type">texto</span>
+                            <span class="field-label">"Juan"</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">apellido</span>
+                            <span class="field-type">texto</span>
+                            <span class="field-label">"García"</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">celular</span>
+                            <span class="field-type">texto</span>
+                            <span class="field-label">+51912345678</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PERSONAS -->
+                <div class="table-card">
+                    <div class="table-header">🆔 PERSONAS_DB</div>
+                    <div class="table-body">
+                        <div class="field">
+                            <span class="field-name">dni</span>
+                            <span class="field-type">texto</span>
+                            <span class="field-label">8 dígitos, única</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">nombre</span>
+                            <span class="field-type">texto</span>
+                            <span class="field-label">"Juan"</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">apellido</span>
+                            <span class="field-type">texto</span>
+                            <span class="field-label">"García"</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">celular</span>
+                            <span class="field-type">texto</span>
+                            <span class="field-label">+51912345678</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-name">empresaAsociada</span>
+                            <span class="field-type">texto</span>
+                            <span class="field-label">Opcional</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- EJEMPLOS REALES -->
+        <div class="section">
+            <h2 class="section-title">💼 Ejemplos de Datos Reales</h2>
+            <div class="examples">
+                <div class="example-card">
+                    <div class="example-title">📌 Empresa Constructora ABC</div>
+                    <div class="example-content">
+RUC: 20123456789
+Razón Social: Constructora ABC
+Dirección: Av. Principal 123
+Teléfono: +51987654321
+Estado: activa
+                    </div>
+                </div>
+
+                <div class="example-card">
+                    <div class="example-title">👥 Contacto 1: Juan García</div>
+                    <div class="example-content">
+ID: CNT_001
+Vinculado a: 20123456789
+Nombre: Juan
+Apellido: García
+Celular: +51912345678
+Cargo: Gerente Proyectos
+                    </div>
+                </div>
+
+                <div class="example-card">
+                    <div class="example-title">👥 Contacto 2: María López</div>
+                    <div class="example-content">
+ID: CNT_002
+Vinculado a: 20123456789
+Nombre: María
+Apellido: López
+Celular: +51987654321
+Cargo: Coordinadora
+                    </div>
+                </div>
+
+                <div class="example-card">
+                    <div class="example-title">🆔 Persona: Carlos Ruiz</div>
+                    <div class="example-content">
+DNI: 98765432
+Nombre: Carlos
+Apellido: Ruiz
+Celular: +51945678901
+Empresa: Ing. & Diseño EIRL
+                    </div>
+                </div>
+            </div>
+
+            <div class="tip-box">
+                <strong>✅ Beneficio:</strong> Si Juan García se va de la empresa, solo eliminas su registro (CNT_001). La empresa Constructora ABC sigue existiendo y María López sigue siendo su contacto.
+            </div>
+        </div>
+
+        <!-- FLUJO DE BÚSQUEDA -->
+        <div class="section">
+            <h2 class="section-title">🔍 Cómo Buscar Clientes Después</h2>
+            <div class="flow-container">
+                <div class="flow-box">Usuario escribe "Constructora ABC"</div>
+                <div class="flow-box">Busca en EMPRESAS_DB</div>
+                <div class="flow-box">Encuentra RUC 20123456789</div>
+                <div class="flow-box">Trae todos sus contactos (Juan, María)</div>
+            </div>
+
+            <div style="margin-top: 30px;">
+                <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 16px;">Otros tipos de búsqueda:</h3>
+
+                <div style="background: var(--slate-50); padding: 16px; border-radius: 8px; margin-bottom: 12px;">
+                    <strong>Por nombre de contacto:</strong> "Juan García" → Encuentra CONTACTOS_DB → Identifica su empresa (20123456789)
+                </div>
+
+                <div style="background: var(--slate-50); padding: 16px; border-radius: 8px; margin-bottom: 12px;">
+                    <strong>Por DNI:</strong> "98765432" → Encuentra PERSONAS_DB → Muestra empresas asociadas
+                </div>
+
+                <div style="background: var(--slate-50); padding: 16px; border-radius: 8px;">
+                    <strong>Por celular:</strong> "+51912345678" → Busca en CONTACTOS_DB o PERSONAS_DB → Histórico de cotizaciones
+                </div>
+            </div>
+        </div>
+
+        <!-- RESUMEN -->
+        <div class="section">
+            <div style="background: var(--primary-light); padding: 24px; border-radius: 12px; border: 2px solid var(--primary);">
+                <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 12px; color: var(--primary);">📌 Resumen Clave</h3>
+                <ul style="list-style: none; padding: 0; font-size: 14px;">
+                    <li style="margin-bottom: 8px;"><strong>✅ 3 tablas independientes</strong> que se conectan por IDs</li>
+                    <li style="margin-bottom: 8px;"><strong>✅ Una empresa puede tener múltiples contactos</strong></li>
+                    <li style="margin-bottom: 8px;"><strong>✅ Una persona puede cotizar como DNI o como contacto de empresa</strong></li>
+                    <li style="margin-bottom: 8px;"><strong>✅ Los datos NO están "regados"</strong> - están organizados y relacionados</li>
+                    <li><strong>✅ Cada registro es único</strong> y se puede buscar, modificar o eliminar sin afectar otros</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

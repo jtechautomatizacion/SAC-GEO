@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GTQC - PWA Presupuestos Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .titulo-principal {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .titulo-principal h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .titulo-principal p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .mockups-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .mockup-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .mockup-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 50px rgba(0,0,0,0.3);
+        }
+
+        .mockup-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .mockup-content {
+            padding: 20px;
+        }
+
+        .screen {
+            background: #f5f5f5;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .screen-title {
+            font-size: 13px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 11px;
+            font-weight: bold;
+            color: #666;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 12px;
+            font-family: inherit;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            background: #fffef0;
+        }
+
+        .ruc-validator {
+            display: flex;
+            gap: 8px;
+            align-items: flex-end;
+        }
+
+        .ruc-validator input {
+            flex: 1;
+            letter-spacing: 2px;
+        }
+
+        .ruc-status {
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-weight: bold;
+            min-width: 40px;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .ruc-status.validando {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .ruc-status.valido {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .ruc-status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .table-items {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+            margin-bottom: 15px;
+        }
+
+        .table-items thead {
+            background: #f0f0f0;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .table-items th {
+            padding: 8px;
+            text-align: left;
+            font-weight: bold;
+            color: #333;
+            font-size: 10px;
+            text-transform: uppercase;
+        }
+
+        .table-items td {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .table-items tr:hover {
+            background: #f9f9f9;
+        }
+
+        .input-small {
+            padding: 4px !important;
+            font-size: 11px !important;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        .badge-paquete {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .badge-unidad {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+
+        .totales {
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 12px;
+            margin-bottom: 15px;
+        }
+
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            font-size: 12px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .total-row.total {
+            border-bottom: none;
+            background: #667eea;
+            color: white;
+            padding: 8px;
+            margin: -12px -12px -12px -12px;
+            border-radius: 0 0 4px 4px;
+            font-weight: bold;
+            font-size: 13px;
+        }
+
+        .btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+            margin-right: 8px;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #333;
+            border: 1px solid #ddd;
+        }
+
+        .btn-secondary:hover {
+            background: #eee;
+        }
+
+        .btn-small {
+            padding: 4px 8px;
+            font-size: 11px;
+        }
+
+        .notification {
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 12px;
+            font-size: 11px;
+        }
+
+        .notification.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .notification.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .notification.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+
+        .feature-list {
+            list-style: none;
+            font-size: 12px;
+            color: #555;
+            line-height: 1.8;
+        }
+
+        .feature-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .feature-list li:before {
+            content: "✓ ";
+            color: #4CAF50;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+
+        .feature-list li.offline:before {
+            content: "📱 ";
+        }
+
+        .feature-list li.sync:before {
+            content: "🔄 ";
+        }
+
+        .section-break {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f0f0f0;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .section-break h3 {
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .section-break p {
+            font-size: 12px;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 968px) {
+            .mockups-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .flujo-diagram {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .flujo-diagram h3 {
+            color: #333;
+            font-size: 14px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .flujo-steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .flujo-step {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 12px;
+            position: relative;
+        }
+
+        .flujo-step:not(:last-child)::after {
+            content: "→";
+            position: absolute;
+            right: -25px;
+            font-size: 20px;
+            color: #667eea;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .flujo-step-number {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 50%;
+            line-height: 30px;
+            margin-bottom: 8px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .footer-info {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 30px;
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+        }
+
+        .footer-info strong {
+            color: #333;
+        }
+
+        .comparacion-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .comparacion-card {
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+        }
+
+        .comparacion-card.paquete {
+            border-color: #1976d2;
+            background: #e3f2fd;
+        }
+
+        .comparacion-card.unidad {
+            border-color: #7b1fa2;
+            background: #f3e5f5;
+        }
+
+        .comparacion-card h4 {
+            font-size: 13px;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .comparacion-card ul {
+            list-style: none;
+            font-size: 11px;
+            color: #666;
+        }
+
+        .comparacion-card li {
+            padding: 4px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .animacion-validacion {
+            animation: pulse 1.5s infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="titulo-principal">
+            <h1>🚀 PWA Presupuestos GTQC</h1>
+            <p>Mockups Interactivos - Demostración del Flujo de Usuario</p>
+        </div>
+
+        <!-- FLUJO PRINCIPAL -->
+        <div class="flujo-diagram">
+            <h3>📋 Flujo Completo de Generación de Presupuestos</h3>
+            <div class="flujo-steps">
+                <div class="flujo-step">
+                    <div class="flujo-step-number">1</div>
+                    <div><strong>Crear Presupuesto</strong></div>
+                </div>
+                <div class="flujo-step">
+                    <div class="flujo-step-number">2</div>
+                    <div><strong>Validar RUC (SUNAT)</strong></div>
+                </div>
+                <div class="flujo-step">
+                    <div class="flujo-step-number">3</div>
+                    <div><strong>Seleccionar Servicios</strong></div>
+                </div>
+                <div class="flujo-step">
+                    <div class="flujo-step-number">4</div>
+                    <div><strong>Generar PDF</strong></div>
+                </div>
+                <div class="flujo-step">
+                    <div class="flujo-step-number">5</div>
+                    <div><strong>Enviar al Cliente</strong></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- COMPARACIÓN PAQUETE VS UNIDAD -->
+        <div style="background: white; border-radius: 8px; padding: 25px; margin-bottom: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+            <h3 style="color: #333; font-size: 16px; margin-bottom: 20px; border-bottom: 2px solid #667eea; padding-bottom: 10px;">
+                📦 Sistema de Paquetes vs Unidades (FLEXIBLE)
+            </h3>
+
+            <div class="comparacion-grid">
+                <div class="comparacion-card paquete">
+                    <h4>📦 POR PAQUETES (Tarifa Cerrada)</h4>
+                    <ul>
+                        <li>✓ Precio fijo por servicio completo</li>
+                        <li>✓ No se especifican unidades</li>
+                        <li>✓ Ejemplo: "Estudio Completo = S/ 3,500"</li>
+                        <li>✓ Mejor para servicios integrales</li>
+                        <li>✓ Tiempo estimado incluido</li>
+                        <li>✓ Campo: "Cantidad" = 1</li>
+                    </ul>
+                </div>
+
+                <div class="comparacion-card unidad">
+                    <h4>📏 POR UNIDADES (Tarifa Variable)</h4>
+                    <ul>
+                        <li>✓ Precio por unidad específica</li>
+                        <li>✓ Cantidad variable según cliente</li>
+                        <li>✓ Ejemplo: "S/ 70 por ensayo x 4 = S/ 280"</li>
+                        <li>✓ Mejor para servicios parciales</li>
+                        <li>✓ Flexible según necesidad</li>
+                        <li>✓ Campo: "Cantidad" editable</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="section-break">
+                <h3>💡 ¿Cómo Funciona en la PWA?</h3>
+                <p>
+                    La PWA es <strong>completamente flexible</strong>. En cada servicio, GTQC puede definir si se vende:
+                </p>
+                <ul style="list-style: none; padding-top: 10px;">
+                    <li>• <strong>PAQUETE:</strong> Campo "Cantidad" deshabilitado (siempre 1) → Precio unitario = Precio paquete</li>
+                    <li>• <strong>UNIDAD:</strong> Campo "Cantidad" habilitado (usuario ingresa cantidad) → Subtotal = Cantidad × Precio unitario</li>
+                    <li>• <strong>HÍBRIDO:</strong> Algunos servicios por paquete, otros por unidad en el mismo presupuesto</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- MOCKUPS PRINCIPALES -->
+        <div class="mockups-grid">
+            <!-- PANTALLA 1: NUEVO PRESUPUESTO -->
+            <div class="mockup-card">
+                <div class="mockup-header">1️⃣ CREAR NUEVO PRESUPUESTO</div>
+                <div class="mockup-content">
+                    <div class="screen">
+                        <div class="screen-title">Información Básica</div>
+
+                        <div class="notification info">
+                            ℹ️ Presupuesto #BUD-2026-0001 | Código: ABC123XYZ789
+                        </div>
+
+                        <div class="form-group">
+                            <label>Proyecto *</label>
+                            <input type="text" placeholder="Ej: Estudio Geotécnico - Puente Inca" value="Estudio Geotécnico - Puente Inca">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Fecha Presupuesto</label>
+                            <input type="date" value="2026-09-11">
+                        </div>
+                    </div>
+
+                    <div class="screen">
+                        <div class="screen-title">Validación de Cliente (RUC SUNAT)</div>
+
+                        <div class="form-group">
+                            <label>RUC Cliente (11 dígitos) *</label>
+                            <div class="ruc-validator">
+                                <input type="text" placeholder="20123456789" maxlength="11" value="20123456789">
+                                <div class="ruc-status valido">✓</div>
+                            </div>
+                        </div>
+
+                        <div class="notification success">
+                            ✓ RUC validado automáticamente
+                        </div>
+
+                        <div class="form-group">
+                            <label>Razón Social (Auto-completado)</label>
+                            <input type="text" value="CONSTRUCTORA PERUANA S.A.C." readonly style="background: #e3f2fd; border-color: #1976d2;">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Dirección (Auto-completada)</label>
+                            <input type="text" value="Av. Principal 500, San Isidro, Lima" readonly style="background: #e3f2fd; border-color: #1976d2;">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Teléfono</label>
+                            <input type="text" value="+51 (1) 444-5555">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" value="contacto@constructora.com">
+                        </div>
+                    </div>
+
+                    <div class="feature-list">
+                        <li>RUC validado en tiempo real</li>
+                        <li>Datos de SUNAT se completan automáticamente</li>
+                        <li>Funciona online u offline</li>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PANTALLA 2: AGREGAR SERVICIOS (PAQUETES & UNIDADES) -->
+            <div class="mockup-card">
+                <div class="mockup-header">2️⃣ AGREGAR SERVICIOS (Paquetes o Unidades)</div>
+                <div class="mockup-content">
+                    <div class="screen">
+                        <div class="screen-title">Tabla de Servicios - FLEXIBLE</div>
+
+                        <table class="table-items">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>DESCRIPCIÓN</th>
+                                    <th>TIPO</th>
+                                    <th>CANT.</th>
+                                    <th>PRECIO U.</th>
+                                    <th>SUBTOTAL</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>1</td>
+                                    <td>Estudio Completo Suelos</td>
+                                    <td><span class="badge badge-paquete">PAQUETE</span></td>
+                                    <td style="text-align: center;">1</td>
+                                    <td>S/ 3,500.00</td>
+                                    <td><strong>S/ 3,500.00</strong></td>
+                                </tr>
+                                <tr>
+                                    <td>2</td>
+                                    <td>Ensayo Triaxial</td>
+                                    <td><span class="badge badge-unidad">UNIDAD</span></td>
+                                    <td><input type="number" class="input-small" value="2" min="1"></td>
+                                    <td>S/ 650.00</td>
+                                    <td><strong>S/ 1,300.00</strong></td>
+                                </tr>
+                                <tr>
+                                    <td>3</td>
+                                    <td>Perfil Estratigráfico</td>
+                                    <td><span class="badge badge-unidad">UNIDAD</span></td>
+                                    <td><input type="number" class="input-small" value="4" min="1"></td>
+                                    <td>S/ 70.00</td>
+                                    <td><strong>S/ 280.00</strong></td>
+                                </tr>
+                                <tr>
+                                    <td>4</td>
+                                    <td>Informe de Capacidad</td>
+                                    <td><span class="badge badge-paquete">PAQUETE</span></td>
+                                    <td style="text-align: center;">1</td>
+                                    <td>S/ 800.00</td>
+                                    <td><strong>S/ 800.00</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="section-break">
+                        <h3>¿Cómo Funciona?</h3>
+                        <ul style="list-style: none; font-size: 11px;">
+                            <li><strong>PAQUETE:</strong> Campo Cantidad deshabilitado (=1). Cliente paga tarifa cerrada.</li>
+                            <li><strong>UNIDAD:</strong> Campo Cantidad editable. Precio se multiplica por cantidad.</li>
+                            <li><strong>Mezcla:</strong> Puedes tener ambos tipos en el mismo presupuesto.</li>
+                        </ul>
+                    </div>
+
+                    <button class="btn btn-primary btn-small">+ Agregar Servicio</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MOCKUPS SECUNDARIOS -->
+        <div class="mockups-grid">
+            <!-- PANTALLA 3: TOTALES Y DESCUENTOS -->
+            <div class="mockup-card">
+                <div class="mockup-header">3️⃣ CÁLCULO AUTOMÁTICO DE TOTALES</div>
+                <div class="mockup-content">
+                    <div class="screen">
+                        <div class="screen-title">Resumen Económico</div>
+
+                        <div class="totales">
+                            <div class="total-row">
+                                <span>Subtotal:</span>
+                                <span><strong>S/ 5,880.00</strong></span>
+                            </div>
+                            <div class="total-row">
+                                <span>Descuento (5%):</span>
+                                <span><strong>S/ (294.00)</strong></span>
+                            </div>
+                            <div class="total-row">
+                                <span>Subtotal Neto:</span>
+                                <span><strong>S/ 5,586.00</strong></span>
+                            </div>
+                            <div class="total-row">
+                                <span>IGV 18%:</span>
+                                <span><strong>S/ 1,005.48</strong></span>
+                            </div>
+                            <div class="total-row total">
+                                <span>TOTAL FINAL:</span>
+                                <span>S/ 6,591.48</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Aplicar Descuento (% o $)</label>
+                            <div style="display: flex; gap: 8px;">
+                                <input type="number" placeholder="5" value="5" style="flex: 1;">
+                                <select style="flex: 1;">
+                                    <option>Por porcentaje (%)</option>
+                                    <option>Por cantidad ($)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Válido por</label>
+                            <select>
+                                <option>7 días</option>
+                                <option selected>15 días</option>
+                                <option>30 días</option>
+                            </select>
+                        </div>
+
+                        <div class="notification info">
+                            📅 Vence el: 26 de Septiembre 2026
+                        </div>
+                    </div>
+
+                    <ul class="feature-list">
+                        <li>Cálculos automáticos en tiempo real</li>
+                        <li>Descuentos flexibles (% o cantidad fija)</li>
+                        <li>IGV configurable según tipo de cliente</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- PANTALLA 4: GENERACIÓN DE PDF -->
+            <div class="mockup-card">
+                <div class="mockup-header">4️⃣ GENERACIÓN DE PDF (Dual)</div>
+                <div class="mockup-content">
+                    <div class="screen">
+                        <div class="screen-title">Opciones de Descarga</div>
+
+                        <div style="margin-bottom: 15px;">
+                            <h4 style="font-size: 12px; color: #333; margin-bottom: 8px;">📄 PDF Cliente (Rápido - Offline)</h4>
+                            <p style="font-size: 11px; color: #666; margin-bottom: 10px;">Genera en el navegador sin necesidad de internet. Perfecto para el campo.</p>
+                            <button class="btn btn-primary" style="width: 100%;">⬇️ Descargar PDF Rápido</button>
+                            <p style="font-size: 10px; color: #999; margin-top: 5px;">⚡ Tiempo: &lt;1 segundo | 📱 Funciona sin internet</p>
+                        </div>
+
+                        <div style="border-top: 1px solid #ddd; padding-top: 15px;">
+                            <h4 style="font-size: 12px; color: #333; margin-bottom: 8px;">📋 PDF Oficial (Profesional - Servidor)</h4>
+                            <p style="font-size: 11px; color: #666; margin-bottom: 10px;">Genera en servidor con firma digital y código QR verificable.</p>
+                            <button class="btn btn-secondary" style="width: 100%;">📤 Generar Oficial (Requiere Internet)</button>
+                            <p style="font-size: 10px; color: #999; margin-top: 5px;">🔒 Firmado digitalmente | 📊 Con código QR | 📈 Auditable</p>
+                        </div>
+                    </div>
+
+                    <div class="section-break">
+                        <h3>Ventajas de Sistema DUAL</h3>
+                        <ul style="list-style: none; font-size: 11px;">
+                            <li>✓ <strong>Sin internet:</strong> Genera PDF rápido (< 1 segundo) con jsPDF</li>
+                            <li>✓ <strong>Con internet:</strong> Opción de PDF profesional/firmado con PDFKit</li>
+                            <li>✓ <strong>Mismo contenido:</strong> Ambas versiones tienen el mismo diseño</li>
+                            <li>✓ <strong>Flexibilidad:</strong> Usuario elige qué versión descargar</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PANTALLA 5: ENVÍO Y SINCRONIZACIÓN -->
+            <div class="mockup-card">
+                <div class="mockup-header">5️⃣ ENVÍO Y SINCRONIZACIÓN</div>
+                <div class="mockup-content">
+                    <div class="screen">
+                        <div class="screen-title">Compartir Presupuesto</div>
+
+                        <div class="form-group">
+                            <label>Email Cliente</label>
+                            <input type="email" value="contacto@constructora.com" placeholder="email@cliente.com">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Asunto (Editable)</label>
+                            <input type="text" value="Presupuesto BUD-2026-0001 - GTQC - Estudio Geotécnico">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Mensaje Personalizado (Opcional)</label>
+                            <textarea placeholder="Mensaje adicional para el cliente..." style="resize: vertical; height: 80px;">Estimado cliente,
+
+Adjunto encontrará nuestro presupuesto para el proyecto. Disponible para aclaraciones.</textarea>
+                        </div>
+
+                        <button class="btn btn-primary" style="width: 100%; margin-bottom: 10px;">📧 Enviar por Email</button>
+
+                        <div class="notification success">
+                            ✓ El PDF se adjuntará automáticamente al email
+                        </div>
+                    </div>
+
+                    <div class="screen" style="margin-top: 15px;">
+                        <div class="screen-title">Sincronización Automática (Background)</div>
+
+                        <div class="notification info">
+                            🔄 Si no hay internet: El presupuesto se guarda en el dispositivo y se sincroniza automáticamente cuando hay conexión.
+                        </div>
+
+                        <div style="background: #f9f9f9; padding: 10px; border-radius: 4px; font-size: 11px; line-height: 1.6;">
+                            <p><strong>Estado:</strong> <span class="animacion-validacion">⏳ Sincronizando...</span></p>
+                            <p style="margin-top: 8px; color: #666;">• Presupuesto guardado localmente</p>
+                            <p style="color: #666;">• Esperando conexión a internet</p>
+                            <p style="color: #666;">• Se sincronizará automáticamente</p>
+                        </div>
+                    </div>
+
+                    <ul class="feature-list">
+                        <li offline>Funciona sin internet</li>
+                        <li sync>Sincroniza automáticamente al conectar</li>
+                        <li>Datos disponibles en todos los dispositivos</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- CARACTERÍSTICAS DESTACADAS -->
+        <div style="background: white; border-radius: 8px; padding: 25px; margin-bottom: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+            <h3 style="color: #333; font-size: 16px; margin-bottom: 20px; border-bottom: 2px solid #667eea; padding-bottom: 10px;">
+                ✨ Características Clave de la PWA
+            </h3>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                <div style="padding: 15px; background: #f9f9f9; border-radius: 8px; border-left: 4px solid #4CAF50;">
+                    <h4 style="color: #4CAF50; font-size: 13px; margin-bottom: 8px;">✅ Validación SUNAT Automática</h4>
+                    <p style="font-size: 11px; color: #666; line-height: 1.5;">
+                        Cuando el usuario ingresa un RUC, la PWA lo valida en tiempo real contra el padrón de SUNAT. Si es válido, se completan automáticamente: Razón Social, Dirección, Teléfono, etc.
+                    </p>
+                </div>
+
+                <div style="padding: 15px; background: #f9f9f9; border-radius: 8px; border-left: 4px solid #2196F3;">
+                    <h4 style="color: #2196F3; font-size: 13px; margin-bottom: 8px;">📱 Funciona Offline</h4>
+                    <p style="font-size: 11px; color: #666; line-height: 1.5;">
+                        Los ejecutivos pueden crear presupuestos sin internet. Cuando se reconecta, la PWA sincroniza automáticamente todos los cambios. Perfecto para trabajos en campo.
+                    </p>
+                </div>
+
+                <div style="padding: 15px; background: #f9f9f9; border-radius: 8px; border-left: 4px solid #FF9800;">
+                    <h4 style="color: #FF9800; font-size: 13px; margin-bottom: 8px;">⚡ Generación PDF Dual</h4>
+                    <p style="font-size: 11px; color: #666; line-height: 1.5;">
+                        Dos opciones: PDF rápido en navegador (&lt;1 seg, sin internet) o PDF profesional en servidor (con firma digital y código QR).
+                    </p>
+                </div>
+
+                <div style="padding: 15px; background: #f9f9f9; border-radius: 8px; border-left: 4px solid #9C27B0;">
+                    <h4 style="color: #9C27B0; font-size: 13px; margin-bottom: 8px;">🎯 Sistema Flexible (Paquetes o Unidades)</h4>
+                    <p style="font-size: 11px; color: #666; line-height: 1.5;">
+                        Cada servicio se puede vender como paquete (tarifa cerrada) o por unidad (cantidad variable). O mezclar ambas en el mismo presupuesto.
+                    </p>
+                </div>
+
+                <div style="padding: 15px; background: #f9f9f9; border-radius: 8px; border-left: 4px solid #E91E63;">
+                    <h4 style="color: #E91E63; font-size: 13px; margin-bottom: 8px;">📊 Cálculos Automáticos</h4>
+                    <p style="font-size: 11px; color: #666; line-height: 1.5;">
+                        Subtotales, descuentos, IGV: todo se calcula en tiempo real mientras escribes. Sin errores manuales.
+                    </p>
+                </div>
+
+                <div style="padding: 15px; background: #f9f9f9; border-radius: 8px; border-left: 4px solid #00BCD4;">
+                    <h4 style="color: #00BCD4; font-size: 13px; margin-bottom: 8px;">📧 Envío Directo</h4>
+                    <p style="font-size: 11px; color: #666; line-height: 1.5;">
+                        Genera el presupuesto y envíalo directamente por email al cliente. El PDF se adjunta automáticamente.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- TÉRMINOS Y CONDICIONES -->
+        <div style="background: white; border-radius: 8px; padding: 25px; margin-bottom: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+            <h3 style="color: #333; font-size: 16px; margin-bottom: 20px; border-bottom: 2px solid #667eea; padding-bottom: 10px;">
+                📜 Sección de Términos y Condiciones
+            </h3>
+
+            <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; font-size: 11px; line-height: 1.8; color: #555;">
+                <p><strong>Nota:</strong> Esta sección es editable en cada presupuesto o puede tener un template por defecto.</p>
+                <br>
+                <p><strong>TÉRMINOS Y CONDICIONES:</strong></p>
+                <ul style="margin-left: 20px; margin-top: 10px;">
+                    <li>La presente cotización tiene validez de <strong>15 días</strong> desde su emisión.</li>
+                    <li>Precios expresados en nuevos soles (S/.), <strong>incluyen IGV 18%</strong>.</li>
+                    <li>Pago al <strong>100% antes del inicio</strong> del servicio.</li>
+                    <li>Cambios posteriores a la aceptación podrán generar <strong>cargos adicionales</strong>.</li>
+                    <li>La validez de esta cotización está sujeta a la disponibilidad de recursos.</li>
+                    <li>GTQC se reserva el derecho de modificar estas condiciones sin previo aviso.</li>
+                    <li>Una vez aceptado, el presupuesto será considerado como una orden de servicio.</li>
+                </ul>
+            </div>
+
+            <div class="section-break" style="margin-top: 20px;">
+                <h3>Cómo Funciona en la PWA:</h3>
+                <ul style="list-style: none; font-size: 11px;">
+                    <li><strong>✓ Template Predefinido:</strong> Sistema carga términos estándar para todos los presupuestos</li>
+                    <li><strong>✓ Editable por Presupuesto:</strong> Ejecutivo puede personalizar términos para clientes especiales</li>
+                    <li><strong>✓ Historial:</strong> Se guarda versión de términos usados en cada presupuesto</li>
+                    <li><strong>✓ En PDF:</strong> Los términos aparecen automáticamente al pie del presupuesto generado</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- FLUJO PAQUETE VS UNIDAD EN DETALLE -->
+        <div style="background: white; border-radius: 8px; padding: 25px; margin-bottom: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+            <h3 style="color: #333; font-size: 16px; margin-bottom: 20px; border-bottom: 2px solid #667eea; padding-bottom: 10px;">
+                🔧 Configuración de Servicios: Paquetes vs Unidades
+            </h3>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div style="border: 2px solid #1976d2; border-radius: 8px; padding: 15px; background: #e3f2fd;">
+                    <h4 style="color: #1976d2; margin-bottom: 12px;">📦 CONFIGURACIÓN PAQUETE</h4>
+                    <p style="font-size: 11px; color: #666; margin-bottom: 10px;"><strong>Caso Actual GTQC:</strong> "ESTUDIO DE SUELOS"</p>
+
+                    <div style="background: white; padding: 10px; border-radius: 4px; margin-bottom: 10px; font-size: 10px;">
+                        <p><strong>En la PWA:</strong></p>
+                        <p>• Nombre: "Estudio Completo Suelos"</p>
+                        <p>• Tipo: PAQUETE ☑️</p>
+                        <p>• Precio: S/ 3,500 (tarifa cerrada)</p>
+                        <p>• Cantidad: 1 (deshabilitada para editar)</p>
+                        <p>• Subtotal: S/ 3,500 (siempre)</p>
+                    </div>
+
+                    <p style="font-size: 11px; color: #666;"><strong>Usuario no puede cambiar:</strong> La cantidad siempre será 1. El cliente paga la tarifa cerrada completa.</p>
+                </div>
+
+                <div style="border: 2px solid #7b1fa2; border-radius: 8px; padding: 15px; background: #f3e5f5;">
+                    <h4 style="color: #7b1fa2; margin-bottom: 12px;">📏 CONFIGURACIÓN UNIDAD</h4>
+                    <p style="font-size: 11px; color: #666; margin-bottom: 10px;"><strong>Caso Actual GTQC:</strong> "ENSAYO TRIAXIAL"</p>
+
+                    <div style="background: white; padding: 10px; border-radius: 4px; margin-bottom: 10px; font-size: 10px;">
+                        <p><strong>En la PWA:</strong></p>
+                        <p>• Nombre: "Ensayo Triaxial"</p>
+                        <p>• Tipo: UNIDAD ☑️</p>
+                        <p>• Precio Unitario: S/ 650</p>
+                        <p>• Cantidad: <input type="number" value="2" min="1" style="width: 40px; padding: 2px; border: 1px solid #999;"> (editable)</p>
+                        <p>• Subtotal: S/ 1,300 (2 × 650)</p>
+                    </div>
+
+                    <p style="font-size: 11px; color: #666;"><strong>Usuario sí puede cambiar:</strong> La cantidad es flexible. Si cliente necesita 5 ensayos: 5 × S/ 650 = S/ 3,250.</p>
+                </div>
+            </div>
+
+            <div class="section-break" style="margin-top: 20px;">
+                <h3>Ejemplo Real: Tu Presupuesto Actual</h3>
+                <table style="width: 100%; font-size: 11px; border-collapse: collapse;">
+                    <thead style="background: #f0f0f0;">
+                        <tr style="border-bottom: 2px solid #667eea;">
+                            <th style="text-align: left; padding: 8px;">SERVICIO</th>
+                            <th style="text-align: center; padding: 8px;">TIPO</th>
+                            <th style="text-align: center; padding: 8px;">PRECIO</th>
+                            <th style="text-align: center; padding: 8px;">CANTIDAD</th>
+                            <th style="text-align: right; padding: 8px;">SUBTOTAL</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 8px;">Exploración directa del subsuelo</td>
+                            <td style="text-align: center; padding: 8px;"><span class="badge badge-paquete">PAQUETE</span></td>
+                            <td style="text-align: center; padding: 8px;">CLIENTE</td>
+                            <td style="text-align: center; padding: 8px;">1</td>
+                            <td style="text-align: right; padding: 8px;">CLIENTE</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 8px;">Perfil Estratigráfico con Ensayo 4m</td>
+                            <td style="text-align: center; padding: 8px;"><span class="badge badge-unidad">UNIDAD</span></td>
+                            <td style="text-align: center; padding: 8px;">S/ 70.00</td>
+                            <td style="text-align: center; padding: 8px;">4</td>
+                            <td style="text-align: right; padding: 8px;">S/ 280.00</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 8px;">Ensayo Triaxial</td>
+                            <td style="text-align: center; padding: 8px;"><span class="badge badge-unidad">UNIDAD</span></td>
+                            <td style="text-align: center; padding: 8px;">S/ 650.00</td>
+                            <td style="text-align: center; padding: 8px;">2</td>
+                            <td style="text-align: right; padding: 8px;">S/ 1,300.00</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 8px;">Informe de Capacidad</td>
+                            <td style="text-align: center; padding: 8px;"><span class="badge badge-paquete">PAQUETE</span></td>
+                            <td style="text-align: center; padding: 8px;">S/ 800.00</td>
+                            <td style="text-align: center; padding: 8px;">1</td>
+                            <td style="text-align: right; padding: 8px;">S/ 800.00</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- FOOTER -->
+        <div class="footer-info">
+            <strong>💡 Resumen:</strong> Esta PWA es completamente flexible. Puedes tener servicios por <strong>paquete</strong> (tarifa cerrada, cantidad fija) o por <strong>unidad</strong> (cantidad variable). O ambas en el mismo presupuesto. El sistema se adapta a tu modelo de negocio actual.
+            <br><br>
+            <strong>📞 Próximo paso:</strong> Agendar reunión para validar el flujo con tu equipo y definir catálogo de servicios en la PWA.
+        </div>
+    </div>
+</body>
+</html>

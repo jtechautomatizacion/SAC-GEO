@@ -1,0 +1,125 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                     PROPUESTA DE VALOR - PWA PRESUPUESTOS                    ║
+║                        Para Mostrar en 10 Segundos                           ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ ¿CUÁL ES EL PROBLEMA HOY?                                                   │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  ❌ Presupuestos en Excel o email (desorden)                               │
+│  ❌ Sin control de quién cambió qué                                         │
+│  ❌ Riesgo legal si hay disputa                                            │
+│  ❌ Ejecutores con laptop 20 min + búsqueda carpeta 10 min                 │
+│  ❌ Cliente recibe presupuesto, pero ¿es oficial?                          │
+│  ❌ Auditoría: "No sabemos quién lo modificó"                              │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ ¿QUÉ OFRECE LA SOLUCIÓN?                                                    │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  ✅ SEGURIDAD: QR Verificable (imposible falsificar)                       │
+│     → Cliente escanea QR → "✓ Presupuesto oficial GTQC"                   │
+│     → Si se modifica PDF después → QR detecta cambio                       │
+│                                                                              │
+│  ✅ TRAZABILIDAD: Auditoría Completa (quién, cuándo, qué)                │
+│     → Cada cambio registrado: usuario, timestamp, IP, antes/después       │
+│     → Si hay disputa: tienes prueba de todo                                │
+│     → Cumple normativa peruana de documentos tributarios                   │
+│                                                                              │
+│  ✅ ORGANIZACIÓN: Microsoft 365 Integración                                │
+│     → PDFs se guardan automáticamente en OneDrive/SharePoint              │
+│     → Accesible desde cualquier dispositivo, cualquier hora                │
+│     → Compartible de forma segura, con control de permisos                │
+│                                                                              │
+│  ✅ VELOCIDAD: Presupuesto en < 3 segundos                                │
+│     → Funciona OFFLINE (ejecutor en obra sin WiFi)                        │
+│     → Sin laptop necesaria (solo celular)                                  │
+│     → Auto-sincronización cuando vuelve conexión                          │
+│                                                                              │
+│  ✅ INTEGRACIÓN: Zero implementación extra                                 │
+│     → PWA (sin descargar app)                                              │
+│     → Usa 365 que ya tienen                                                │
+│     → Funciona en cualquier celular/navegador                             │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ EL RESULTADO (ANTES vs DESPUÉS)                                             │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  ANTES (Hoy):                      DESPUÉS (Con PWA):                       │
+│  ────────────────────────────────  ─────────────────────────────────────   │
+│  ⏱️ 30 min por presupuesto         ⏱️ 3-5 min por presupuesto              │
+│  📱 Necesita laptop                📱 Solo celular                         │
+│  🌐 Requiere WiFi                  🌐 Funciona sin internet               │
+│  ❓ ¿Es oficial?                   ✅ Verificable con QR                  │
+│  🚨 Riesgo de falsificación        🔒 Imposible falsificar                │
+│  📁 Archivos dispersos             📦 Todo centralizado en OneDrive       │
+│  ❌ Sin auditoría = sin protección  ✅ Auditoría completa = protección    │
+│  😰 Ejecutor preocupado            😌 Ejecutor tranquilo                  │
+│  😕 Jefe no ve control             😊 Jefe ve panel de auditoría         │
+│  🤝 Cliente desconfía               🤝 Cliente confía (QR verificado)     │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                        LAS 3 PREGUNTAS CLAVE DE VENTA                       ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+1️⃣ DOLOR:     "¿Cuánto dinero pierden al año por errores en presupuestos?"
+   → Si no lo saben → Pregunta: "¿Cuántas disputas/año?"
+
+2️⃣ RIESGO:    "¿Qué pasaría si hay auditoría y no pueden probar quién cambió?"
+   → Reacción: "Eso nunca pensé..."  ← GANASTE
+
+3️⃣ OPORTUNIDAD: "¿Cuánto tiempo libre tendrían si generaran presupuestos en 3 min?"
+   → Si es 50+ horas/mes × salario promedio = ROI claro
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                         LA PROPUESTA EN 30 SEGUNDOS                         ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+"GTQC, la idea es simple:
+
+El ejecutor en obra, en su celular, genera presupuesto sin internet.
+PDF en 3 segundos. Con QR verificable (cliente lo escanea, confía).
+Todo se guarda automáticamente en OneDrive. 
+Todo quedan registrado: quién, cuándo, qué cambió.
+
+Resultado:
+✓ Presupuesto oficial, imposible de falsificar
+✓ Auditoría completa si hay disputa
+✓ Menos tiempo, más seguridad, más profesionalismo
+
+¿Esto resuelve tu problema?"
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                         LAS 5 DIFERENCIAS COMPETITIVAS                      ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+MIENTRAS LA COMPETENCIA USA:          TÚ TENDRÍAS:
+────────────────────────────────────  ─────────────────────────────────────
+Excel & Email (2024, en serio?)       PWA Moderna, Offline-First
+Sin auditoría, sin control             Auditoría + control total
+Presupuestos artesanales              PDFs con QR verificable
+"Creo que cambió el precio"           "Aquí está prueba de todo"
+Ejecutores frustrados con laptops     Ejecutores eficientes con celular
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                    NÚMERO MÁGICO PARA CERRAR LA VENTA                       ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+"¿Si ESTA SOLUCIÓN PREVIENE UNA SOLA DISPUTA DE PRESUPUESTO,
+  WORTH IT?"
+
+Cliente calcula:
+- Disputas/año promedio = 2-3
+- Costo por disputa = 10,000-50,000 dólares + tiempo legal
+
+"Sí, definitivamente worth it"
+
+Cerrar: "Perfecto. Entonces empezamos esta semana. ¿De acuerdo?"
+

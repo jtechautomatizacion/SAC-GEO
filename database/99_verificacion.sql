@@ -11,6 +11,36 @@
 -- Cada fila es un control. `hallazgos` = 0 significa que el control pasó.
 -- Los controles marcados INFO no son defectos: son cosas que una persona debe
 -- mirar (por ejemplo, un paquete que cuesta más que sus partes).
+--
+-- ----------------------------------------------------------------------------
+-- DISCIPLINA DE TENANT  (desde la migración 0003)
+-- ----------------------------------------------------------------------------
+-- Este archivo es una auditoría DE LA INSTALACIÓN, no de un laboratorio. Debe
+-- ver TODOS los tenants: una fila corrupta del tenant 5 hay que encontrarla
+-- aunque el operador "esté" en el tenant 1.
+--
+-- Por eso **este archivo NO ejecuta SET app.tenant_id**, y no debe hacerlo
+-- nunca. Hoy daría igual porque RLS todavía no está activa; en cuanto llegue
+-- 0004, fijar un tenant convertiría silenciosamente esta auditoría global en la
+-- de un solo laboratorio, y los 36 controles restantes pasarían en verde sin
+-- haber mirado el resto de la instalación. Sería un falso negativo perfecto.
+--
+-- Dos consecuencias de esa decisión, resueltas en el propio SQL:
+--
+--   · Ningún control puede depender de fn_hoy_lima(), que tras 0003 exige
+--     contexto de tenant. Afectaba solo a E2, a través de
+--     vw_acreditacion_vigente. E2 pasa a resolver su fecha en línea.
+--
+--   · Los controles de unicidad (A1-A4) y de correlativos (F1-F2) agrupan
+--     además POR TENANT. Tras 0003 la unicidad es por laboratorio: que dos
+--     tenants tengan ambos SU-01 o COT-2026-001 es correcto, no un duplicado.
+--     Sin ese cambio, el segundo tenant encendería cuatro alarmas críticas
+--     falsas y, peor, el control dejaría de detectar el duplicado REAL dentro
+--     de un mismo tenant.
+--
+-- La expresión `to_jsonb(t)->>'tenant_id'` se usa para eso: devuelve el tenant
+-- cuando la columna existe y NULL cuando no, así que el mismo archivo funciona
+-- antes y después de 0003 sin bifurcaciones.
 -- ============================================================================
 
 \pset border 2
@@ -21,23 +51,31 @@ WITH controles AS (
 -- ─── A. DUPLICADOS Y UNICIDAD ────────────────────────────────────────────────
 SELECT 'CRÍTICO' AS sev, 'A1' AS id, 'Códigos de ensayo duplicados' AS control,
        COUNT(*)::TEXT AS hallazgos, COALESCE(string_agg(codigo, ', '), '—') AS detalle
-  FROM (SELECT codigo FROM ensayos_catalogo GROUP BY codigo HAVING COUNT(*) > 1) x
+  FROM (SELECT codigo FROM (SELECT codigo, to_jsonb(e)->>'tenant_id' AS tn
+                              FROM ensayos_catalogo e) z
+         GROUP BY tn, codigo HAVING COUNT(*) > 1) x
 UNION ALL
 SELECT 'CRÍTICO', 'A2', 'Números de cotización duplicados',
        COUNT(*)::TEXT, COALESCE(string_agg(numero, ', '), '—')
-  FROM (SELECT numero FROM cotizaciones WHERE numero IS NOT NULL
-         GROUP BY numero HAVING COUNT(*) > 1) x
+  FROM (SELECT numero FROM (SELECT numero, to_jsonb(c)->>'tenant_id' AS tn
+                              FROM cotizaciones c WHERE numero IS NOT NULL) z
+         GROUP BY tn, numero HAVING COUNT(*) > 1) x
 UNION ALL
 SELECT 'CRÍTICO', 'A3', 'RUC o DNI duplicados',
        COUNT(*)::TEXT, COALESCE(string_agg(doc, ', '), '—')
-  FROM (SELECT ruc AS doc FROM empresas GROUP BY ruc HAVING COUNT(*) > 1
+  FROM (SELECT doc FROM (SELECT ruc AS doc, to_jsonb(e)->>'tenant_id' AS tn
+                           FROM empresas e) z
+         GROUP BY tn, doc HAVING COUNT(*) > 1
         UNION ALL
-        SELECT dni FROM personas GROUP BY dni HAVING COUNT(*) > 1) x
+        SELECT doc FROM (SELECT dni AS doc, to_jsonb(p)->>'tenant_id' AS tn
+                           FROM personas p) z
+         GROUP BY tn, doc HAVING COUNT(*) > 1) x
 UNION ALL
 SELECT 'ALTO', 'A4', 'Prefijos de categoría duplicados',
        COUNT(*)::TEXT, COALESCE(string_agg(prefijo_codigo, ', '), '—')
-  FROM (SELECT prefijo_codigo FROM categorias_ensayo
-         GROUP BY prefijo_codigo HAVING COUNT(*) > 1) x
+  FROM (SELECT prefijo_codigo FROM (SELECT prefijo_codigo, to_jsonb(c)->>'tenant_id' AS tn
+                                      FROM categorias_ensayo c) z
+         GROUP BY tn, prefijo_codigo HAVING COUNT(*) > 1) x
 
 -- ─── B. HUÉRFANOS Y REFERENCIAS INVÁLIDAS ────────────────────────────────────
 UNION ALL
@@ -60,8 +98,13 @@ SELECT 'ALTO', 'B3', 'Cotización sin ítems',
 UNION ALL
 SELECT 'ALTO', 'B4', 'Ítem cuyo código ya no existe en el catálogo',
        COUNT(*)::TEXT, COALESCE(string_agg(DISTINCT i.codigo_snapshot, ', '), '—')
+-- El tenant entra en la comparación: si el ítem del laboratorio A cita un
+-- código que A ya borró pero que B sí tiene, el control debe encenderse. Sin
+-- esto sería un falso NEGATIVO, que es peor que una falsa alarma.
   FROM cotizacion_items i
- WHERE NOT EXISTS (SELECT 1 FROM ensayos_catalogo e WHERE e.codigo = i.codigo_snapshot)
+ WHERE NOT EXISTS (SELECT 1 FROM ensayos_catalogo e
+                    WHERE e.codigo = i.codigo_snapshot
+                      AND to_jsonb(e)->>'tenant_id' IS NOT DISTINCT FROM to_jsonb(i)->>'tenant_id')
 UNION ALL
 SELECT 'MEDIO', 'B5', 'Componente de paquete huérfano de texto y de vínculo',
        COUNT(*)::TEXT, COALESCE(string_agg(id::TEXT, ', '), '—')
@@ -116,28 +159,45 @@ SELECT 'ALTO', 'E1', 'Ensayo sin ninguna fila de historial de acreditación',
   FROM ensayos_catalogo ec
  WHERE NOT EXISTS (SELECT 1 FROM ensayo_acreditacion_historial h WHERE h.ensayo_id = ec.id)
 UNION ALL
+-- E2 resolvía su fecha a través de vw_acreditacion_vigente, que llama a
+-- fn_hoy_lima(). Tras 0003 esa función exige contexto de tenant, así que E2
+-- abortaba — y como los 37 controles son UN SOLO CTE, se caía el archivo
+-- entero: no fallaba un control, no se ejecutaba ninguno.
+-- Se resuelve en línea con una fecha independiente del tenant. La diferencia
+-- frente a la zona horaria de cada laboratorio es, como mucho, un día en el
+-- corte; para una auditoría de integridad eso no cambia ningún veredicto, y a
+-- cambio el archivo deja de depender del contexto de sesión.
 SELECT 'CRÍTICO', 'E2', 'Estado de acreditación que contradice su historial',
        COUNT(*)::TEXT, COALESCE(string_agg(codigo, ', '), '—')
-  FROM vw_acreditacion_vigente
- WHERE coherente IS FALSE
+  FROM (
+    SELECT ec.codigo, ec.acreditado,
+           (SELECT h.acreditado FROM ensayo_acreditacion_historial h
+             WHERE h.ensayo_id = ec.id
+               AND h.vigente_desde <= (now() AT TIME ZONE 'America/Lima')::date
+             ORDER BY h.vigente_desde DESC, h.id DESC LIMIT 1) AS hist
+      FROM ensayos_catalogo ec
+  ) x
+ WHERE hist IS NOT NULL AND acreditado <> hist
 
 -- ─── F. CORRELATIVOS ─────────────────────────────────────────────────────────
--- F1/F2 se agregan por prefijo y por año, no por fila de `correlativos`, para
--- que el control siga funcionando cuando la migración 0003 agregue tenant_id a
--- la PK del contador. Ojo: en ese escenario habrá que re-alcanzar el control
--- POR TENANT (tal como está, detecta un desfase global, no el de un tenant
--- concreto). Está anotado en el checklist del skill /multi-tenant.
+-- F1/F2 se agregan por prefijo y por año, y además POR TENANT. Sin el tenant,
+-- tras 0003 el contador del laboratorio A se compararía contra el código máximo
+-- del laboratorio B: daría alarmas falsas y dejaría de ver el desfase real
+-- dentro de un mismo laboratorio. Esto cierra el punto que el skill
+-- /multi-tenant dejaba anotado como pendiente.
 UNION ALL
 SELECT 'CRÍTICO', 'F1', 'Contador de ensayos por debajo del código ya emitido',
        COUNT(*)::TEXT, COALESCE(string_agg(prefijo, ', '), '—')
   FROM (
     SELECT e.prefijo, e.emitido, COALESCE(c.contador, -1) AS contador
-      FROM (SELECT ce.prefijo_codigo AS prefijo,
+      FROM (SELECT to_jsonb(ec)->>'tenant_id' AS tn, ce.prefijo_codigo AS prefijo,
                    MAX(split_part(ec.codigo,'-',2)::INT) AS emitido
               FROM ensayos_catalogo ec JOIN categorias_ensayo ce ON ce.id = ec.categoria_id
-             GROUP BY ce.prefijo_codigo) e
-      LEFT JOIN (SELECT clave, MAX(ultimo) AS contador FROM correlativos
-                  WHERE ambito = 'ensayo' GROUP BY clave) c ON c.clave = e.prefijo
+             GROUP BY 1, 2) e
+      LEFT JOIN (SELECT to_jsonb(co)->>'tenant_id' AS tn, clave,
+                        MAX(ultimo) AS contador
+                   FROM correlativos co WHERE ambito = 'ensayo' GROUP BY 1, 2) c
+             ON c.clave = e.prefijo AND c.tn IS NOT DISTINCT FROM e.tn
   ) x
  WHERE contador < emitido
 UNION ALL
@@ -145,11 +205,14 @@ SELECT 'CRÍTICO', 'F2', 'Contador de cotizaciones por debajo del número emitid
        COUNT(*)::TEXT, COALESCE(string_agg(anio, ', '), '—')
   FROM (
     SELECT e.anio, e.emitido, COALESCE(c.contador, -1) AS contador
-      FROM (SELECT split_part(numero,'-',2) AS anio,
+      FROM (SELECT to_jsonb(co)->>'tenant_id' AS tn,
+                   split_part(numero,'-',2) AS anio,
                    MAX(split_part(numero,'-',3)::INT) AS emitido
-              FROM cotizaciones WHERE numero IS NOT NULL GROUP BY 1) e
-      LEFT JOIN (SELECT periodo, MAX(ultimo) AS contador FROM correlativos
-                  WHERE ambito = 'cotizacion' GROUP BY periodo) c ON c.periodo = e.anio
+              FROM cotizaciones co WHERE numero IS NOT NULL GROUP BY 1, 2) e
+      LEFT JOIN (SELECT to_jsonb(cr)->>'tenant_id' AS tn, periodo,
+                        MAX(ultimo) AS contador
+                   FROM correlativos cr WHERE ambito = 'cotizacion' GROUP BY 1, 2) c
+             ON c.periodo = e.anio AND c.tn IS NOT DISTINCT FROM e.tn
   ) x
  WHERE contador < emitido
 
@@ -244,7 +307,12 @@ SELECT 'ALTO', 'I3', 'Claves ajenas de navegación sin índice',
       JOIN pg_attribute a ON a.attrelid = c.oid AND a.attnum = k.conkey[1]
      WHERE k.contype = 'f' AND c.relnamespace = 'public'::regnamespace
        AND a.attname NOT IN ('creado_por','actualizado_por','desactivado_por',
-                             'registrado_por','conectado_por','subido_por')
+                             'registrado_por','conectado_por','subido_por',
+                             -- 'asignado_por' (usuario_roles, 0007) es autoria,
+                             -- no navegacion: nadie lista las asignaciones POR
+                             -- quien las otorgo. Mismo criterio que las seis
+                             -- anteriores.
+                             'asignado_por')
        AND NOT EXISTS (SELECT 1 FROM pg_index i
                         WHERE i.indrelid = c.oid AND i.indkey[0] = a.attnum)
   ) x
@@ -269,6 +337,115 @@ SELECT sev AS "SEV", id AS "#", control AS "CONTROL",
        hallazgos AS "HALLAZGOS", left(detalle, 80) AS "DETALLE"
   FROM controles
  ORDER BY CASE sev WHEN 'CRÍTICO' THEN 1 WHEN 'ALTO' THEN 2 WHEN 'MEDIO' THEN 3 ELSE 4 END, id;
+
+
+-- ----------------------------------------------------------------------------
+-- CONTROLES QUE SOLO APLICAN DESPUÉS DE 0003
+-- ----------------------------------------------------------------------------
+-- Van fuera del CTE principal porque interrogan objetos que antes de 0003 no
+-- existen (`campos_sensibles`, `tenant_id`). Un CTE estático no puede
+-- referenciar una tabla ausente ni siquiera para ignorarla, así que se
+-- resuelven con SQL dinámico y se saltan solos cuando 0003 no está aplicada.
+DO $post0003$
+DECLARE
+    v_n INT; v_det TEXT;
+BEGIN
+    IF to_regclass('public.campos_sensibles') IS NULL THEN
+        RAISE NOTICE '';
+        RAISE NOTICE 'J4/K1 — SIN EJECUTAR: 0003 no esta aplicada. No son fallos.';
+        RAISE NOTICE '';
+        RETURN;
+    END IF;
+
+    RAISE NOTICE '';
+    RAISE NOTICE '=== CONTROLES POST-0003 ==================================';
+
+    -- ---- J4 · Columnas de nombre sensible que nadie protegio ----------------
+    --
+    -- Este control existe porque `campos_sensibles` falla ABIERTO: si manana
+    -- alguien agrega usuarios.mfa_secret y olvida registrarla, se auditaria en
+    -- claro y nadie se enteraria. J4 convierte ese olvido silencioso en un
+    -- hallazgo.
+    --
+    -- Las excepciones se declaran AQUI, en el archivo, y no en una tabla. Es
+    -- deliberado: una excepcion guardada en la base la podria insertar quien
+    -- comprometiera la base, y serviria exactamente para ocultar el secreto
+    -- que este control busca. En el archivo, anadir una excepcion exige un
+    -- cambio de codigo que alguien tiene que revisar.
+    --
+    -- Cada excepcion lleva su motivo. Si el motivo deja de ser cierto, la
+    -- excepcion se retira.
+    EXECUTE $q$
+        SELECT COUNT(*)::INT, COALESCE(string_agg(t||'.'||c, ', '), '-')
+          FROM (
+            SELECT col.table_name AS t, col.column_name AS c
+              FROM information_schema.columns col
+             WHERE col.table_schema = 'public'
+               AND (col.column_name ILIKE '%password%' OR col.column_name ILIKE '%token%'
+                 OR col.column_name ILIKE '%secret%'   OR col.column_name ILIKE '%hash%'
+                 OR col.column_name ILIKE '%clave%'    OR col.column_name ILIKE '%credencial%')
+               AND (col.table_name, col.column_name) NOT IN (
+                     -- Suma de verificacion de un archivo, no un secreto.
+                     -- Redactarla destruiria su unico proposito: comprobar que
+                     -- el documento no fue alterado.
+                     ('documentos_externos','hash_sha256'),
+                     -- Referencia a un vault (vault://...), no el token. Y si
+                     -- alguien pusiera ahi un token real, redactarlo lo
+                     -- ESCONDERIA del control J1, que es el disenado para
+                     -- detectarlo. Protegerla seria contraproducente.
+                     ('integraciones','token_ref'),
+                     -- La "clave" de un correlativo es su discriminante
+                     -- ('SU', 'AG', 'GLOBAL'), no una contrasena. El patron
+                     -- %clave% se conserva a proposito: en castellano "clave"
+                     -- SI significa contrasena, y una futura columna
+                     -- clave_acceso debe encender este control.
+                     ('correlativos','clave')
+                   )
+               AND NOT EXISTS (SELECT 1 FROM campos_sensibles s
+                                WHERE s.tabla = col.table_name
+                                  AND s.columna = col.column_name)
+          ) x
+    $q$ INTO v_n, v_det;
+    IF v_n = 0 THEN
+        RAISE NOTICE '  J4  [ALTO]     Columnas sensibles sin proteger ......... 0';
+    ELSE
+        RAISE WARNING '  J4  [ALTO]     Columnas sensibles SIN PROTEGER: % -> %', v_n, v_det;
+    END IF;
+
+    -- ---- K1 · Filas tenant-scoped sin tenant --------------------------------
+    -- Las columnas son NOT NULL, asi que esto solo puede encenderse si una
+    -- migracion futura las debilita. Es barato y detecta una regresion grave.
+    EXECUTE $q$
+        SELECT COUNT(*)::INT, COALESCE(string_agg(tbl||'='||n, ', '), '-') FROM (
+          SELECT 'empresas' AS tbl, COUNT(*) AS n FROM empresas WHERE tenant_id IS NULL
+          UNION ALL SELECT 'cotizaciones', COUNT(*) FROM cotizaciones WHERE tenant_id IS NULL
+          UNION ALL SELECT 'cotizacion_items', COUNT(*) FROM cotizacion_items WHERE tenant_id IS NULL
+          UNION ALL SELECT 'ensayos_catalogo', COUNT(*) FROM ensayos_catalogo WHERE tenant_id IS NULL
+          UNION ALL SELECT 'correlativos', COUNT(*) FROM correlativos WHERE tenant_id IS NULL
+        ) y WHERE n > 0
+    $q$ INTO v_n, v_det;
+    IF v_n = 0 THEN
+        RAISE NOTICE '  K1  [CRITICO]  Filas tenant-scoped sin tenant .......... 0';
+    ELSE
+        RAISE WARNING '  K1  [CRITICO]  Filas tenant-scoped SIN TENANT: %', v_det;
+    END IF;
+
+    -- ---- K2 · Usuarios globales de mas ---------------------------------------
+    -- tenant_id NULL en usuarios significa "identidad global". Hoy debe haber
+    -- exactamente una: el usuario `sistema`. Mas de una seria una via de
+    -- escalada, porque bajo la politica RLS hibrida prevista para 0004 una
+    -- identidad global es visible desde TODOS los laboratorios.
+    EXECUTE $q$ SELECT COUNT(*)::INT, COALESCE(string_agg(email, ', '), '-')
+                  FROM usuarios WHERE tenant_id IS NULL $q$ INTO v_n, v_det;
+    IF v_n = 1 THEN
+        RAISE NOTICE '  K2  [CRITICO]  Usuarios globales ....................... 1 (%)', v_det;
+    ELSE
+        RAISE WARNING '  K2  [CRITICO]  Se esperaba 1 usuario global, hay %: %', v_n, v_det;
+    END IF;
+
+    RAISE NOTICE '';
+END
+$post0003$;
 
 
 -- ----------------------------------------------------------------------------

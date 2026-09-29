@@ -33,14 +33,100 @@ Atraviesan todo el flujo: **usuarios y roles** (quién puede hacer qué), **audi
 |---|---|
 | 1 · Mockup / diseño de la app | ✅ **Terminado y congelado.** No se toca el diseño |
 | 2 · Base de datos | ✅ **Terminada** (v3.0, 27-sep-2026) — ver `docs/AUDITORIA_BD_v3.md` |
-| 3 · Evaluación de motor e infraestructura | ⏳ Pendiente. No decidir por intuición |
-| 4 · Multi-tenant en la BD (migración 0003) | 📝 Escrita y probada, **no aplicada** |
-| 5 · Backend / API | ⏳ Pendiente |
-| 6 · Autenticación y autorización | ⏳ Pendiente |
-| 7 · Multi-tenant de aplicación + RLS | ⏳ Pendiente |
+| 3 · Evaluación de motor e infraestructura | ✅ **Terminada** (27-sep-2026) — ver `docs/03_AMBIENTES.md` |
+| 4 · Multi-tenant en la BD | ✅ **Terminada** (29-sep-2026) — `0003`, `0004` y `0005` aplicadas y certificadas |
+| 5 · Backend / API | 🔶 **Esqueleto terminado. Sin endpoints de negocio** |
+| 6 · Autenticación y autorización | 🔶 **En progreso.** 6A y 6B cerradas: autenticación, RBAC en la BD y los guards de la API. Falta aplicarlos a endpoints reales y las subfases `0008`–`0010` |
+| 7 · Multi-tenant de aplicación + RLS | ✅ **Terminada** (29-sep-2026) — RLS forzada, aislamiento certificado |
 | 8 · Frontend conectado al backend | ⏳ Pendiente |
 
 **Cada fase se apoya en la anterior. No saltar etapas.**
+
+### Estado real de la base de trabajo
+
+`sacgeo_dev`, en el contenedor `sac-geo-postgres-dev` (PostgreSQL 16.15):
+
+- migraciones aplicadas: `0001, 0002, 0003, 0004, 0005, 0006, 0007`
+- RLS: **18 tablas** con `ENABLE` **y** `FORCE`, **19 políticas**
+- roles del clúster: `sacgeo_dev` (dueño, superusuario — **nunca** para la API),
+  `sacgeo_app` (el rol de la API), `sacgeo_auth` (NOLOGIN, dueño de las dos
+  funciones de login)
+- auditoría: 355 filas, 11 de ellas globales (`tenant_id` NULL)
+- RBAC: 31 permisos, 49 `rol_permisos`, 2 `usuario_roles`
+
+### Qué falta para cerrar la fase 5 (backend)
+
+- **Endpoints de negocio.** Hoy no existe ninguno, a propósito: cada fase los
+  prohibió expresamente hasta cerrar la autorización. Solo hay `/salud`,
+  `/auth/login` y `/auth/yo`.
+- Paginación, filtros y manejo de errores de dominio en la API.
+
+### Qué falta para cerrar la fase 6 (autenticación y autorización)
+
+La auditoría de seguridad previa a las APIs (`docs/AUDITORIA_SEGURIDAD_PRE_API.md`)
+encontró **15 hallazgos** y concluyó que **hoy no se puede publicar un endpoint de
+escritura sin crear una vulnerabilidad estructural**: RLS separa laboratorios, pero
+dentro de un laboratorio no hay ninguna barrera entre lo que un usuario puede hacer
+y lo que le corresponde.
+
+El plan de migraciones, en orden:
+
+| # | Contenido | Estado |
+|---|---|---|
+| **0006** | Autor de auditoría no falsificable (H-06) | ✅ **aplicada y certificada** (29-sep-2026) |
+| **0007** | RBAC multi-rol: `permisos`, `rol_permisos`, `usuario_roles` + H-15 y H-13 | ✅ **aplicada y certificada** (29-sep-2026) |
+| **0008** | Sesiones y refresh con rotación y detección de reuso | ⏳ diseño previo pendiente de revisar |
+| **0009** | `eventos_seguridad` | ⏳ |
+| **0010** | Flujo de aprobación (`docs/FLUJO_APROBACION.md`) | ⏳ |
+
+Y en el backend, lo hecho y lo que falta:
+
+| | Estado |
+|---|---|
+| `require_permission()`, `require_any_permission()`, `require_all_permissions()` | ✅ **fase 6B** (29-sep-2026), 16 pruebas |
+| DTO con lista blanca (H-02) | ⏳ |
+| `/api/v1` — hoy el router monta en `/auth`, sin versión | ⏳ |
+| Mapeo de errores de dominio completo | ⏳ |
+| `/docs` condicionado al entorno | ⏳ |
+| Límite de intentos en el login (H-08) | ⏳ |
+
+### Gaps de seguridad abiertos
+
+**H-01 — mecanismo de autorización implementado; aplicación a endpoints de
+negocio pendiente.** Los guards existen y están probados: un usuario autenticado
+sin el permiso recibe 403. Pero **ningún endpoint de negocio existe todavía**, así
+que la barrera está construida y no está puesta en ninguna parte. Falta el primer
+endpoint protegido y su validación de extremo a extremo. **Publicar un endpoint de
+negocio sin su `require_permission()` reabre H-01 entero.**
+
+**G-2 — `sacgeo_app` conserva INSERT y DELETE directos sobre `usuario_roles`.**
+Un endpoint que escribiera la tabla a mano saltaría `fn_asignar_rol()` y la
+comprobación de `usuarios.assign_role`. Se resuelve en la fase de administración
+de usuarios/RBAC, no antes: retirar el GRANT ahora dejaría sin vía a la función
+que lo necesita.
+
+**G-4 — la API no tiene CORS, ni cabeceras de seguridad, ni límite de peticiones,
+y `/docs` se publica sin condición.** Fase de hardening.
+
+Y siguen abiertos de la auditoría pre-API: **H-02** (mass assignment), **H-08**
+(sin límite de intentos en el login) y **H-12** (los PDF de `insumos/` versionados).
+
+**H-11 — cerrado en la fase 6B.3.** La credencial histórica de desarrollo —la
+contraseña funcional del rol `sacgeo_dev`— estaba versionada en `.env.example` y
+`docker-compose.yml` de la raíz, y en el `.env.example` del backend. Se retiró de
+los tres y del único commit local que la contenía, reescrito antes de publicarlo.
+Hoy `docker-compose.yml` exige `POSTGRES_PASSWORD` sin valor por defecto y la
+suite exige `PG_PASSWORD`: **ningún archivo versionado contiene una contraseña que
+funcione**. La contraseña del clúster de desarrollo NO se cambió; sigue viva en
+`.env`, que está ignorado. Rotarla es trabajo aparte y no bloquea nada.
+
+Entitlements por plan (`docs/SAAS_ENTITLEMENTS.md`) quedan para después del primer
+endpoint: no bloquean nada.
+
+### Decisión de negocio todavía abierta
+
+**M-07 — el descuento se aplica después del IGV.** Ver §5. Bloquea cualquier
+trabajo sobre importes y sobre el PDF.
 
 ---
 
@@ -50,6 +136,18 @@ Atraviesan todo el flujo: **usuarios y roles** (quién puede hacer qué), **audi
 CLAUDE.md                  ← este archivo
 app/
   gtqc_sistema_unificado_v2.html   El mockup, última versión. NO SE MODIFICA
+backend/                   API FastAPI. Fase 5-6. Ver backend/.env.example
+  src/sacgeo/
+    config.py              configuración por entorno; ningún secreto en el repo
+    main.py                app + ciclo de vida (arranque fail-closed)
+    db/pool.py             pool, DISCARD ALL, verificación del rol de conexión
+    db/tx.py               PUNTO ÚNICO de transacción: set_config(..., true)
+    api/deps.py            cadena JWT → sesión → transacción → identidad →
+                           autorización (require_permission y variantes)
+    api/v1/auth.py         /auth/login y /auth/yo. No hay más endpoints
+    security/              passwords (Argon2id), jwt, autenticacion, tenant
+  tests/                   90 pruebas (74 + 16 de RBAC). Clúster APARTE, y
+                           PG_PASSWORD obligatoria: no hay valor por defecto
 database/
   00_schema.sql            tablas, dominios, PK/FK/UNIQUE/CHECK
   01_functions.sql         contexto de sesión, correlativos, casos de uso, dashboard
@@ -57,23 +155,38 @@ database/
   03_indexes_views.sql     índices (uno por uno justificados) y 8 vistas
   04_seeds.sql             roles, usuario sistema, 4 categorías, 14 subcategorías, 3 plantillas
   05_seed_ensayos.sql      87 ensayos, 13 paquetes, 119 componentes (74 amarrados)
+  97_aislamiento.sql       40 aserciones de aislamiento entre tenants
   98_pruebas.sql           71 pruebas funcionales
   99_verificacion.sql      37 controles de integridad
-  full_dump.sql            todo junto, reproducible de cero (se regenera, no se edita)
+  full_dump.sql            línea base 0002. NO incluye 0003/0004/0005 (Opción C)
   migrations/
     0001_baseline_v2.sql            el esquema anterior, para reproducir el punto de partida
     0002_v2_a_v3.sql                migración real, preserva los datos
-    0003_multitenant_habilitar.sql  ⚠ ESCRITA, NO APLICADA
+    0003_multitenant_habilitar.sql  ✅ aplicada — tenants, tenant_id, FK compuestas
+    0004_rls_rol_aplicacion.sql     ✅ aplicada — RLS FORCE, sacgeo_app, sacgeo_auth
+    0005_guarda_plantilla_y_sello_auditoria.sql  ✅ aplicada — corrige D-1 y D-2
+    0006_auditoria_autor_no_falsificable.sql     ✅ aplicada — H-06, autor no falsificable
+    0007_rbac_multirol.sql                       ✅ aplicada — RBAC multi-rol, H-15, H-13
 docs/
   AUDITORIA_BD_v3.md       el informe completo: hallazgos, decisiones, verificación
+  03_AMBIENTES.md          versiones verificadas del entorno (fase 3)
+  AUDITORIA_SEGURIDAD_PRE_API.md  los 15 hallazgos previos a las APIs
+  DISENO_RBAC_0007.md      RBAC multi-rol: 31 permisos y la matriz. ✅ 0007 APLICADA
+  SEGURIDAD_RBAC.md        diseño previo de roles. ⚠ su §3.3 (un rol) está SUPERADO
+  MODELO_AMENAZAS.md       amenazas y mitigaciones
+  PLAN_PRUEBAS_SEGURIDAD.md
+  FLUJO_APROBACION.md      aprobación interna de cotizaciones. NO implementado
+  SAAS_ENTITLEMENTS.md     planes y límites. NO implementado
   ER_GTQC_v3.png/.pdf/.svg diagrama entidad-relación actualizado
   gen_er_v3.py             genera el SVG del diagrama
   render_er_v3.js          lo renderiza a PNG y PDF
   Guion_BD_GTQC.docx       guion para explicarle la BD al cliente
 skills/
-  multi-tenant/SKILL.md    la guía de arquitectura para cuando se implemente multi-tenant
+  multi-tenant/SKILL.md    clasificación GLOBAL/TENANT/HÍBRIDA y checklist de aislamiento
 insumos/                   PDFs reales de presupuestos del laboratorio (material fuente)
 _archivo/                  iteraciones anteriores. Material histórico, no se usa
+_backups_sacgeo/           backups y logs de migración. IGNORADO POR GIT:
+                           contiene password_hash y datos reales del laboratorio
 ```
 
 ---
@@ -93,15 +206,59 @@ No escribir API, endpoints, JWT, middleware ni frontend mientras la fase no est�
 Después de cualquier cambio en `database/`:
 
 ```bash
-createdb gtqc_test
-psql -d gtqc_test -v ON_ERROR_STOP=1 -f database/full_dump.sql
-psql -d gtqc_test -f database/98_pruebas.sql      # 71 en verde, 0 FAIL
-psql -d gtqc_test -f database/99_verificacion.sql # 35 de 37 controles en cero
+# Base desechable con el esquema COMPLETO. full_dump por sí solo ya no basta:
+# es la línea base 0002 y no trae multi-tenant ni RLS.
+docker exec CONT psql -U sacgeo_dev -d postgres -c 'CREATE DATABASE prueba'
+for f in database/full_dump.sql \
+         database/migrations/0003_multitenant_habilitar.sql \
+         database/migrations/0004_rls_rol_aplicacion.sql \
+         database/migrations/0005_guarda_plantilla_y_sello_auditoria.sql; do
+  docker exec -i CONT psql -U sacgeo_dev -d prueba -v ON_ERROR_STOP=1 < "$f"
+done
+
+docker exec -i CONT psql -U sacgeo_dev -d prueba < database/98_pruebas.sql   # 71 PASS, 0 FAIL
+docker exec -i CONT psql -U sacgeo_dev -d prueba < database/99_verificacion.sql # 35 de 37 en cero
 ```
 
 Los dos controles que no dan cero son informativos y están explicados en `docs/AUDITORIA_BD_v3.md §9`. Cualquier otro que se encienda es un problema real.
 
+**La suite 97 se certifica CON `sacgeo_app`, no con el dueño:**
+
+```bash
+docker exec -i -e PGPASSWORD=... CONT psql -U sacgeo_app -h localhost -d prueba \
+  < database/97_aislamiento.sql      # 40 PASS, 0 FAIL, 0 SKIP
+```
+
+Ejecutarla como `sacgeo_dev` NO certifica nada: es dueño de las tablas y tiene
+BYPASSRLS, así que las políticas no se le aplican. La propia suite lo detecta y
+marca esas pruebas como SKIP. **Un SKIP es deuda declarada; un PASS falso es una
+fuga que nadie va a volver a mirar.**
+
+⚠ **`0004` solo puede aplicarse UNA VEZ POR CLÚSTER.** Su precondición exige que
+`sacgeo_auth` no preexista, y los roles de PostgreSQL son del clúster, no de la
+base: `DROP DATABASE` no se los lleva. Para una segunda base de prueba hay que
+levantar otro contenedor.
+
 Si se agrega una regla de negocio, se agrega su prueba en `98_pruebas.sql`. Si se agrega una forma nueva de que los datos queden inconsistentes, se agrega su control en `99_verificacion.sql`.
+
+### 4.3 bis Un backup no está validado hasta que se restaura EN OTRO CLÚSTER
+
+`pg_dump` NO vuelca los roles: son globales del clúster. Un dump de `sacgeo_dev`
+restaurado en un clúster limpio **falla** en la primera política
+(`role "sacgeo_app" does not exist`) y, con `--exit-on-error`, deja la base vacía.
+
+Las validaciones de las fases 4B y 4D restauraron en el MISMO clúster, donde los roles
+ya existían. Pasaron, y no probaban lo que decían probar. Corregido en 5B.
+
+El respaldo completo son **dos archivos**:
+
+```bash
+docker exec CONT pg_dump    -U sacgeo_dev -d sacgeo_dev -Fc > base.dump
+docker exec CONT pg_dumpall -U sacgeo_dev --globals-only --no-role-passwords > globals.sql
+```
+
+Y la restauración, en este orden: `globals.sql` primero, `pg_restore` después.
+`--no-role-passwords` evita que el volcado lleve hashes de contraseña de los roles.
 
 ### 4.4 `full_dump.sql` se regenera, no se edita
 
@@ -159,6 +316,72 @@ Sin esto la auditoría culpa al usuario `sistema`.
 
 **La BD no guarda secretos.** `integraciones.token_ref` es una referencia a un vault, nunca el token. `usuarios.password_hash` es solo un hash (Argon2id/bcrypt), nunca una contraseña.
 
+**La atribución no se elige: se deriva del contexto.** Tres columnas lo aprendieron por
+separado — `auditoria.usuario_id` (0006), `creado_por` vía `p_usuario` (0007, H-15) y
+`usuario_roles.asignado_por` (0007). La regla general: **toda columna de autoría que el
+que escribe pueda elegir es falsificable mientras el motor no la ate a
+`fn_app_usuario()`**. Cualquier tabla nueva con una columna `*_por` debe llevar su guarda.
+
+**RLS se habilita con `FORCE`, no solo con `ENABLE`.** Sin `FORCE`, el dueño de
+la tabla ignora sus propias políticas: existirían en el catálogo, se verían en
+`pg_policies`, y no protegerían nada. Es el modo de fallo más silencioso que
+tiene RLS, porque no hay ninguna señal en tiempo de ejecución.
+
+**La API NUNCA se conecta como `sacgeo_dev`.** Se conecta como `sacgeo_app`:
+sin `SUPERUSER`, sin `BYPASSRLS`, sin poseer ninguna tabla, con GRANTs acotados
+—sin `DELETE` sobre `usuarios`, sin nada sobre `schema_migrations`— y sin poder
+ejecutar `fn_purgar_auditoria`.
+
+**El arranque es fail-closed.** Con `REQUIRE_RLS_SAFE_ROLE=true` la API comprueba
+antes de aceptar la primera petición que su rol no puede saltarse RLS —incluida
+la herencia, vía `pg_has_role`, porque `pg_roles.rolsuper` solo mira el atributo
+directo— y que se llama exactamente `ROL_APLICACION`. Si algo falla, **aborta**.
+`DATABASE_URL` y `REQUIRE_RLS_SAFE_ROLE` se cambian en el MISMO despliegue.
+
+**Login y sesión son la única excepción a RLS, y es acotada.** No es un problema
+de orden sino de datos: el contexto de tenant no se puede fijar hasta saber el
+tenant, y el tenant sale de la propia consulta. Lo resuelven dos funciones
+`SECURITY DEFINER` propiedad de `sacgeo_auth` (NOLOGIN, sin `BYPASSRLS`), con
+`search_path` fijo, sin SQL dinámico y con `EXECUTE` revocado a `PUBLIC`:
+`fn_login_buscar(TEXT)` y `fn_sesion_resolver_usuario(UUID)`. La segunda devuelve
+tres columnas y ninguna sensible. Todo lo demás se lee ya dentro de la
+transacción, con el contexto puesto.
+
+**La auditoría se sella con el tenant DE LA FILA auditada, no con el de la
+sesión.** Un cambio sobre una entidad global (`roles`, `campos_sensibles`, una
+plantilla base) produce `tenant_id` NULL, que es lo que significa: lo ven todos.
+`b_auditoria_sello` impide lo contrario en las dos direcciones — que un rastro
+tenant-scoped se marque como global, que sería a la vez una fuga y una forma de
+sacarlo del historial que su dueño revisa.
+
+**Una guarda que consulta otra tabla tiene que contar con RLS.** Lo aprendimos
+con `fn_validar_plantilla_tenant`: comprobaba `IF v_tp IS NOT NULL AND v_tp <>
+NEW.tenant_id`, y bajo RLS la fila ajena es invisible, así que `v_tp` salía NULL
+y la guarda no disparaba. Se arregló preguntando primero **si la fila es
+visible** —lo que la política ya contesta— y conservando después la comparación
+de pertenencia, que es la que sirve para los roles no sujetos a RLS. Sin
+`SECURITY DEFINER`, sin rol nuevo y sin privilegio nuevo.
+
+**La atribución de autoría no la elige quien escribe.** `auditoria.usuario_id` debe
+ser `fn_app_usuario()` — lo impone `b_auditoria_autor` (`0006`). El mismo criterio se
+aplicará al parámetro `p_usuario` de las siete funciones de caso de uso que lo aceptan
+(hallazgo H-15): hoy permiten escribir `creado_por` a nombre de otro.
+
+**El multi-rol sustituye a los permisos implícitos del administrador.** `admin` NO
+recibe `catalogo.manage`, `acreditacion.manage` ni ningún permiso de operación de
+cotizaciones. Si un administrador necesita cotizar o gestionar acreditación, se le
+añade el rol correspondiente — asignación visible y auditada, en vez de potestad
+escondida dentro de la palabra «administrador». El efecto buscado es que
+`if role == "admin"` **no funcione ni escribiéndolo**.
+
+**La autorización se pregunta a PostgreSQL en cada petición** (fase 6B). Los guards
+`require_permission()`, `require_any_permission()` y `require_all_permissions()` de
+`api/deps.py` leen `fn_usuario_permisos()` dentro de la MISMA transacción que
+`get_db_tx` ya contextualizó — de ahí sale el aislamiento entre laboratorios, que lo
+impone RLS sobre `usuario_roles` y no el código de la API. Un permiso dentro del JWT
+sería una foto del momento del login: retirar un rol no surtiría efecto hasta que el
+token expirase. Sin caché entre peticiones, la revocación se nota en la siguiente.
+
 ### Decisión abierta, no técnica
 
 **M-07 — el descuento se aplica después del IGV.** Se conservó el comportamiento del mockup, pero lo habitual en Perú es descontar sobre la base imponible. Es un cambio de una línea en `fn_recalcular_cotizacion()` que altera los importes de todo lo emitido: **lo decide contabilidad, no el desarrollo.**
@@ -198,13 +421,28 @@ borrador ──→ emitida ──→ aceptada
 ## 7. Comandos que se usan seguido
 
 ```bash
-# levantar PostgreSQL (entorno de trabajo)
-sudo service postgresql start
+# PostgreSQL vive en Docker, no en el sistema
+docker start sac-geo-postgres-dev
+docker exec sac-geo-postgres-dev psql -U sacgeo_dev -d sacgeo_dev -c '\dt'
 
-# base limpia desde cero + verificación
-createdb gtqc && psql -d gtqc -v ON_ERROR_STOP=1 -f database/full_dump.sql
-psql -d gtqc -f database/98_pruebas.sql
-psql -d gtqc -f database/99_verificacion.sql
+# estado de la base de trabajo
+docker exec sac-geo-postgres-dev psql -U sacgeo_dev -d sacgeo_dev -c \
+  "SELECT version FROM schema_migrations ORDER BY version"
+
+# backend (Windows: usar run.py, NO 'uvicorn' directo — fija la política de
+# event loop antes de importar uvicorn, y psycopg async falla sin ella)
+cd backend && ./.venv/Scripts/python.exe run.py
+
+# pruebas del backend. PG_CONTENEDOR debe apuntar a un clúster DE VALIDACIÓN:
+# el conftest crea y ELIMINA los roles sacgeo_app y sacgeo_auth, que en el
+# clúster real son permanentes. Hay una guarda que lo impide, pero conviene
+# saber por qué existe. POSTGRES_DB=postgres es obligatorio: sin él, Docker
+# crea una base llamada sacgeo_dev y la guarda aborta la suite entera.
+docker run -d --name sac-geo-postgres-val -e POSTGRES_USER=sacgeo_dev \
+  -e POSTGRES_PASSWORD=<elegir> -e POSTGRES_DB=postgres -p 5433:5432 postgres:16
+
+cd backend && PG_CONTENEDOR=sac-geo-postgres-val PG_PUERTO=5433 \
+  PG_PASSWORD=<la misma> ./.venv/Scripts/python.exe -m pytest -q   # 90 en verde
 
 # regenerar el diagrama ER
 python3 docs/gen_er_v3.py && node docs/render_er_v3.js
@@ -214,9 +452,9 @@ python3 docs/gen_er_v3.py && node docs/render_er_v3.js
 
 ## 8. Skills del proyecto
 
-**`/multi-tenant`** (`skills/multi-tenant/SKILL.md`) — guía de arquitectura y seguridad para la fase multi-tenant. Contiene la clasificación GLOBAL / TENANT-SCOPED de cada tabla, las reglas de aislamiento y un checklist obligatorio. **Se consulta antes de tocar cualquier tabla tenant-scoped, de crear una tabla nueva, de agregar una FK o de escribir un endpoint.**
+**`/multi-tenant`** (`skills/multi-tenant/SKILL.md`) — guía de arquitectura y seguridad del multi-tenant, YA IMPLEMENTADO (fases 4 y 7). Contiene la clasificación GLOBAL / TENANT-SCOPED de cada tabla, las reglas de aislamiento y un checklist obligatorio. **Se consulta antes de tocar cualquier tabla tenant-scoped, de crear una tabla nueva, de agregar una FK o de escribir un endpoint.**
 
-Si más adelante hacen falta otros skills, los candidatos naturales son: uno de migraciones de BD (el procedimiento de §4.5), y uno de generación del PDF de cotización.
+Si más adelante hacen falta otros skills, los candidatos naturales son: uno de migraciones de BD (el procedimiento de §4.5, que ya se ha ejecutado tres veces con el mismo guion: precheck, backup validado por restauración, ejecución, certificación) y uno de generación del PDF de cotización.
 
 ---
 

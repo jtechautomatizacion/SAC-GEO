@@ -23,6 +23,17 @@
 -- quedan en el tenant 1 y 99_verificacion.sql sigue limpio). La base del
 -- proyecto NO la tiene aplicada.
 --
+-- Revisión de la fase 3C — lo que cambió respecto de la versión original:
+--   · El RUC de GTQC ya no está escrito: se exige declararlo con
+--     SET app.ruc_gtqc antes de aplicar, o la migración aborta (sección 1).
+--   · auditoria.tenant_id admite NULL = cambio global del producto, y
+--     fn_auditar() ya no llama a fn_app_tenant() (secciones 2 y 6).
+--   · fn_max_plantillas_activas() cuenta por tenant; antes el cupo global
+--     quedaba agotado por las 3 plantillas base y ningún laboratorio podía
+--     crear las suyas (sección 6b).
+--   · Las 8 vistas se recrean con security_invoker y exponen tenant_id
+--     (sección 6c).
+--
 -- Lo que este archivo NO trae y es responsabilidad del backend:
 --   · autenticación, JWT, sesiones, login;
 --   · autorización por rol;
@@ -59,8 +70,23 @@ COMMENT ON TABLE tenants IS 'GLOBAL. Un laboratorio cliente del SaaS.';
 -- solo laboratorio. Con varios, la fecha de emisión debe salir de la zona del
 -- tenant, no del servidor.
 
+-- RUC de GTQC: CONFIRMADO por el Product Owner el 2026-09-28 (fase 3G).
+--
+-- La historia de este valor importa. La version original de esta migracion
+-- traia '20601234567' sin respaldo en el repositorio, y el mockup usaba
+-- '20500000001'. Ninguno de los dos estaba verificado, asi que la fase 3C
+-- retiro el literal y obligo a declararlo con SET app.ruc_gtqc, para que un
+-- RUC sin confirmar no pudiera colarse por descuido.
+--
+-- Ya esta confirmado, asi que el valor vuelve al archivo y la guarda se
+-- retira: exigir un SET para un dato ya verificado solo anade friccion y un
+-- modo de fallo nuevo el dia del despliegue.
+--
+-- `uq_tenants_ruc` es UNIQUE y el tenant 1 es el registro fundacional del
+-- sistema: si este numero fuera incorrecto, apareceria impreso en cada
+-- cotizacion que emita el laboratorio.
 INSERT INTO tenants (id, slug, razon_social, ruc)
-VALUES (1, 'gtqc', 'Group Total Quality Control S.A.C.', '20601234567');
+VALUES (1, 'gtqc', 'Group Total Quality Control S.A.C.', '20606918357');
 SELECT setval(pg_get_serial_sequence('tenants','id'), 1);
 
 -- Resolución del tenant activo. Sin contexto NO adivina: lanza error.
@@ -195,7 +221,7 @@ BEGIN
         'empresas','contactos','personas','categorias_ensayo','subcategorias_ensayo',
         'ensayos_catalogo','ensayo_acreditacion_historial','paquete_componentes',
         'correlativos','cotizaciones','cotizacion_items','cotizacion_historial_estados',
-        'integraciones','documentos_externos','auditoria']) AS t
+        'integraciones','documentos_externos']) AS t
     LOOP
         EXECUTE format('ALTER TABLE %I ALTER COLUMN tenant_id SET NOT NULL', r.t);
         EXECUTE format('ALTER TABLE %I ADD CONSTRAINT %I FOREIGN KEY (tenant_id)
@@ -206,11 +232,51 @@ BEGIN
 END
 $obligatorio$;
 
--- usuarios y plantillas_cotizacion admiten NULL (fila global del producto).
+-- usuarios, plantillas_cotizacion y auditoria admiten NULL (fila global).
 ALTER TABLE usuarios ADD CONSTRAINT fk_usuarios_tenant
     FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE RESTRICT;
 ALTER TABLE plantillas_cotizacion ADD CONSTRAINT fk_plantillas_tenant
     FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE RESTRICT;
+
+-- Admitir NULL no es lo mismo que ponerlo por omisión.
+--
+-- Estas dos tablas quedan fuera del bucle de arriba porque su tenant_id puede
+-- ser NULL, pero eso las dejaba también sin DEFAULT, y el efecto era una fuga
+-- silenciosa: un laboratorio que creara una plantilla propia sin nombrar el
+-- tenant obtenía tenant_id NULL, es decir, una PLANTILLA BASE DEL PRODUCTO
+-- visible para todos los demás laboratorios. Lo detectó la prueba 15 de
+-- 97_aislamiento.sql, que esperaba un bloqueo y vio pasar la operación: el
+-- trigger a_validar_plantilla hacía lo correcto, pero la plantilla ya no era
+-- ajena, se había vuelto global.
+-- En usuarios el efecto es equivalente: un alta sin tenant explícito crearía
+-- otro usuario global como el usuario sistema.
+--
+-- Con el DEFAULT, lo propio es lo que ocurre por omisión y lo global exige
+-- escribir tenant_id = NULL a mano. Crear algo que verán todos los clientes
+-- debe ser un acto deliberado, nunca un descuido.
+ALTER TABLE usuarios              ALTER COLUMN tenant_id SET DEFAULT fn_app_tenant();
+ALTER TABLE plantillas_cotizacion ALTER COLUMN tenant_id SET DEFAULT fn_app_tenant();
+
+-- auditoria.tenant_id ADMITE NULL, y ese NULL significa algo concreto:
+-- "este cambio no pertenece a ningún laboratorio, es del producto".
+--
+-- Ocurre de verdad, no es un caso teórico: cambiar un rol, editar una
+-- plantilla base o tocar al usuario `sistema` son filas globales. Forzando
+-- NOT NULL habría que atribuirlas al tenant que estuviera en la sesión, y el
+-- rastro diría que el laboratorio A modificó algo que es de todos.
+--
+-- Tampoco lleva DEFAULT fn_app_tenant(): el valor lo pone siempre fn_auditar()
+-- a partir de la fila auditada. Un DEFAULT que lanza excepción en una tabla
+-- append-only sería una trampa esperando a que alguien inserte a mano.
+--
+-- La futura política RLS (0004) es, en consecuencia, la de una tabla híbrida:
+--     USING (tenant_id IS NULL OR tenant_id = fn_app_tenant())
+-- Cada laboratorio ve su rastro y el de los cambios del producto que le
+-- afectan; el del vecino, nunca.
+ALTER TABLE auditoria ADD CONSTRAINT fk_auditoria_tenant
+    FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE RESTRICT;
+COMMENT ON COLUMN auditoria.tenant_id IS
+    'NULL = cambio global del producto (roles, plantillas base, usuario sistema).';
 
 
 -- ----------------------------------------------------------------------------
@@ -252,6 +318,31 @@ CREATE UNIQUE INDEX uq_plantillas_slug_tenant ON plantillas_cotizacion (tenant_i
     WHERE tenant_id IS NOT NULL;
 CREATE UNIQUE INDEX uq_plantillas_slug_base   ON plantillas_cotizacion (slug)
     WHERE tenant_id IS NULL;
+
+-- El NULL de usuarios.tenant_id queda RESERVADO, no abierto.
+--
+-- Esta migración le da un significado nuevo a `tenant_id IS NULL` en usuarios:
+-- "usuario global del producto". Hoy eso describe a exactamente una fila, el
+-- usuario `sistema` (id 1), que es autor de los seeds y fallback de auditoría.
+--
+-- El problema es que crear la semántica sin acotarla deja abierta una vía de
+-- escalada: bajo la política RLS híbrida prevista para 0004
+--     USING (tenant_id IS NULL OR tenant_id = fn_app_tenant())
+-- un usuario con tenant_id NULL es visible desde TODOS los laboratorios. Un
+-- alta con ese valor crea, de hecho, una identidad de alcance global.
+--
+-- La vía accidental ya está cerrada: usuarios.tenant_id tiene DEFAULT
+-- fn_app_tenant(), así que un alta sin tenant explícito queda en el tenant de
+-- la sesión. Este índice cierra la vía deliberada.
+--
+-- Cuando exista el Super Admin (ver docs/SEGURIDAD_RBAC.md §4), su migración
+-- relajará este índice de forma explícita y revisable, junto con roles.scope y
+-- la tabla de concesiones de plataforma. Esa es justamente la intención: que
+-- añadir una identidad de alcance global sea un cambio de esquema que alguien
+-- tenga que revisar, y no un INSERT.
+CREATE UNIQUE INDEX uq_usuarios_global ON usuarios ((TRUE)) WHERE tenant_id IS NULL;
+COMMENT ON INDEX uq_usuarios_global IS
+    'Reserva el tenant_id NULL para un único usuario global (sistema). Relajar solo al introducir el Super Admin.';
 
 DROP INDEX uq_usuarios_email;
 -- El email sí sigue siendo único en TODO el sistema: una persona = una cuenta.
@@ -461,14 +552,90 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- La auditoría también se sella con el tenant.
+-- ----------------------------------------------------------------------------
+-- 6d. CAMPOS SENSIBLES: LA AUDITORIA NUNCA ARCHIVA UN SECRETO
+-- ----------------------------------------------------------------------------
+-- fn_auditar() guarda la fila entera con to_jsonb(NEW). Eso significa que, en
+-- cuanto usuarios.password_hash deje de ser NULL, CADA cambio de contrasena
+-- copiaria el hash a `auditoria` -- que es append-only y no se puede limpiar.
+-- Quien consiguiera leer la auditoria obtendria material para un ataque
+-- offline, incluidas contrasenas ya rotadas.
+--
+-- Se verifico ejecutandolo sobre una copia desechable: el hash quedaba en
+-- auditoria.datos_nuevos->>'password_hash' en claro.
+--
+-- Se corrige aqui, y no mas adelante, por dos razones:
+--   · esta migracion YA reemplaza fn_auditar(); cualquier otra ubicacion
+--     obligaria a reescribir la misma funcion dos veces;
+--   · el dano es irreversible: una vez el hash entra en una tabla append-only,
+--     no sale.
+--
+-- No es un parche para password_hash: es un catalogo. Anadir un campo sensible
+-- nuevo (mfa_secret, refresh_token_hash, token_recuperacion) es un INSERT, no
+-- un cambio de funcion.
+CREATE TABLE campos_sensibles (
+    id      INTEGER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+    tabla   VARCHAR(63)  NOT NULL,
+    columna VARCHAR(63)  NOT NULL,
+    motivo  VARCHAR(200) NOT NULL,
+    CONSTRAINT uq_campos_sensibles       UNIQUE (tabla, columna),
+    CONSTRAINT ck_campos_sensibles_motivo CHECK (btrim(motivo) <> '')
+);
+COMMENT ON TABLE campos_sensibles IS
+    'GLOBAL. Columnas que la auditoria registra como CAMBIADAS pero cuyo valor NUNCA almacena.';
+-- La PK es un id propio y no (tabla, columna) porque auditoria.registro_id es
+-- NOT NULL: sin una columna `id`, esta tabla no podria auditarse a si misma.
+-- Y debe poder: quitar una proteccion tiene que dejar rastro.
+
+INSERT INTO campos_sensibles (tabla, columna, motivo) VALUES
+    ('usuarios', 'password_hash',
+     'Hash de contrasena. La auditoria es append-only: lo que entra no se puede borrar.');
+
+CREATE OR REPLACE FUNCTION fn_campos_sensibles(p_tabla TEXT) RETURNS TEXT[] AS $$
+    SELECT COALESCE(array_agg(columna), ARRAY[]::TEXT[])
+      FROM campos_sensibles WHERE tabla = p_tabla;
+$$ LANGUAGE sql STABLE;
+COMMENT ON FUNCTION fn_campos_sensibles(TEXT) IS
+    'STABLE para que PostgreSQL la evalue una vez por sentencia y no una vez por fila.';
+
+CREATE OR REPLACE FUNCTION fn_redactar(p_datos JSONB, p_cols TEXT[]) RETURNS JSONB AS $$
+DECLARE v_col TEXT;
+BEGIN
+    IF p_datos IS NULL THEN RETURN NULL; END IF;
+    FOREACH v_col IN ARRAY p_cols LOOP
+        -- Un NULL se deja como NULL: sustituirlo por '[REDACTADO]' insinuaria
+        -- que habia un secreto donde no lo habia, y "no tenia contrasena" es
+        -- un hecho de auditoria legitimo y no confidencial.
+        IF p_datos ? v_col AND jsonb_typeof(p_datos -> v_col) <> 'null' THEN
+            p_datos := jsonb_set(p_datos, ARRAY[v_col], '"[REDACTADO]"'::jsonb);
+        END IF;
+    END LOOP;
+    RETURN p_datos;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+
+-- La auditoría se sella con el tenant DE LA FILA AUDITADA, y con nada más.
+--
+-- No lleva COALESCE(..., fn_app_tenant()). Dos razones:
+--   · Las tablas tenant-scoped tienen tenant_id NOT NULL, así que la fila
+--     SIEMPRE lo trae: el COALESCE nunca haría falta para ellas.
+--   · Las globales (roles, plantillas base, usuario sistema) no lo traen, y ahí
+--     el COALESCE hacía justo lo contrario de lo correcto: llamaba a
+--     fn_app_tenant(), que lanza excepción si no hay contexto. Un superadmin
+--     modificando un rol del producto no puede aplicar la migración ni tocar
+--     un rol sin inventarse un tenant al que no pertenece.
+-- Sin el COALESCE, una fila sin tenant_id produce una fila de auditoría con
+-- tenant_id NULL, que es exactamente lo que significa: cambio global.
 CREATE OR REPLACE FUNCTION fn_auditar() RETURNS TRIGGER AS $$
 DECLARE
     v_new JSONB := CASE WHEN TG_OP <> 'DELETE' THEN to_jsonb(NEW) END;
     v_old JSONB := CASE WHEN TG_OP <> 'INSERT' THEN to_jsonb(OLD) END;
     v_ref JSONB := COALESCE(v_new, v_old);
     v_campos TEXT[];
+    v_sens   TEXT[];
 BEGIN
+    -- PASO 1 - los campos cambiados se calculan con los VALORES REALES.
     IF TG_OP = 'UPDATE' THEN
         SELECT array_agg(k ORDER BY k) INTO v_campos
         FROM jsonb_object_keys(v_new) AS k
@@ -477,9 +644,23 @@ BEGIN
             RETURN NULL;
         END IF;
     END IF;
+
+    -- PASO 2 - y SOLO DESPUES se redactan los valores sensibles.
+    --
+    -- El orden es la parte que se puede equivocar, y equivocarlo cuesta caro:
+    -- redactando primero, los dos valores pasarian a ser '[REDACTADO]', serian
+    -- iguales, el campo no figuraria como cambiado y -por la salida anticipada
+    -- de arriba- un cambio de contrasena podria no generar NINGUNA fila de
+    -- auditoria. Se perderia el secreto y ademas la trazabilidad.
+    v_sens := fn_campos_sensibles(TG_TABLE_NAME);
+    IF array_length(v_sens, 1) IS NOT NULL THEN
+        v_new := fn_redactar(v_new, v_sens);
+        v_old := fn_redactar(v_old, v_sens);
+    END IF;
+
     INSERT INTO auditoria (tenant_id, tabla, registro_id, registro_public_id, accion,
                            campos_cambiados, datos_anteriores, datos_nuevos, usuario_id, ip_origen)
-    VALUES (COALESCE((v_ref->>'tenant_id')::INTEGER, fn_app_tenant()),
+    VALUES ((v_ref->>'tenant_id')::INTEGER,
             TG_TABLE_NAME, (v_ref->>'id')::BIGINT,
             NULLIF(v_ref->>'public_id','')::UUID, TG_OP, v_campos, v_old, v_new,
             fn_app_usuario(), fn_app_ip());
@@ -487,9 +668,296 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+
+-- ----------------------------------------------------------------------------
+-- 6b. EL LÍMITE DE PLANTILLAS PASA A SER POR TENANT  (defecto F-2)
+-- ----------------------------------------------------------------------------
+-- fn_max_plantillas_activas() cuenta hoy TODAS las plantillas activas de la
+-- base, sin mirar de quién son:
+--
+--     IF NEW.activo AND (SELECT COUNT(*) FROM plantillas_cotizacion
+--                         WHERE activo AND id <> COALESCE(NEW.id, -1)) >= 3
+--
+-- Con un solo laboratorio da igual. Con varios rompe dos cosas a la vez:
+--   · las 3 plantillas base del producto quedan activas tras esta migración,
+--     así que el cupo global ya está agotado y NINGÚN laboratorio podría crear
+--     una plantilla propia — la función quedaría muerta al nacer;
+--   · y si pudieran, el laboratorio A le consumiría cupo al B.
+--
+-- QUÉ SIGNIFICA "MÁXIMO 3" — evidencia, no suposición:
+--   · el trigger dice "el mismo límite que aplica la app";
+--   · en el mockup, MAX_PLANTILLAS = 3 se compara contra DB.plantillas, que es
+--     la lista PROPIA del laboratorio (arranca como copia de las 3 base y el
+--     usuario las edita y las elimina);
+--   · COMMENT ON TABLE dice "3 plantillas base del producto + las del tenant",
+--     y ese "+" describe dos conjuntos distintos que se suman.
+--
+-- AMBIGÜEDAD QUE QUEDA ABIERTA — decisión de producto, no de desarrollo:
+--   El mockup trata las 3 plantillas como propias y editables del laboratorio;
+--   esta migración las convierte en base del producto, compartidas y de solo
+--   lectura. Son dos modelos distintos, y como el mockup está congelado la
+--   contradicción no se resuelve leyendo el código.
+--   Lo que NO es ambiguo es que el límite debe ser POR TENANT: ninguna lectura
+--   admite que un laboratorio consuma el cupo de otro. Eso es lo que se corrige.
+--   Lo que SÍ queda por confirmar es si las 3 base cuentan dentro del cupo de
+--   cada laboratorio. Se implementa que NO cuenten, porque bajo la otra lectura
+--   el cupo nace agotado y crear plantillas sería inalcanzable: una regla que
+--   hace imposible su propia funcionalidad no puede ser la buscada. Si producto
+--   decide lo contrario, el cambio es quitar el retorno anticipado de abajo y
+--   contar también las filas con tenant_id IS NULL.
+CREATE OR REPLACE FUNCTION fn_max_plantillas_activas() RETURNS TRIGGER AS $$
+BEGIN
+    -- Las plantillas base del producto (tenant_id NULL) no pasan por el cupo:
+    -- las administra el producto, no un laboratorio.
+    IF NEW.tenant_id IS NULL THEN
+        RETURN NEW;
+    END IF;
+
+    IF NEW.activo AND (SELECT COUNT(*) FROM plantillas_cotizacion
+                        WHERE activo
+                          AND tenant_id = NEW.tenant_id
+                          AND id <> COALESCE(NEW.id, -1)) >= 3 THEN
+        RAISE EXCEPTION 'Máximo 3 plantillas activas. Desactive una antes de crear otra.'
+            USING ERRCODE = 'restrict_violation';
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+COMMENT ON FUNCTION fn_max_plantillas_activas() IS
+    'El cupo de 3 es POR TENANT y cuenta solo las propias; las base del producto no consumen cupo.';
+
+
+-- ----------------------------------------------------------------------------
+-- 6c. LAS 8 VISTAS, CONSCIENTES DEL TENANT
+-- ----------------------------------------------------------------------------
+-- Las ocho leen tablas tenant-scoped y ninguna filtraba por tenant. Se recrean
+-- con dos cambios y ninguno más: se expone tenant_id y se declara
+-- security_invoker = true.
+--
+-- POR QUÉ security_invoker (PostgreSQL 15+; aquí corre 16.15):
+-- una vista normal se ejecuta con los privilegios de SU DUEÑO, no de quien
+-- consulta. Si el dueño de la vista es también dueño de las tablas, las
+-- políticas RLS no se le aplican y la vista se convierte en un túnel que
+-- atraviesa el aislamiento entero. Con security_invoker las políticas se
+-- evalúan como el rol que consulta, que es lo único que tiene sentido.
+-- Hoy no cambia nada porque RLS aún no existe; cuando llegue 0004, la
+-- diferencia está entre estar aislado y creer que se está.
+--
+-- POR QUÉ ADEMÁS SE EXPONE tenant_id:
+-- para que la API pueda filtrar explícitamente. RLS es la red, no el piso.
+--
+-- LO QUE NO SE HIZO, Y ES LO IMPORTANTE:
+-- agregar tenant_id a un JOIN no es gratis. Tres de estas vistas pierden filas
+-- —muchas— si el tenant se amarra en el sitio equivocado. Va comentado en cada
+-- una. Los números salen de la base real validada en la fase 2.
+
+DROP VIEW vw_catalogo_disponible;
+DROP VIEW vw_paquete_detalle;
+DROP VIEW vw_paquetes_resumen;
+DROP VIEW vw_acreditacion_vigente;
+DROP VIEW vw_resumen_por_categoria;
+DROP VIEW vw_ensayos_mas_cotizados;
+DROP VIEW vw_auditoria_legible;
+DROP VIEW vw_cotizacion_pdf;
+
+-- 1/8 · Tablas base: ensayos_catalogo, subcategorias_ensayo, categorias_ensayo.
+-- tenant_id sale de ec (el ensayo). Los JOIN llevan además el tenant: es
+-- redundante —la FK compuesta (tenant_id, categoria_id, subcategoria_id) ya lo
+-- garantiza— pero deja la intención escrita en la propia vista.
+-- Sin riesgo de duplicación (los JOIN son contra la PK) ni de pérdida de filas.
+CREATE VIEW vw_catalogo_disponible WITH (security_invoker = true) AS
+SELECT ec.tenant_id,
+       ce.id   AS categoria_id, ce.slug AS categoria_slug, ce.nombre AS categoria,
+       ce.icono, ce.color_hex, ce.orden AS orden_categoria,
+       se.id   AS subcategoria_id, se.nombre AS subcategoria, se.orden AS orden_subcategoria,
+       ec.id   AS ensayo_id, ec.public_id, ec.codigo, ec.nombre, ec.norma,
+       ec.unidad, ec.precio_base, ec.es_paquete, ec.acreditado
+  FROM ensayos_catalogo ec
+  JOIN subcategorias_ensayo se ON se.id = ec.subcategoria_id AND se.tenant_id = ec.tenant_id
+  JOIN categorias_ensayo   ce ON ce.id = ec.categoria_id     AND ce.tenant_id = ec.tenant_id
+ WHERE ec.activo AND se.activo AND ce.activo;
+
+-- 2/8 · Tablas base: paquete_componentes, ensayos_catalogo (dos veces).
+-- tenant_id sale de pc (el componente).
+-- PÉRDIDA DE FILAS: el segundo JOIN es LEFT y su condición de tenant va en el
+-- ON, nunca en el WHERE. Movida al WHERE, el LEFT JOIN se degrada a INNER y
+-- desaparecen los componentes descriptivos sin ensayo vinculado: 45 de 122 en
+-- la base actual, el 37%. Son justamente los que el control G7 de
+-- 99_verificacion.sql contabiliza como pendientes de amarrar al catálogo.
+CREATE VIEW vw_paquete_detalle WITH (security_invoker = true) AS
+SELECT pc.tenant_id,
+       p.id     AS paquete_id,
+       p.codigo AS paquete_codigo,
+       p.nombre AS paquete,
+       pc.orden,
+       c.codigo                      AS componente_codigo,
+       COALESCE(c.nombre, pc.nombre) AS componente,
+       COALESCE(c.norma,  pc.norma)  AS norma,
+       pc.cantidad,
+       c.precio_base                 AS precio_individual,
+       c.activo                      AS componente_activo,
+       (pc.ensayo_componente_id IS NOT NULL) AS vinculado
+  FROM paquete_componentes pc
+  JOIN ensayos_catalogo p      ON p.id = pc.ensayo_id
+                              AND p.tenant_id = pc.tenant_id
+  LEFT JOIN ensayos_catalogo c ON c.id = pc.ensayo_componente_id
+                              AND c.tenant_id = pc.tenant_id;
+
+-- 3/8 · Tablas base: ensayos_catalogo (paquete y componente), paquete_componentes.
+-- tenant_id sale de p (el paquete) y entra también en el GROUP BY. No altera la
+-- agrupación: ya se agrupaba por p.id, que es PK y por tanto determina el
+-- tenant. Mismos LEFT JOIN con la condición de tenant en el ON, por la misma
+-- razón que la vista anterior: un paquete con componentes descriptivos debe
+-- seguir contándolos.
+CREATE VIEW vw_paquetes_resumen WITH (security_invoker = true) AS
+SELECT p.tenant_id, p.id, p.codigo, p.nombre, p.precio_base AS precio_paquete, p.activo,
+       COUNT(pc.id)                    AS componentes,
+       COUNT(pc.ensayo_componente_id)  AS vinculados,
+       SUM(c.precio_base * pc.cantidad) AS valor_individual,
+       CASE WHEN COUNT(pc.id) = COUNT(pc.ensayo_componente_id)
+             AND SUM(c.precio_base * pc.cantidad) > 0
+            THEN round(100 * (1 - p.precio_base / SUM(c.precio_base * pc.cantidad)), 1)
+       END AS ahorro_pct
+  FROM ensayos_catalogo p
+  LEFT JOIN paquete_componentes pc ON pc.ensayo_id = p.id
+                                  AND pc.tenant_id = p.tenant_id
+  LEFT JOIN ensayos_catalogo c     ON c.id = pc.ensayo_componente_id
+                                  AND c.tenant_id = p.tenant_id
+ WHERE p.es_paquete
+ GROUP BY p.tenant_id, p.id, p.codigo, p.nombre, p.precio_base, p.activo;
+
+-- 4/8 · Tablas base: ensayos_catalogo, ensayo_acreditacion_historial (LATERAL).
+-- tenant_id sale de ec. El LATERAL filtra además por tenant.
+-- CAMBIO DE COMPORTAMIENTO: esta vista llama a fn_hoy_lima(), que tras esta
+-- migración resuelve la zona horaria del tenant en contexto. Consultarla sin
+-- app.tenant_id deja de funcionar y lanza 42501. No es un defecto de la vista:
+-- es la consecuencia de que la fecha de negocio dejó de ser la del servidor.
+CREATE VIEW vw_acreditacion_vigente WITH (security_invoker = true) AS
+SELECT ec.tenant_id,
+       ec.id AS ensayo_id, ec.codigo, ec.nombre, ec.acreditado AS estado_actual,
+       h.acreditado AS estado_historial, h.vigente_desde, h.motivo,
+       (ec.acreditado = h.acreditado) AS coherente
+  FROM ensayos_catalogo ec
+  LEFT JOIN LATERAL (
+        SELECT acreditado, vigente_desde, motivo
+          FROM ensayo_acreditacion_historial
+         WHERE ensayo_id = ec.id
+           AND tenant_id = ec.tenant_id
+           AND vigente_desde <= fn_hoy_lima()
+         ORDER BY vigente_desde DESC, id DESC LIMIT 1
+  ) h ON TRUE;
+
+-- 5/8 · Tablas base: cotizacion_items, cotizaciones.
+-- tenant_id sale de ci y entra en el GROUP BY.
+-- CAMBIO REAL DE GRANULARIDAD: antes había una fila por categoría; ahora una
+-- por (tenant, categoría). Dentro de un tenant el resultado es idéntico, que es
+-- como la consulta la aplicación. Se comprobó que ninguna función ni vista
+-- depende de ésta, así que el cambio no arrastra a nadie.
+CREATE VIEW vw_resumen_por_categoria WITH (security_invoker = true) AS
+SELECT ci.tenant_id,
+       ci.categoria_snapshot AS categoria,
+       COUNT(DISTINCT c.id)  AS cotizaciones,
+       SUM(ci.cantidad)      AS items,
+       SUM(ci.subtotal)      AS monto_cotizado,
+       SUM(ci.subtotal) FILTER (WHERE c.estado = 'aceptada') AS monto_aceptado
+  FROM cotizacion_items ci
+  JOIN cotizaciones c ON c.id = ci.cotizacion_id
+                     AND c.tenant_id = ci.tenant_id
+ WHERE c.estado <> 'borrador'
+ GROUP BY ci.tenant_id, ci.categoria_snapshot;
+
+-- 6/8 · Tablas base: cotizacion_items, cotizaciones. Mismo caso que la anterior.
+-- El GROUP BY pasa de posiciones (1,2,3) a columnas con nombre: al insertar
+-- tenant_id como primera columna las posiciones se corrían, y el error habría
+-- sido silencioso — agrupando por las columnas equivocadas sin avisar.
+CREATE VIEW vw_ensayos_mas_cotizados WITH (security_invoker = true) AS
+SELECT ci.tenant_id,
+       ci.codigo_snapshot AS codigo, ci.nombre_snapshot AS nombre,
+       ci.categoria_snapshot AS categoria,
+       COUNT(*)         AS veces_cotizado,
+       SUM(ci.cantidad) AS unidades,
+       SUM(ci.subtotal) AS monto
+  FROM cotizacion_items ci
+  JOIN cotizaciones c ON c.id = ci.cotizacion_id
+                     AND c.tenant_id = ci.tenant_id
+ WHERE c.estado <> 'borrador'
+ GROUP BY ci.tenant_id, ci.codigo_snapshot, ci.nombre_snapshot, ci.categoria_snapshot;
+
+-- 7/8 · Tablas base: auditoria, usuarios, roles.
+-- tenant_id sale de a, y aquí PUEDE SER NULL: es el cambio global de la
+-- decisión A. La vista lo propaga tal cual.
+-- PÉRDIDA DE FILAS, la peor de las tres: el JOIN contra usuarios NO lleva
+-- condición de tenant, y no es un olvido. El usuario sistema (id 1) es global:
+-- esta misma migración le pone tenant_id = NULL. Amarrar
+-- u.tenant_id = a.tenant_id borraría de la vista TODO cambio hecho por
+-- sistema: 340 de 341 filas en la base actual, el 99.7%. El aislamiento de
+-- esta vista lo da a.tenant_id y la política RLS de auditoria, nunca el JOIN
+-- con el autor del cambio.
+CREATE VIEW vw_auditoria_legible WITH (security_invoker = true) AS
+SELECT a.tenant_id,
+       a.id, a.registrado_en, a.tabla, a.registro_id, a.accion,
+       (u.nombres || ' ' || u.apellidos) AS usuario, r.codigo AS rol,
+       a.ip_origen,
+       array_to_string(a.campos_cambiados, ', ') AS campos,
+       a.datos_anteriores, a.datos_nuevos
+  FROM auditoria a
+  JOIN usuarios u ON u.id = a.usuario_id
+  JOIN roles    r ON r.id = u.rol_id;
+
+-- 8/8 · Tablas base: cotizaciones, empresas, personas, contactos,
+--       plantillas_cotizacion, cotizacion_items (subconsulta).
+-- tenant_id sale de c (la cotización).
+-- PÉRDIDA DE FILAS: el JOIN con plantillas_cotizacion es INNER y la tabla es
+-- HÍBRIDA. Escribir pl.tenant_id = c.tenant_id elimina toda cotización que use
+-- una plantilla base: 2 de 2 en la base actual, el 100% de la vista, que es
+-- justamente la que alimenta el PDF. La condición correcta admite la base:
+--     pl.tenant_id IS NULL OR pl.tenant_id = c.tenant_id
+-- que es literalmente la misma regla que aplica el trigger a_validar_plantilla.
+-- La subconsulta de ítems lleva su propio filtro de tenant.
+CREATE VIEW vw_cotizacion_pdf WITH (security_invoker = true) AS
+SELECT c.tenant_id,
+       c.id, c.public_id, c.numero, c.fecha_emision, c.estado, c.moneda,
+       c.proyecto_nombre, c.validez_dias,
+       COALESCE(e.razon_social, p.nombres || ' ' || p.apellidos) AS cliente,
+       COALESCE(e.ruc, p.dni)            AS documento_cliente,
+       ct.nombres || ' ' || ct.apellidos AS contacto,
+       ct.cargo AS contacto_cargo, ct.email AS contacto_email,
+       pl.nombre AS plantilla, pl.terminos_condiciones,
+       c.subtotal, c.igv_tasa, c.igv, c.descuento_tipo, c.descuento_monto,
+       c.descuento_razon, c.total, c.notas,
+       (SELECT jsonb_agg(jsonb_build_object(
+                  'orden', i.orden, 'codigo', i.codigo_snapshot,
+                  'nombre', i.nombre_snapshot, 'norma', i.norma_snapshot,
+                  'unidad', i.unidad_snapshot, 'acreditado', i.acreditado_snapshot,
+                  'cantidad', i.cantidad, 'precio', i.precio_unitario,
+                  'subtotal', i.subtotal, 'incluye', i.componentes_snapshot)
+              ORDER BY i.orden)
+          FROM cotizacion_items i
+         WHERE i.cotizacion_id = c.id AND i.tenant_id = c.tenant_id) AS items
+  FROM cotizaciones c
+  LEFT JOIN empresas  e  ON e.id  = c.empresa_id  AND e.tenant_id  = c.tenant_id
+  LEFT JOIN personas  p  ON p.id  = c.persona_id  AND p.tenant_id  = c.tenant_id
+  LEFT JOIN contactos ct ON ct.id = c.contacto_id AND ct.tenant_id = c.tenant_id
+  JOIN plantillas_cotizacion pl ON pl.id = c.plantilla_id
+                               AND (pl.tenant_id IS NULL OR pl.tenant_id = c.tenant_id);
+
+COMMENT ON VIEW vw_auditoria_legible IS
+    'ATENCION: la columna `rol` muestra el rol ACTUAL del usuario, no el que tenia cuando ocurrio el hecho. Si sus roles cambian, esta vista reescribe el pasado. Se corrige en 0006 con un snapshot de roles; hasta entonces, no construir encima de esa columna.';
+COMMENT ON VIEW vw_resumen_por_categoria IS
+    'Se agrupa por (tenant, categoria_snapshot): el dashboard no pierde historia si el catálogo cambia.';
+COMMENT ON VIEW vw_cotizacion_pdf IS
+    'Fuente única del PDF. Todo sale del snapshot del ítem, nunca del catálogo vivo.';
+
+
+-- campos_sensibles se audita a si misma. Va aqui, despues de reemplazar
+-- fn_auditar(), para que la primera fila que registre ya use la version nueva.
+-- Su tenant_id saldra NULL, que es lo correcto: es un cambio del producto.
+CREATE TRIGGER trg_auditar AFTER INSERT OR UPDATE OR DELETE ON campos_sensibles
+    FOR EACH ROW EXECUTE FUNCTION fn_auditar();
+
 INSERT INTO schema_migrations (version, nombre, nota) VALUES
     ('0003', 'multi-tenant: tenant_id, unicidad por tenant y FK compuestas',
-     'Estructura de aislamiento. RLS y autorización de aplicación quedan pendientes (ver bloque 7).');
+     'Estructura de aislamiento, vistas tenant-aware y cupo de plantillas por tenant. RLS y autorización de aplicación quedan pendientes (ver bloque 7).');
 
 COMMIT;
 
@@ -519,7 +987,33 @@ COMMIT;
 -- … y lo mismo para: contactos, personas, categorias_ensayo,
 --   subcategorias_ensayo, ensayos_catalogo, ensayo_acreditacion_historial,
 --   paquete_componentes, correlativos, cotizaciones, cotizacion_items,
---   cotizacion_historial_estados, integraciones, documentos_externos, auditoria.
+--   cotizacion_historial_estados, integraciones, documentos_externos.
+--
+-- auditoria es HÍBRIDA por la decisión A: tenant_id NULL = cambio global del
+-- producto. Su política es la de abajo, no la simple:
+-- CREATE POLICY p_tenant ON auditoria
+--     USING      (tenant_id IS NULL OR tenant_id = fn_app_tenant())
+--     WITH CHECK (tenant_id IS NULL OR tenant_id = fn_app_tenant());
+--   -- El WITH CHECK admite NULL porque quien escribe aquí es SIEMPRE el
+--   -- trigger fn_auditar(), nunca una sentencia de la aplicación: la tabla es
+--   -- append-only y no acepta INSERT directo. Si 0004 prefiriera cerrar el
+--   -- WITH CHECK a (tenant_id = fn_app_tenant()), entonces fn_auditar() SÍ
+--   -- necesitaría SECURITY DEFINER para poder sellar los cambios globales.
+--
+-- SOBRE SECURITY DEFINER EN fn_auditar() — analizado y NO implementado aquí:
+--   No hace falta en 0003, porque 0003 no activa RLS y sin políticas el
+--   trigger escribe sin obstáculo. Declararlo ahora solo añadiría superficie
+--   de ataque sin resolver nada. Cuando 0004 lo evalúe, debe decidir a la vez:
+--     · propietario — una función SECURITY DEFINER corre con los privilegios
+--       de su dueño, así que el dueño no puede ser un superusuario;
+--     · search_path — obligatorio fijarlo (SET search_path = public, pg_temp)
+--       o un esquema intruso en el search_path del invocador puede secuestrar
+--       la resolución de nombres dentro de la función;
+--     · permisos — REVOKE EXECUTE FROM PUBLIC y conceder solo a lo necesario;
+--     · riesgo — la función deja de estar sujeta a las políticas del invocador,
+--       de modo que un fallo en su lógica de tenant ya no lo atrapa RLS.
+--   La alternativa (el WITH CHECK permisivo de arriba) evita todo eso y es la
+--   recomendada, porque la protección real de auditoria es el append-only.
 --
 -- plantillas_cotizacion (híbrida) lleva una política distinta:
 -- CREATE POLICY p_tenant ON plantillas_cotizacion

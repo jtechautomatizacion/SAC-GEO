@@ -29,3 +29,24 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.log
+
+# Backend
+backend/.venv/
+backend/__pycache__/
+backend/**/__pycache__/
+backend/*.egg-info/
+backend/src/*.egg-info/
+backend/uvicorn.log
+backend/.pytest_cache/
+
+# Backups de base de datos. Contienen password_hash y datos reales del
+# laboratorio: NUNCA se versionan.
+_backups_sacgeo/
+*_backups/
+
+# Volcados de PostgreSQL. Un .dump de sacgeo_dev lleva password_hash y los
+# datos reales del laboratorio, vaya donde vaya el archivo.
+*.dump
+
+# Entornos virtuales en cualquier ruta, no solo backend/.
+.venv/

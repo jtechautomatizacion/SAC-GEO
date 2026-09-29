@@ -18,15 +18,57 @@ BEGIN
     ELSE           RAISE WARNING 'FAIL  %', p_msg; END IF;
 END; $$ LANGUAGE plpgsql;
 
--- Comprueba que una operación PROHIBIDA efectivamente se bloquea.
-CREATE OR REPLACE FUNCTION t_bloquea(p_sql TEXT, p_msg TEXT) RETURNS VOID AS $$
+-- Comprueba que una operación PROHIBIDA se bloquea POR LA RAZÓN ESPERADA.
+--
+-- No basta con que salte una excepción. Una prueba que da PASS ante cualquier
+-- error acaba certificando que la BD funciona cuando en realidad está rota.
+-- El caso que motiva esto es la migración 0003: a partir de ella, cualquier
+-- consulta sin `app.tenant_id` falla con 42501 (fn_app_tenant), y todas estas
+-- pruebas darían PASS sin haber ejercido ni una sola regla de negocio.
+--
+--   p_estado — SQLSTATE esperado. Admite varios separados por coma.
+--              NULL = no se contrasta el código (siguen aplicándose los
+--              filtros 1 y 2, que son los que atrapan una prueba rota).
+CREATE OR REPLACE FUNCTION t_bloquea(p_sql TEXT, p_msg TEXT, p_estado TEXT DEFAULT NULL)
+RETURNS VOID AS $$
+DECLARE
+    v_estado TEXT;
+    v_err    TEXT;
 BEGIN
     BEGIN
         EXECUTE p_sql;
         RAISE WARNING 'FAIL  % — la BD lo permitió', p_msg;
+        RETURN;
     EXCEPTION WHEN OTHERS THEN
-        RAISE NOTICE 'PASS  % — bloqueado: %', p_msg, left(replace(SQLERRM, E'\n', ' '), 70);
+        v_estado := SQLSTATE;
+        v_err    := left(replace(SQLERRM, E'\n', ' '), 70);
     END;
+
+    -- 1. La rota es la prueba, no la regla. Objeto inexistente o SQL mal
+    --    escrito: la sentencia nunca llegó a chocar con lo que dice probar.
+    IF v_estado IN ('42883','42P01','42703','42601','42P02','42804','42P18') THEN
+        RAISE WARNING 'FAIL  % — PRUEBA ROTA (%): %', p_msg, v_estado, v_err;
+        RETURN;
+    END IF;
+
+    -- 2. Falta el contexto de tenant. Bloqueó, sí, pero por no saber quién
+    --    pregunta, no por la regla. Es fallo salvo que la prueba verifique
+    --    justamente eso (p_estado con 42501).
+    IF v_estado = '42501' AND (p_estado IS NULL OR p_estado NOT LIKE '%42501%') THEN
+        RAISE WARNING 'FAIL  % — sin contexto de tenant; la regla no se ejerció: %',
+                      p_msg, v_err;
+        RETURN;
+    END IF;
+
+    -- 3. Bloqueó con un código distinto del que esa regla debería producir.
+    IF p_estado IS NOT NULL
+       AND v_estado <> ALL (string_to_array(replace(p_estado, ' ', ''), ',')) THEN
+        RAISE WARNING 'FAIL  % — bloqueado por otra razón (esperado %, obtenido %): %',
+                      p_msg, p_estado, v_estado, v_err;
+        RETURN;
+    END IF;
+
+    RAISE NOTICE 'PASS  % — bloqueado [%]: %', p_msg, v_estado, v_err;
 END; $$ LANGUAGE plpgsql;
 
 
@@ -40,6 +82,10 @@ DECLARE
 BEGIN
     RAISE NOTICE '--- 0. Preparación ------------------------------------------';
     PERFORM set_config('app.usuario_id', '1', FALSE);
+    -- Tras la migración 0003, `tenant_id` toma su valor por defecto de
+    -- fn_app_tenant(), que falla si la sesión no declara a qué laboratorio
+    -- pertenece. Antes de 0003 este ajuste es inofensivo: nada lo lee.
+    PERFORM set_config('app.tenant_id', '1', FALSE);
 
     INSERT INTO usuarios (nombres, apellidos, email, rol_id, creado_por)
     VALUES ('Ana', 'Quispe', 'ana@gtqc.pe', 2, 1) RETURNING id INTO v_user2;
@@ -69,13 +115,13 @@ BEGIN
 
     RAISE NOTICE '--- 1. Validación de formato en la propia BD ----------------';
     PERFORM t_bloquea(format('INSERT INTO empresas (ruc, razon_social, creado_por) VALUES (%L, %L, 1)',
-                             '12345', 'RUC corto S.A.'), 'RUC con formato inválido');
+                             '12345', 'RUC corto S.A.'), 'RUC con formato inválido', '23514');
     PERFORM t_bloquea(format('INSERT INTO personas (dni, nombres, apellidos, creado_por) VALUES (%L, %L, %L, 1)',
-                             'ABC12345', 'X', 'Y'), 'DNI no numérico');
+                             'ABC12345', 'X', 'Y'), 'DNI no numérico', '23514');
     PERFORM t_bloquea(format('INSERT INTO empresas (ruc, razon_social, email, creado_por) VALUES (%L, %L, %L, 1)',
-                             '20111111111', 'Mail malo S.A.', 'no-es-un-correo'), 'Email sin formato');
+                             '20111111111', 'Mail malo S.A.', 'no-es-un-correo'), 'Email sin formato', '23514');
     PERFORM t_bloquea(format('UPDATE ensayos_catalogo SET precio_base = -50 WHERE id = %s', v_su02),
-                      'Precio negativo');
+                      'Precio negativo', '23514');
 
     RAISE NOTICE '--- 2. Correlativo de cotización (atómico, sin MAX+1) -------';
     SELECT c.numero, c.cotizacion_id INTO v_num1, v_cot1
@@ -102,7 +148,7 @@ BEGIN
     PERFORM t_ok(v_t = (SELECT round(SUM(subtotal) * 1.18, 2) FROM cotizacion_items WHERE cotizacion_id = v_cot1),
                  'total = suma de ítems + IGV 18% (S/ ' || v_t || ')');
     PERFORM t_bloquea(format('UPDATE cotizacion_items SET subtotal = 1 WHERE cotizacion_id = %s', v_cot1),
-                      'subtotal de ítem que no es cantidad x precio');
+                      'subtotal de ítem que no es cantidad x precio', '23001');
 
     RAISE NOTICE '--- 4. Snapshot: el pasado no se mueve ----------------------';
     SELECT componentes_snapshot::TEXT INTO v_txt FROM cotizacion_items
@@ -132,15 +178,15 @@ BEGIN
 
     RAISE NOTICE '--- 5. Documento emitido = congelado ------------------------';
     PERFORM t_bloquea(format('UPDATE cotizaciones SET subtotal = 1, igv = 0.18, total = 1.18 WHERE id = %s', v_cot1),
-                      'cambiar importes de una cotización emitida');
+                      'cambiar importes de una cotización emitida', '23001');
     PERFORM t_bloquea(format('UPDATE cotizaciones SET empresa_id = %s WHERE id = %s', v_emp2, v_cot1),
-                      'cambiar el cliente de una cotización emitida');
+                      'cambiar el cliente de una cotización emitida', '23001');
     PERFORM t_bloquea(format('INSERT INTO cotizacion_items (cotizacion_id, orden, codigo_snapshot, nombre_snapshot, categoria_snapshot, acreditado_snapshot, cantidad, precio_unitario, subtotal) VALUES (%s, 99, ''X-01'', ''Colado'', ''Suelos'', FALSE, 1, 10, 10)', v_cot1),
-                      'agregar un ítem a una cotización emitida');
+                      'agregar un ítem a una cotización emitida', '23001');
     PERFORM t_bloquea(format('DELETE FROM cotizaciones WHERE id = %s', v_cot1),
-                      'eliminar una cotización');
+                      'eliminar una cotización', '23001');
     PERFORM t_bloquea(format('UPDATE cotizaciones SET numero = ''COT-2026-999'' WHERE id = %s', v_cot1),
-                      'renumerar una cotización ya emitida');
+                      'renumerar una cotización ya emitida', '23001');
 
     RAISE NOTICE '--- 6. Máquina de estados ----------------------------------';
     PERFORM fn_cambiar_estado_cotizacion(v_cot1, 'aceptada', 'Orden de compra 4471');
@@ -151,27 +197,35 @@ BEGIN
                    WHERE cotizacion_id = v_cot1 ORDER BY id DESC LIMIT 1) = 'Orden de compra 4471',
                  'el historial guardó la nota del cambio');
     PERFORM t_bloquea(format('SELECT fn_cambiar_estado_cotizacion(%s, ''emitida'')', v_cot1),
-                      'aceptada → emitida (estado terminal)');
+                      'aceptada → emitida (estado terminal)', '23514');
     PERFORM t_bloquea(format('UPDATE cotizaciones SET estado = ''emitida'' WHERE id = %s', v_cot1),
-                      'saltarse la máquina de estados con UPDATE directo');
+                      'saltarse la máquina de estados con UPDATE directo', '23514');
     PERFORM t_bloquea('UPDATE cotizacion_historial_estados SET estado = ''rechazada'' WHERE id = 1',
-                      'reescribir el historial de estados');
+                      'reescribir el historial de estados', '23001');
 
     RAISE NOTICE '--- 7. Aislamiento empresa / contacto ----------------------';
     PERFORM t_bloquea(format('SELECT fn_crear_cotizacion(%s, %s, NULL, ''Cruzada'', %s, ''[{"ensayo_id":%s,"cantidad":1}]''::jsonb)',
                              v_emp1, v_ct_otra, v_plant, v_su02),
-                      'cotización de la Empresa A con el contacto de la Empresa B');
+                      'cotización de la Empresa A con el contacto de la Empresa B', '23503');
     PERFORM t_bloquea(format('SELECT fn_crear_cotizacion(NULL, %s, %s, ''Mixta'', %s, ''[{"ensayo_id":%s,"cantidad":1}]''::jsonb)',
                              v_ct1, v_per, v_plant, v_su02),
-                      'persona natural con contacto de empresa');
+                      'persona natural con contacto de empresa', '23514');
     PERFORM t_bloquea(format('SELECT fn_crear_cotizacion(%s, NULL, %s, ''Dos clientes'', %s, ''[{"ensayo_id":%s,"cantidad":1}]''::jsonb)',
                              v_emp1, v_per, v_plant, v_su02),
-                      'cotización con empresa Y persona a la vez');
+                      'cotización con empresa Y persona a la vez', '23514');
 
     RAISE NOTICE '--- 8. Acreditación con historial (ISO 17025) --------------';
     PERFORM t_bloquea(format('UPDATE ensayos_catalogo SET acreditado = FALSE WHERE id = %s', v_su02),
-                      'cambiar la acreditación con UPDATE directo');
+                      'cambiar la acreditación con UPDATE directo', '23001');
+    -- La autoria se declara cambiando el CONTEXTO de sesion, no pasando
+    -- p_usuario. Desde 0007, la guarda de H-15 rechaza con 42501 que una sesion
+    -- atribuya autoria a otra persona -- que es exactamente lo que hacia esta
+    -- prueba. El comportamiento que demuestra (lo hizo el usuario 2) se conserva
+    -- intacto; cambia el mecanismo, que ahora es el mismo que ya usaba la prueba
+    -- 12 mas abajo y el mismo que usa el backend real.
+    PERFORM set_config('app.usuario_id', v_user2::TEXT, FALSE);
     PERFORM fn_cambiar_acreditacion(v_su02, FALSE, 'Alcance retirado por INACAL', DATE '2026-06-01', v_user2);
+    PERFORM set_config('app.usuario_id', '1', FALSE);
     PERFORM t_ok((SELECT acreditado FROM ensayos_catalogo WHERE id = v_su02) = FALSE,
                  'fn_cambiar_acreditacion movió el estado actual');
     PERFORM t_ok(fn_acreditado_en_fecha(v_su02, DATE '2026-03-15') = TRUE,
@@ -182,22 +236,29 @@ BEGIN
                    WHERE cotizacion_id = v_cot1 AND ensayo_id = v_su02) = TRUE,
                  'la cotización emitida sigue diciendo "acreditado" (era cierto ese día)');
     PERFORM t_bloquea('UPDATE ensayo_acreditacion_historial SET acreditado = TRUE WHERE id = 1',
-                      'reescribir el historial de acreditación');
+                      'reescribir el historial de acreditación', '23001');
 
     RAISE NOTICE '--- 9. Borrado: lo que tiene historia no se borra ----------';
     PERFORM t_bloquea(format('DELETE FROM ensayos_catalogo WHERE id = %s', v_su02),
-                      'eliminar un ensayo ya cotizado');
+                      'eliminar un ensayo ya cotizado', '23001');
     PERFORM t_bloquea('DELETE FROM ensayos_catalogo WHERE codigo = ''SU-03''',
-                      'eliminar un ensayo que es componente de un paquete');
+                      'eliminar un ensayo que es componente de un paquete', '23001');
     PERFORM t_bloquea('DELETE FROM categorias_ensayo WHERE slug = ''suelos''',
-                      'eliminar una categoría con ensayos');
+                      'eliminar una categoría con ensayos', '23001');
     PERFORM t_bloquea('DELETE FROM subcategorias_ensayo WHERE nombre = ''Paquetes'' AND categoria_id = (SELECT id FROM categorias_ensayo WHERE slug=''suelos'')',
-                      'eliminar una subcategoría con ensayos');
+                      'eliminar una subcategoría con ensayos', '23001');
     PERFORM t_bloquea(format('DELETE FROM usuarios WHERE id = %s', v_user2),
-                      'eliminar un usuario referenciado por la auditoría');
-    PERFORM t_bloquea('DELETE FROM roles WHERE codigo = ''admin''', 'eliminar un rol del sistema');
+                      'eliminar un usuario referenciado por la auditoría', '23001');
+    PERFORM t_bloquea('DELETE FROM roles WHERE codigo = ''admin''', 'eliminar un rol del sistema', '23001');
 
     RAISE NOTICE '--- 10. Códigos de ensayo: no se reutilizan ----------------';
+    -- La autoria se declara cambiando el CONTEXTO de sesion, no pasando
+    -- p_usuario. Desde 0007, la guarda de H-15 rechaza con 42501 que una sesion
+    -- atribuya autoria a otra persona -- que es exactamente lo que hacia esta
+    -- prueba. El comportamiento que demuestra (lo hizo el usuario 2) se conserva
+    -- intacto; cambia el mecanismo, que ahora es el mismo que ya usaba la prueba
+    -- 12 mas abajo y el mismo que usa el backend real.
+    PERFORM set_config('app.usuario_id', v_user2::TEXT, FALSE);
     v_nuevo := fn_crear_ensayo(
         (SELECT se.id FROM subcategorias_ensayo se JOIN categorias_ensayo ce ON ce.id = se.categoria_id
           WHERE ce.slug='suelos' AND se.nombre='Campo'),
@@ -211,6 +272,9 @@ BEGIN
         (SELECT se.id FROM subcategorias_ensayo se JOIN categorias_ensayo ce ON ce.id = se.categoria_id
           WHERE ce.slug='suelos' AND se.nombre='Campo'),
         'Veleta de campo', 'ASTM D2573', 'UND', 90, FALSE, v_user2);
+    -- Vuelta al usuario 1: las pruebas P4 y P2 de abajo pasan p_usuario = 1 y
+    -- fallarian con 42501 si la sesion siguiera siendo la del usuario 2.
+    PERFORM set_config('app.usuario_id', '1', FALSE);
     PERFORM t_ok(v_nuevo2 = 'SU-30',
                  'el código eliminado NO se reutiliza: el siguiente es SU-30, no SU-29');
 
@@ -219,13 +283,20 @@ BEGIN
             (SELECT se.id FROM subcategorias_ensayo se JOIN categorias_ensayo ce ON ce.id=se.categoria_id
               WHERE ce.slug=''suelos'' AND se.nombre=''Paquetes''),
             ''Paquete de uno'', ''UND'', 100, FALSE, ''[{"ensayo_id":%s,"cantidad":1}]''::jsonb, 1)', v_su02),
-        'paquete con un solo componente (P4)');
+        'paquete con un solo componente (P4)', '23514');
     PERFORM t_bloquea(format('SELECT fn_crear_paquete(
             (SELECT se.id FROM subcategorias_ensayo se JOIN categorias_ensayo ce ON ce.id=se.categoria_id
               WHERE ce.slug=''suelos'' AND se.nombre=''Paquetes''),
             ''Paquete anidado'', ''UND'', 100, FALSE, ''[{"ensayo_id":%s,"cantidad":1},{"ensayo_id":%s,"cantidad":1}]''::jsonb, 1)',
             v_su20, v_su02),
-        'paquete que incluye otro paquete (P2)');
+        'paquete que incluye otro paquete (P2)', '23514');
+    -- La autoria se declara cambiando el CONTEXTO de sesion, no pasando
+    -- p_usuario. Desde 0007, la guarda de H-15 rechaza con 42501 que una sesion
+    -- atribuya autoria a otra persona -- que es exactamente lo que hacia esta
+    -- prueba. El comportamiento que demuestra (lo hizo el usuario 2) se conserva
+    -- intacto; cambia el mecanismo, que ahora es el mismo que ya usaba la prueba
+    -- 12 mas abajo y el mismo que usa el backend real.
+    PERFORM set_config('app.usuario_id', v_user2::TEXT, FALSE);
     v_nuevo := fn_crear_paquete(
         (SELECT se.id FROM subcategorias_ensayo se JOIN categorias_ensayo ce ON ce.id = se.categoria_id
           WHERE ce.slug='suelos' AND se.nombre='Paquetes'),
@@ -234,6 +305,7 @@ BEGIN
                           jsonb_build_object('ensayo_id', v_su08, 'cantidad', 1),
                           jsonb_build_object('ensayo_id', v_ag01, 'cantidad', 1)),
         v_user2);
+    PERFORM set_config('app.usuario_id', '1', FALSE);
     PERFORM t_ok((SELECT componentes FROM vw_paquetes_resumen WHERE codigo = v_nuevo) = 3,
                  'paquete ' || v_nuevo || ' creado con 3 componentes amarrados');
     PERFORM t_ok((SELECT ahorro_pct FROM vw_paquetes_resumen WHERE codigo = v_nuevo) > 0,
@@ -261,26 +333,26 @@ BEGIN
                    WHERE tabla='ensayos_catalogo' AND registro_id = v_su08 AND accion='UPDATE'
                    ORDER BY id DESC LIMIT 1) = v_t,
                  'la auditoría guardó el valor anterior (S/ ' || v_t || ')');
-    PERFORM t_bloquea('UPDATE auditoria SET usuario_id = 1 WHERE id = 1', 'modificar la auditoría');
-    PERFORM t_bloquea('DELETE FROM auditoria WHERE id = 1', 'eliminar una fila de auditoría');
-    PERFORM t_bloquea('SELECT fn_purgar_auditoria(fn_hoy_lima())', 'purgar auditoría reciente (< 365 días)');
+    PERFORM t_bloquea('UPDATE auditoria SET usuario_id = 1 WHERE id = 1', 'modificar la auditoría', '23001');
+    PERFORM t_bloquea('DELETE FROM auditoria WHERE id = 1', 'eliminar una fila de auditoría', '23001');
+    PERFORM t_bloquea('SELECT fn_purgar_auditoria(fn_hoy_lima())', 'purgar auditoría reciente (< 365 días)', '23001');
 
     RAISE NOTICE '--- 13. Catálogo: R2, R4, R5 ------------------------------';
     PERFORM set_config('app.usuario_id', '1', FALSE);
     PERFORM t_bloquea('UPDATE categorias_ensayo SET prefijo_codigo = ''XX'' WHERE slug = ''suelos''',
-                      'cambiar el prefijo de una categoría con ensayos (R4)');
+                      'cambiar el prefijo de una categoría con ensayos (R4)', '23001');
     PERFORM t_bloquea('INSERT INTO categorias_ensayo (slug, nombre, prefijo_codigo, creado_por) VALUES (''suelos2'', ''SUELOS'', ''SX'', 1)',
-                      'categoría con nombre duplicado ignorando mayúsculas (R5)');
+                      'categoría con nombre duplicado ignorando mayúsculas (R5)', '23505');
     PERFORM t_bloquea('INSERT INTO ensayos_catalogo (codigo, categoria_id, subcategoria_id, nombre, precio_base, creado_por)
                        SELECT ''ZZ-01'', ce.id, se.id, ''Código ajeno'', 10, 1
                          FROM categorias_ensayo ce JOIN subcategorias_ensayo se ON se.categoria_id = ce.id
                         WHERE ce.slug = ''suelos'' LIMIT 1',
-                      'ensayo con código que no respeta el prefijo de su categoría (R4)');
+                      'ensayo con código que no respeta el prefijo de su categoría (R4)', '23514');
     v_x := fn_crear_categoria('Geotecnia', 'GE', '🧪', '#16a34a', 1);
     PERFORM t_ok((SELECT COUNT(*) FROM subcategorias_ensayo WHERE categoria_id = v_x AND nombre='General') = 1,
                  'R2: la categoría nueva nace con su subcategoría "General"');
     PERFORM t_bloquea(format('UPDATE subcategorias_ensayo SET activo = FALSE WHERE categoria_id = %s', v_x),
-                      'desactivar la única subcategoría activa de su categoría (R2)');
+                      'desactivar la única subcategoría activa de su categoría (R2)', '23001');
 
     RAISE NOTICE '--- 14. Dashboard por periodo -----------------------------';
     PERFORM t_ok((SELECT total_cotizaciones FROM fn_dashboard_kpis(NULL, NULL)) = 2,
@@ -299,7 +371,7 @@ BEGIN
 
     RAISE NOTICE '--- 15. Documentos: local y nube --------------------------';
     PERFORM t_bloquea(format('INSERT INTO documentos_externos (cotizacion_id, origen, nombre_archivo, subido_por) VALUES (%s, ''nube'', ''x.pdf'', 1)', v_cot1),
-                      'documento en nube sin integración ni URL');
+                      'documento en nube sin integración ni URL', '23514');
     INSERT INTO documentos_externos (cotizacion_id, origen, tipo_documento, nombre_archivo, subido_por)
     VALUES (v_cot1, 'local', 'cotizacion_pdf', v_num1 || '.pdf', 1);
     PERFORM t_ok((SELECT COUNT(*) FROM documentos_externos WHERE cotizacion_id = v_cot1) = 1,
@@ -314,4 +386,4 @@ END
 $pruebas$;
 
 DROP FUNCTION t_ok(BOOLEAN, TEXT);
-DROP FUNCTION t_bloquea(TEXT, TEXT);
+DROP FUNCTION t_bloquea(TEXT, TEXT, TEXT);

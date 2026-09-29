@@ -1,3 +1,4 @@
+import json
 import os
 import secrets
 import subprocess
@@ -484,6 +485,41 @@ def catalogo_tenant_2(usuarios_prueba):
             (id_categoria_vacia, id_tenant_2),
         )
         (vacia_public_id,) = cur.fetchone()
+
+        # Un PAQUETE en el otro laboratorio. Hace falta un segundo ensayo
+        # porque fn_crear_paquete exige al menos 2 componentes VINCULADOS
+        # (regla P4), y se le añade uno descriptivo para que el paquete ajeno
+        # tenga la misma forma que los reales.
+        cur.execute(
+            "SELECT fn_crear_ensayo(%s::INTEGER, %s::VARCHAR, %s::VARCHAR,"
+            " %s::VARCHAR, %s::NUMERIC, %s::BOOLEAN, NULL)",
+            (id_subcategoria, "Segundo ensayo del otro lab",
+             "NTP 111.111", "UND", 50.0, False),
+        )
+        (codigo_2,) = cur.fetchone()
+        cur.execute(
+            "SELECT id FROM ensayos_catalogo WHERE codigo IN (%s, %s) AND tenant_id = %s"
+            " ORDER BY id",
+            (codigo, codigo_2, id_tenant_2),
+        )
+        ids_componentes = [f[0] for f in cur.fetchall()]
+        cur.execute(
+            "SELECT fn_crear_paquete(%s::INTEGER, %s::VARCHAR, %s::VARCHAR,"
+            " %s::NUMERIC, %s::BOOLEAN, %s::JSONB, NULL)",
+            (id_subcategoria, "Paquete secreto del otro laboratorio", "UND",
+             120.0, False,
+             json.dumps([
+                 {"ensayo_id": ids_componentes[0], "cantidad": 1},
+                 {"ensayo_id": ids_componentes[1], "cantidad": 2},
+                 {"nombre": "Componente descriptivo ajeno", "norma": "NTP 222.222"},
+             ])),
+        )
+        (codigo_paquete,) = cur.fetchone()
+        cur.execute(
+            "SELECT public_id FROM ensayos_catalogo WHERE codigo = %s AND tenant_id = %s",
+            (codigo_paquete, id_tenant_2),
+        )
+        (paquete_public_id,) = cur.fetchone()
         conn.commit()
 
     return {
@@ -496,6 +532,8 @@ def catalogo_tenant_2(usuarios_prueba):
         "codigo": codigo,
         "public_id": str(public_id),
         "nombre": "Ensayo secreto del otro laboratorio",
+        "paquete_codigo": codigo_paquete,
+        "paquete_public_id": str(paquete_public_id),
     }
 
 
@@ -622,6 +660,61 @@ def usuarios_permisos_separados(usuarios_prueba):
         "solo_acreditacion": creados["solo_acreditacion"],
         "solo_acreditacion_email": "soloacr@lab.test",
     }
+
+
+@pytest.fixture(scope="session")
+def paquete_mixto(bd_auth_desechable):
+    """Un paquete del tenant 1 que tiene componentes vinculados Y descriptivos.
+
+    Se elige consultando la base, no escribiendo un código a mano: el seed
+    tiene 13 paquetes y 45 componentes descriptivos, pero cuál los reúne es un
+    detalle del seed que puede cambiar. Una constante aquí dejaría de ser
+    cierta en silencio y el test pasaría comprobando solo la mitad del
+    contrato.
+    """
+    with psycopg.connect(_url(BD_AUTH)) as conn, conn.cursor() as cur:
+        cur.execute("SELECT set_config('app.tenant_id', '1', false)")
+        cur.execute(
+            """
+            SELECT p.public_id, p.codigo,
+                   count(pc.ensayo_componente_id) AS vinculados,
+                   count(*) FILTER (WHERE pc.ensayo_componente_id IS NULL) AS descriptivos
+              FROM ensayos_catalogo p
+              JOIN paquete_componentes pc
+                ON pc.ensayo_id = p.id AND pc.tenant_id = p.tenant_id
+             WHERE p.es_paquete AND p.activo AND p.tenant_id = 1
+             GROUP BY p.id, p.public_id, p.codigo
+            HAVING count(pc.ensayo_componente_id) > 0
+               AND count(*) FILTER (WHERE pc.ensayo_componente_id IS NULL) > 0
+             ORDER BY count(*) DESC
+             LIMIT 1
+            """
+        )
+        fila = cur.fetchone()
+
+    assert fila is not None, (
+        "el seed debe tener al menos un paquete con componentes de los dos tipos"
+    )
+    return {
+        "public_id": str(fila[0]),
+        "codigo": fila[1],
+        "vinculados": fila[2],
+        "descriptivos": fila[3],
+    }
+
+
+@pytest.fixture(scope="session")
+def ensayo_no_paquete(bd_auth_desechable):
+    """Un ensayo NORMAL del tenant 1. Existe, es visible, y no es un paquete."""
+    with psycopg.connect(_url(BD_AUTH)) as conn, conn.cursor() as cur:
+        cur.execute("SELECT set_config('app.tenant_id', '1', false)")
+        cur.execute(
+            "SELECT public_id, codigo FROM ensayos_catalogo"
+            " WHERE NOT es_paquete AND activo AND tenant_id = 1 ORDER BY id LIMIT 1"
+        )
+        fila = cur.fetchone()
+    assert fila is not None
+    return {"public_id": str(fila[0]), "codigo": fila[1]}
 
 
 # ------------------------------------------------- modo RLS seguro ---------

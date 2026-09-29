@@ -35,7 +35,7 @@ Atraviesan todo el flujo: **usuarios y roles** (quién puede hacer qué), **audi
 | 2 · Base de datos | ✅ **Terminada** (v3.0, 27-sep-2026) — ver `docs/AUDITORIA_BD_v3.md` |
 | 3 · Evaluación de motor e infraestructura | ✅ **Terminada** (27-sep-2026) — ver `docs/03_AMBIENTES.md` |
 | 4 · Multi-tenant en la BD | ✅ **Terminada** (29-sep-2026) — `0003`, `0004` y `0005` aplicadas y certificadas |
-| 5 · Backend / API | 🔶 **En progreso.** Primer recurso de negocio publicado: `/api/v1/catalogo` (fase 7B). Faltan los demás recursos |
+| 5 · Backend / API | 🔶 **En progreso.** Publicados en solo lectura: `/api/v1/catalogo` (7B), `/api/v1/categorias` y la acreditación de un ensayo (7C.1). Faltan clientes, cotizaciones, dashboard y todas las escrituras |
 | 6 · Autenticación y autorización | 🔶 **En progreso.** 6A y 6B cerradas, y los guards ya protegen un endpoint real (7B): **H-01 cerrado**. Faltan las subfases `0008`–`0010` y el hardening |
 | 7 · Multi-tenant de aplicación + RLS | ✅ **Terminada** (29-sep-2026) — RLS forzada, aislamiento certificado |
 | 8 · Frontend conectado al backend | ⏳ Pendiente |
@@ -153,8 +153,14 @@ backend/                   API FastAPI. Fase 5-6. Ver backend/.env.example
     api/v1/auth.py         /auth/login y /auth/yo. SIN prefijo /api/v1 (ver §5)
     api/v1/catalogo.py     GET /api/v1/catalogo y /{public_id}. Primer recurso
                            de negocio. Lee vw_catalogo_disponible, nunca las tablas
+    api/v1/categorias.py   GET /api/v1/categorias y /{public_id}, con las
+                           subcategorías anidadas. Lee las TABLAS: no hay vista,
+                           y vw_catalogo_disponible ocultaría las categorías vacías
+    api/v1/acreditacion.py GET /api/v1/catalogo/{public_id}/acreditacion. Router
+                           APARTE del de catálogo: exige acreditacion.read
     security/              passwords (Argon2id), jwt, autenticacion, tenant
-  tests/                   125 pruebas (90 + 31 de catálogo + 4 de D-3). Clúster
+  tests/                   161 pruebas (90 + 31 catálogo + 4 D-3 + 36 de
+                           categorías y acreditación). Clúster
                            APARTE, y PG_PASSWORD obligatoria: sin valor por defecto
 database/
   00_schema.sql            tablas, dominios, PK/FK/UNIQUE/CHECK
@@ -414,6 +420,20 @@ pool. **No se quitó `DISCARD ALL`**: eso habría tapado el síntoma eliminando 
 que impide devolver una conexión con estado. No preparar cuesta cero aquí, porque
 con `DISCARD ALL` un prepared statement no sobrevive a la petición que lo creó.
 
+**Un permiso distinto exige un router distinto.** `/catalogo/{id}/acreditacion`
+comparte prefijo con el catálogo pero exige **`acreditacion.read`**, no
+`catalogo.read`, así que vive en `api/v1/acreditacion.py` con su propio
+`APIRouter`. Colgar la ruta del router de catálogo —que declara `catalogo.read` a
+nivel de router— le habría dado el permiso equivocado **en silencio**, y habría
+bastado con poder ver precios para leer el historial ISO 17025. Dos tests
+(`rbac_5` y `rbac_6`) fallan si eso vuelve a ocurrir, y para que puedan fallar hubo
+que crear dos roles de prueba con UN permiso cada uno: los cinco roles del producto
+llevan los dos, así que con ellos el error habría pasado inadvertido.
+
+**El permiso se declara en el router, no endpoint por endpoint.** Así un endpoint
+nuevo en ese archivo nace protegido: olvidarse de la dependencia deja de ser
+posible, porque no hay nada que recordar.
+
 ### Decisión abierta, no técnica
 
 **M-07 — el descuento se aplica después del IGV.** Se conservó el comportamiento del mockup, pero lo habitual en Perú es descontar sobre la base imponible. Es un cambio de una línea en `fn_recalcular_cotizacion()` que altera los importes de todo lo emitido: **lo decide contabilidad, no el desarrollo.**
@@ -474,7 +494,7 @@ docker run -d --name sac-geo-postgres-val -e POSTGRES_USER=sacgeo_dev \
   -e POSTGRES_PASSWORD=<elegir> -e POSTGRES_DB=postgres -p 5433:5432 postgres:16
 
 cd backend && PG_CONTENEDOR=sac-geo-postgres-val PG_PUERTO=5433 \
-  PG_PASSWORD=<la misma> ./.venv/Scripts/python.exe -m pytest -q   # 125 en verde
+  PG_PASSWORD=<la misma> ./.venv/Scripts/python.exe -m pytest -q   # 161 en verde
 
 # regenerar el diagrama ER
 python3 docs/gen_er_v3.py && node docs/render_er_v3.js

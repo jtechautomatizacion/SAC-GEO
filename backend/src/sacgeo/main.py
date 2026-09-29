@@ -12,7 +12,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from sacgeo.api import errors
-from sacgeo.api.v1 import auth, catalogo
+from sacgeo.api.v1 import acreditacion, auth, catalogo, categorias
 from sacgeo.config import settings
 from sacgeo.db.pool import (
     RolInseguro,
@@ -60,6 +60,13 @@ app.include_router(auth.router)
 # El primer recurso de negocio. Bajo /api/v1 desde el primer día: añadir la
 # versión cuando ya hay clientes cuesta mucho más que ponerla ahora.
 app.include_router(catalogo.router, prefix="/api/v1")
+app.include_router(categorias.router, prefix="/api/v1")
+
+# Comparte el prefijo /catalogo con el router anterior, y no es un descuido:
+# exige `acreditacion.read`, no `catalogo.read`. Colgar la ruta del router de
+# catálogo le habría dado el permiso equivocado en silencio — y entonces
+# cualquiera con catalogo.read leería el historial ISO 17025.
+app.include_router(acreditacion.router, prefix="/api/v1")
 
 
 @app.get("/salud")

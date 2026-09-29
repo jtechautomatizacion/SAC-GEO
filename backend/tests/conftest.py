@@ -462,11 +462,37 @@ def catalogo_tenant_2(usuarios_prueba):
             (codigo, id_tenant_2),
         )
         (public_id,) = cur.fetchone()
+        cur.execute(
+            "SELECT public_id FROM categorias_ensayo WHERE id = %s AND tenant_id = %s",
+            (id_categoria, id_tenant_2),
+        )
+        (categoria_public_id,) = cur.fetchone()
+
+        # Una segunda categoría SIN ningún ensayo. En sacgeo_dev existe
+        # «Geotecnia», que es justo este caso, pero la base desechable se
+        # levanta desde el seed —4 categorías, todas pobladas—, así que el
+        # escenario hay que crearlo. Sin él, `incluir_vacias` se probaría
+        # contra un conjunto vacío de categorías vacías: pasaría sin
+        # comprobar nada.
+        cur.execute(
+            "SELECT fn_crear_categoria(%s::VARCHAR, %s::VARCHAR, NULL, NULL, NULL)",
+            ("Categoria sin ensayos", "SE"),
+        )
+        (id_categoria_vacia,) = cur.fetchone()
+        cur.execute(
+            "SELECT public_id FROM categorias_ensayo WHERE id = %s AND tenant_id = %s",
+            (id_categoria_vacia, id_tenant_2),
+        )
+        (vacia_public_id,) = cur.fetchone()
         conn.commit()
 
     return {
         "tenant_2": id_tenant_2,
         "categoria_id": id_categoria,
+        "categoria_public_id": str(categoria_public_id),
+        "categoria_nombre": "Ensayos del otro lab",
+        "categoria_vacia_id": id_categoria_vacia,
+        "categoria_vacia_public_id": str(vacia_public_id),
         "codigo": codigo,
         "public_id": str(public_id),
         "nombre": "Ensayo secreto del otro laboratorio",
@@ -534,6 +560,67 @@ def usuarios_catalogo(usuarios_prueba):
         "sin_roles_email": "sinroles@lab.test",
         "solo_dash": creados["SoloDash"],
         "solo_dash_email": "solodash@lab.test",
+    }
+
+
+@pytest.fixture(scope="session")
+def usuarios_permisos_separados(usuarios_prueba):
+    """Dos usuarios que tienen UNO de los dos permisos y no el otro.
+
+    Es lo único que demuestra que `catalogo.read` y `acreditacion.read` son
+    realmente independientes. Con los roles del producto no se puede: los
+    cinco llevan `catalogo.read`, y `laboratorio`, `comercial`, `lectura`,
+    `admin` y `aprobador` llevan además `acreditacion.read`. Un usuario con
+    ambos pasaría los dos endpoints aunque el guard de uno estuviera mal
+    escrito — y eso es justo lo que no queremos que pase inadvertido.
+
+    Los roles son de prueba; lo que se prueba es el guard, no la matriz del
+    producto, que no se toca.
+    """
+    from sacgeo.security import passwords
+
+    h = passwords.hashear(PASSWORD_PRUEBA)
+    creados = {}
+    with psycopg.connect(_url(BD_AUTH)) as conn, conn.cursor() as cur:
+        cur.execute("SELECT set_config('app.tenant_id', '1', false)")
+        cur.execute("SELECT set_config('app.usuario_id', '1', false)")
+        for codigo_rol, permiso, email in (
+            ("solo_catalogo", "catalogo.read", "solocat@lab.test"),
+            ("solo_acreditacion", "acreditacion.read", "soloacr@lab.test"),
+        ):
+            cur.execute(
+                """
+                INSERT INTO roles (codigo, nombre, descripcion, es_sistema, scope)
+                VALUES (%s, %s, 'Rol de prueba con un unico permiso', FALSE, 'tenant')
+                RETURNING id
+                """,
+                (codigo_rol, codigo_rol),
+            )
+            (id_rol,) = cur.fetchone()
+            cur.execute(
+                "INSERT INTO rol_permisos (rol_id, permiso_id)"
+                " SELECT %s, p.id FROM permisos p WHERE p.codigo = %s",
+                (id_rol, permiso),
+            )
+            cur.execute(
+                """
+                INSERT INTO usuarios (nombres, apellidos, email, rol_id,
+                                      password_hash, creado_por)
+                VALUES (%s, 'Prueba', %s, 4, %s, 1) RETURNING id
+                """,
+                (codigo_rol, email, h),
+            )
+            (creados[codigo_rol],) = cur.fetchone()
+        conn.commit()
+
+    _asignar_rol(1, creados["solo_catalogo"], "solo_catalogo")
+    _asignar_rol(1, creados["solo_acreditacion"], "solo_acreditacion")
+
+    return {
+        "solo_catalogo": creados["solo_catalogo"],
+        "solo_catalogo_email": "solocat@lab.test",
+        "solo_acreditacion": creados["solo_acreditacion"],
+        "solo_acreditacion_email": "soloacr@lab.test",
     }
 
 

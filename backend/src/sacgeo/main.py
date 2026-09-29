@@ -12,7 +12,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from sacgeo.api import errors
-from sacgeo.api.v1 import auth
+from sacgeo.api.v1 import auth, catalogo
 from sacgeo.config import settings
 from sacgeo.db.pool import (
     RolInseguro,
@@ -48,7 +48,18 @@ app = FastAPI(
     lifespan=ciclo_de_vida,
 )
 errors.registrar(app)
+
+# `/auth` se queda donde está, SIN el prefijo /api/v1, y es una decisión, no un
+# descuido. Moverlo rompería `POST /auth/login` y `GET /auth/yo`, que ya están
+# ejercitados por los tests de extremo a extremo y son el contrato con el que
+# se probó toda la cadena de autenticación. Esta fase entrega el catálogo; la
+# unificación de rutas es un cambio de contrato público y merece su propia
+# decisión, no ir de polizón. Queda anotado como deuda.
 app.include_router(auth.router)
+
+# El primer recurso de negocio. Bajo /api/v1 desde el primer día: añadir la
+# versión cuando ya hay clientes cuesta mucho más que ponerla ahora.
+app.include_router(catalogo.router, prefix="/api/v1")
 
 
 @app.get("/salud")

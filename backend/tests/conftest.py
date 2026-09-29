@@ -418,6 +418,125 @@ def url_app(bd_auth_desechable):
     return _url_app(BD_AUTH)
 
 
+# --------------------------------------------------------- catálogo -------
+
+@pytest.fixture(scope="session")
+def catalogo_tenant_2(usuarios_prueba):
+    """Siembra UN ensayo en el OTRO laboratorio, y devuelve su public_id.
+
+    Sin esto no se puede probar aislamiento de catálogo: la base desechable
+    trae los 87 ensayos del seed, y `0003` los adjudicó todos al tenant 1. Con
+    un solo laboratorio poblado, un test de "no veo lo ajeno" pasaría sin que
+    hubiera nada ajeno que ver — que es pasar por la razón equivocada.
+
+    Se crea con `fn_crear_categoria` y `fn_crear_ensayo`, no con INSERT: son
+    las funciones que emiten el código correlativo (`OT-01`) y crean la
+    subcategoría «General» que exige la regla R2. Un INSERT directo produciría
+    un catálogo que el resto del sistema considera inválido.
+    """
+    id_tenant_2 = usuarios_prueba["tenant_2"]
+    with psycopg.connect(_url(BD_AUTH)) as conn, conn.cursor() as cur:
+        cur.execute("SELECT set_config('app.tenant_id', %s, false)", (str(id_tenant_2),))
+        cur.execute("SELECT set_config('app.usuario_id', '1', false)")
+        cur.execute(
+            "SELECT fn_crear_categoria(%s::VARCHAR, %s::VARCHAR, NULL, NULL, NULL)",
+            ("Ensayos del otro lab", "OT"),
+        )
+        (id_categoria,) = cur.fetchone()
+        cur.execute(
+            "SELECT id FROM subcategorias_ensayo WHERE categoria_id = %s AND tenant_id = %s",
+            (id_categoria, id_tenant_2),
+        )
+        (id_subcategoria,) = cur.fetchone()
+        cur.execute(
+            # Casts explícitos: psycopg infiere smallint para el id y double
+            # precision para el precio, y ninguna de las dos firmas existe.
+            "SELECT fn_crear_ensayo(%s::INTEGER, %s::VARCHAR, %s::VARCHAR,"
+            " %s::VARCHAR, %s::NUMERIC, %s::BOOLEAN, NULL)",
+            (id_subcategoria, "Ensayo secreto del otro laboratorio",
+             "NTP 000.000", "UND", 999.99, True),   # dom_unidad exige mayúsculas
+        )
+        (codigo,) = cur.fetchone()
+        cur.execute(
+            "SELECT public_id FROM ensayos_catalogo WHERE codigo = %s AND tenant_id = %s",
+            (codigo, id_tenant_2),
+        )
+        (public_id,) = cur.fetchone()
+        conn.commit()
+
+    return {
+        "tenant_2": id_tenant_2,
+        "categoria_id": id_categoria,
+        "codigo": codigo,
+        "public_id": str(public_id),
+        "nombre": "Ensayo secreto del otro laboratorio",
+    }
+
+
+@pytest.fixture(scope="session")
+def usuarios_catalogo(usuarios_prueba):
+    """Dos usuarios que existen para probar la DENEGACIÓN, no el acceso.
+
+      · sin_roles  — autenticado, con tenant, y sin una sola fila en
+                     usuario_roles. Es el estado de una cuenta recién creada.
+      · solo_dash  — con un rol que tiene `dashboard.read` y NO `catalogo.read`.
+                     Hizo falta inventarlo: los cinco roles del producto tienen
+                     catalogo.read, porque es la pantalla de entrada. El rol es
+                     de prueba; lo que se prueba es el guard, no la matriz.
+
+    Se insertan sin ON CONFLICT: `uq_usuarios_email` es UNIQUE sobre
+    lower(email) a secas —global, no por tenant— así que la especificación
+    (tenant_id, email) no corresponde a ningún índice. La fixture es de sesión
+    y corre una sola vez.
+    """
+    with psycopg.connect(_url(BD_AUTH)) as conn, conn.cursor() as cur:
+        cur.execute("SELECT set_config('app.tenant_id', '1', false)")
+        cur.execute("SELECT set_config('app.usuario_id', '1', false)")
+        cur.execute("SELECT password_hash FROM usuarios WHERE email = 'activo@lab.test'")
+        (h,) = cur.fetchone()
+
+        cur.execute(
+            """
+            INSERT INTO roles (codigo, nombre, descripcion, es_sistema, scope)
+            VALUES ('solo_dashboard', 'Solo dashboard',
+                    'Rol de prueba: dashboard.read y nada mas', FALSE, 'tenant')
+            RETURNING id
+            """
+        )
+        (id_rol,) = cur.fetchone()
+        cur.execute(
+            """
+            INSERT INTO rol_permisos (rol_id, permiso_id)
+            SELECT %s, p.id FROM permisos p WHERE p.codigo = 'dashboard.read'
+            """,
+            (id_rol,),
+        )
+
+        creados = {}
+        for nombre, email in (("SinRoles", "sinroles@lab.test"),
+                              ("SoloDash", "solodash@lab.test")):
+            cur.execute(
+                """
+                INSERT INTO usuarios (nombres, apellidos, email, rol_id,
+                                      password_hash, creado_por)
+                VALUES (%s, 'Prueba', %s, 4, %s, 1) RETURNING id
+                """,
+                (nombre, email, h),
+            )
+            (creados[nombre],) = cur.fetchone()
+        conn.commit()
+
+    # sin_roles NO recibe ninguna asignación: ese es el punto.
+    _asignar_rol(1, creados["SoloDash"], "solo_dashboard")
+
+    return {
+        "sin_roles": creados["SinRoles"],
+        "sin_roles_email": "sinroles@lab.test",
+        "solo_dash": creados["SoloDash"],
+        "solo_dash_email": "solodash@lab.test",
+    }
+
+
 # ------------------------------------------------- modo RLS seguro ---------
 
 # Roles DESECHABLES para probar el fail-closed. Cada uno encarna exactamente

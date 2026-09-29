@@ -61,6 +61,42 @@ async def _reset(conn: AsyncConnection) -> None:
         await conn.set_autocommit(autocommit_previo)
 
 
+async def _configurar(conn: AsyncConnection) -> None:
+    """Desactiva la preparación automática de sentencias. Defecto D-3.
+
+    psycopg3 prepara una consulta en el servidor cuando la ha ejecutado 5 veces
+    sobre la misma conexión, y recuerda su nombre en una caché DEL LADO DEL
+    CLIENTE. `_reset()` ejecuta `DISCARD ALL`, que borra los prepared
+    statements DEL SERVIDOR — pero no esa caché. A partir de ahí psycopg pide
+    por nombre algo que ya no existe:
+
+        SQLSTATE 26000 — prepared statement "_pg3_0" does not exist
+
+    No es hipotético. La sentencia que primero alcanza el umbral es
+    `SELECT set_config(%s, %s, true)` de `db/tx.py`, que corre dos o tres veces
+    por petición: el fallo aparecía en la CUARTA petición de cualquier endpoint
+    autenticado. Estaba ahí desde que existe el pool; nadie lo había visto
+    porque ninguna prueba encadenaba cuatro peticiones sobre la misma conexión.
+    Lo destapó el primer endpoint de negocio, en la fase 7B.
+
+    Dos maneras de arreglarlo, y por qué esta:
+
+      · quitar `DISCARD ALL` haría desaparecer el síntoma y con él la red de
+        seguridad que impide que una conexión vuelva al pool con estado. No se
+        toca;
+      · no preparar nada cuesta exactamente cero AQUÍ, porque con `DISCARD ALL`
+        en cada devolución un prepared statement no puede sobrevivir a la
+        petición que lo creó. Preparar no ahorraba ninguna replanificación:
+        solo podía romperse.
+
+    Se aplica siempre, también con `pool_discard_all` en false. Que el
+    comportamiento del pool dependiera de esa bandera es justo el acoplamiento
+    sutil que produce sorpresas: la bandera existe para probar que el
+    aislamiento NO depende de ella, no para cambiar cómo habla psycopg.
+    """
+    conn.prepare_threshold = None
+
+
 async def abrir_pool() -> AsyncConnectionPool:
     global _pool
     if _pool is not None:
@@ -75,6 +111,7 @@ async def abrir_pool() -> AsyncConnectionPool:
         max_idle=settings.pool_max_idle,
         # Descarta conexiones rotas ANTES de entregarlas al endpoint.
         check=AsyncConnectionPool.check_connection,
+        configure=_configurar,
         reset=_reset,
         open=False,
     )

@@ -35,8 +35,8 @@ Atraviesan todo el flujo: **usuarios y roles** (quién puede hacer qué), **audi
 | 2 · Base de datos | ✅ **Terminada** (v3.0, 27-sep-2026) — ver `docs/AUDITORIA_BD_v3.md` |
 | 3 · Evaluación de motor e infraestructura | ✅ **Terminada** (27-sep-2026) — ver `docs/03_AMBIENTES.md` |
 | 4 · Multi-tenant en la BD | ✅ **Terminada** (29-sep-2026) — `0003`, `0004` y `0005` aplicadas y certificadas |
-| 5 · Backend / API | 🔶 **Esqueleto terminado. Sin endpoints de negocio** |
-| 6 · Autenticación y autorización | 🔶 **En progreso.** 6A y 6B cerradas: autenticación, RBAC en la BD y los guards de la API. Falta aplicarlos a endpoints reales y las subfases `0008`–`0010` |
+| 5 · Backend / API | 🔶 **En progreso.** Primer recurso de negocio publicado: `/api/v1/catalogo` (fase 7B). Faltan los demás recursos |
+| 6 · Autenticación y autorización | 🔶 **En progreso.** 6A y 6B cerradas, y los guards ya protegen un endpoint real (7B): **H-01 cerrado**. Faltan las subfases `0008`–`0010` y el hardening |
 | 7 · Multi-tenant de aplicación + RLS | ✅ **Terminada** (29-sep-2026) — RLS forzada, aislamiento certificado |
 | 8 · Frontend conectado al backend | ⏳ Pendiente |
 
@@ -92,12 +92,18 @@ Y en el backend, lo hecho y lo que falta:
 
 ### Gaps de seguridad abiertos
 
-**H-01 — mecanismo de autorización implementado; aplicación a endpoints de
-negocio pendiente.** Los guards existen y están probados: un usuario autenticado
-sin el permiso recibe 403. Pero **ningún endpoint de negocio existe todavía**, así
-que la barrera está construida y no está puesta en ninguna parte. Falta el primer
-endpoint protegido y su validación de extremo a extremo. **Publicar un endpoint de
-negocio sin su `require_permission()` reabre H-01 entero.**
+**H-01 — CERRADO en la fase 7B** (29-sep-2026). El mecanismo de autorización ya
+no guarda el vacío: `GET /api/v1/catalogo` y `GET /api/v1/catalogo/{public_id}`
+exigen `catalogo.read` mediante `require_permission()`, declarado en el **router**
+y no endpoint por endpoint, de modo que un endpoint nuevo en ese archivo nace
+protegido. Demostrado por sus contrarios, no solo por el caso feliz: usuario sin
+ningún rol → 403; rol con otro permiso → 403; tenant A contra datos de B → 0 filas
+y 404; sin contexto de tenant → 500, nunca `200 []`; JWT con `permissions`
+inyectado y firma válida → 401.
+
+⚠ **H-01 se reabre en cuanto alguien publique un endpoint de negocio sin su
+`require_permission()`.** Lo que está cerrado es la ausencia de capa de
+autorización, no la obligación de usarla en cada recurso nuevo.
 
 **G-2 — `sacgeo_app` conserva INSERT y DELETE directos sobre `usuario_roles`.**
 Un endpoint que escribiera la tabla a mano saltaría `fn_asignar_rol()` y la
@@ -144,10 +150,12 @@ backend/                   API FastAPI. Fase 5-6. Ver backend/.env.example
     db/tx.py               PUNTO ÚNICO de transacción: set_config(..., true)
     api/deps.py            cadena JWT → sesión → transacción → identidad →
                            autorización (require_permission y variantes)
-    api/v1/auth.py         /auth/login y /auth/yo. No hay más endpoints
+    api/v1/auth.py         /auth/login y /auth/yo. SIN prefijo /api/v1 (ver §5)
+    api/v1/catalogo.py     GET /api/v1/catalogo y /{public_id}. Primer recurso
+                           de negocio. Lee vw_catalogo_disponible, nunca las tablas
     security/              passwords (Argon2id), jwt, autenticacion, tenant
-  tests/                   90 pruebas (74 + 16 de RBAC). Clúster APARTE, y
-                           PG_PASSWORD obligatoria: no hay valor por defecto
+  tests/                   125 pruebas (90 + 31 de catálogo + 4 de D-3). Clúster
+                           APARTE, y PG_PASSWORD obligatoria: sin valor por defecto
 database/
   00_schema.sql            tablas, dominios, PK/FK/UNIQUE/CHECK
   01_functions.sql         contexto de sesión, correlativos, casos de uso, dashboard
@@ -382,6 +390,30 @@ impone RLS sobre `usuario_roles` y no el código de la API. Un permiso dentro de
 sería una foto del momento del login: retirar un rol no surtiría efecto hasta que el
 token expirase. Sin caché entre peticiones, la revocación se nota en la siguiente.
 
+**El primer recurso de negocio lee una VISTA, y sin ningún `WHERE tenant_id`.**
+`/api/v1/catalogo` consulta `vw_catalogo_disponible`, que es `security_invoker` y
+ya une ensayo → subcategoría → categoría por el par `(tenant_id, id)` filtrando
+las tres por `activo`. El aislamiento lo impone el motor: contexto de sesión →
+política `USING (tenant_id = fn_app_tenant())`. Añadir un filtro por tenant en
+Python sugeriría que el aislamiento depende de esa línea, y **enmascararía un fallo
+de contexto**: sin contexto, RLS lanza 42501 y la petición muere con 500, mientras
+que un filtro con una variable vacía devolvería `200 []` — indistinguible de «este
+laboratorio no tiene ensayos». Un recurso ajeno responde **404, nunca 403**: un 403
+confirmaría que existe y convertiría el endpoint en un oráculo para enumerar el
+catálogo de la competencia.
+
+**El pool NO prepara sentencias** (`prepare_threshold = None`, hook `configure` de
+`db/pool.py`). Defecto **D-3**, encontrado en la fase 7B y cerrado en la 7B.1:
+psycopg3 prepara una consulta tras 5 ejecuciones sobre la misma conexión y guarda
+su nombre en una caché *del cliente*; `DISCARD ALL` borra el statement *del
+servidor* y no toca esa caché, así que la siguiente ejecución fallaba con
+`SQLSTATE 26000`. La sentencia que primero alcanzaba el umbral era el `set_config`
+de `tx.py` —dos o tres por petición—, de modo que reventaba en la **cuarta**
+petición de cualquier endpoint autenticado. Estaba latente desde que existe el
+pool. **No se quitó `DISCARD ALL`**: eso habría tapado el síntoma eliminando la red
+que impide devolver una conexión con estado. No preparar cuesta cero aquí, porque
+con `DISCARD ALL` un prepared statement no sobrevive a la petición que lo creó.
+
 ### Decisión abierta, no técnica
 
 **M-07 — el descuento se aplica después del IGV.** Se conservó el comportamiento del mockup, pero lo habitual en Perú es descontar sobre la base imponible. Es un cambio de una línea en `fn_recalcular_cotizacion()` que altera los importes de todo lo emitido: **lo decide contabilidad, no el desarrollo.**
@@ -442,7 +474,7 @@ docker run -d --name sac-geo-postgres-val -e POSTGRES_USER=sacgeo_dev \
   -e POSTGRES_PASSWORD=<elegir> -e POSTGRES_DB=postgres -p 5433:5432 postgres:16
 
 cd backend && PG_CONTENEDOR=sac-geo-postgres-val PG_PUERTO=5433 \
-  PG_PASSWORD=<la misma> ./.venv/Scripts/python.exe -m pytest -q   # 90 en verde
+  PG_PASSWORD=<la misma> ./.venv/Scripts/python.exe -m pytest -q   # 125 en verde
 
 # regenerar el diagrama ER
 python3 docs/gen_er_v3.py && node docs/render_er_v3.js

@@ -35,7 +35,7 @@ Atraviesan todo el flujo: **usuarios y roles** (quién puede hacer qué), **audi
 | 2 · Base de datos | ✅ **Terminada** (v3.0, 27-sep-2026) — ver `docs/AUDITORIA_BD_v3.md` |
 | 3 · Evaluación de motor e infraestructura | ✅ **Terminada** (27-sep-2026) — ver `docs/03_AMBIENTES.md` |
 | 4 · Multi-tenant en la BD | ✅ **Terminada** (29-sep-2026) — `0003`, `0004` y `0005` aplicadas y certificadas |
-| 5 · Backend / API | 🔶 **En progreso.** Publicados en solo lectura: `/api/v1/catalogo` (7B), `/api/v1/categorias` y la acreditación de un ensayo (7C.1), y los componentes de un paquete (7D.1). Faltan clientes, cotizaciones, dashboard y todas las escrituras |
+| 5 · Backend / API | 🔶 **En progreso.** 16 GET y 2 POST bajo `/api/v1`: catálogo (7B), categorías y acreditación (7C.1), componentes (7D.1), clientes (7F), usuarios y plantillas (7G), y las dos primeras escrituras (7I, 7I.1). Faltan cotizaciones, dashboard, auditoría y el resto de escrituras |
 | 6 · Autenticación y autorización | 🔶 **En progreso.** 6A y 6B cerradas, y los guards ya protegen un endpoint real (7B): **H-01 cerrado**. Faltan las subfases `0008`–`0010` y el hardening |
 | 7 · Multi-tenant de aplicación + RLS | ✅ **Terminada** (29-sep-2026) — RLS forzada, aislamiento certificado |
 | 8 · Frontend conectado al backend | ⏳ Pendiente |
@@ -54,12 +54,59 @@ Atraviesan todo el flujo: **usuarios y roles** (quién puede hacer qué), **audi
 - auditoría: 355 filas, 11 de ellas globales (`tenant_id` NULL)
 - RBAC: 31 permisos, 49 `rol_permisos`, 2 `usuario_roles`
 
+### Superficie de la API publicada
+
+Del código, no de la documentación (`app.routes`, 30-sep-2026):
+
+```
+LECTURA — 16 GET bajo /api/v1, más /auth/yo, /salud y /salud/rol
+  /api/v1/catalogo · /{public_id} · /{public_id}/acreditacion · /{public_id}/componentes
+  /api/v1/categorias · /{public_id}
+  /api/v1/clientes/empresas · /{public_id} · /{public_id}/contactos
+  /api/v1/clientes/personas · /{public_id}
+  /api/v1/clientes/contactos/{public_id}
+  /api/v1/usuarios · /{public_id}
+  /api/v1/plantillas · /{public_id}
+
+ESCRITURA — TRES en todo el sistema, y ni una más
+  POST /auth/login                      (autenticación, no negocio)
+  POST /api/v1/clientes/empresas        clientes.manage   (7I)
+  POST /api/v1/clientes/contactos       clientes.manage   (7I.1)
+```
+
+**No existe ningún PUT, PATCH ni DELETE**, ni escrituras de personas, cotizaciones,
+usuarios o catálogo. `test_ningun_endpoint_de_negocio_acepta_escritura` falla si
+aparece una escritura que no esté en esa lista de tres.
+
+Permiso por router: `catalogo.read` (catálogo y categorías) · `acreditacion.read` ·
+`clientes.read` (lectura) · `clientes.manage` (escritura) · `usuarios.read` ·
+`cotizaciones.read` (plantillas, ver §5).
+
+### Estado de Git
+
+```
+HEAD         2df52dfbc9dd37198d2be283f329bbdc2511f1c1
+             feat(security): establish secured client read and write surface
+branch       main
+working tree LIMPIO
+origin/main  4a34c60   ← main va 1 commit POR DELANTE: el push está PENDIENTE
+```
+
+El commit de 7I.2 consolida las cinco fases 7F, 7G, 7H.1, 7I y 7I.1 en 20 archivos,
+sin SQL, sin migraciones y sin cambios en RLS ni en RBAC.
+
 ### Qué falta para cerrar la fase 5 (backend)
 
 - **Endpoints de negocio.** Hoy no existe ninguno, a propósito: cada fase los
-  prohibió expresamente hasta cerrar la autorización. Solo hay `/salud`,
-  `/auth/login` y `/auth/yo`.
-- Paginación, filtros y manejo de errores de dominio en la API.
+  prohibió expresamente hasta cerrar la autorización. Hoy existen los de
+  catálogo, categorías, acreditación, componentes, clientes, usuarios y
+  plantillas; faltan cotizaciones, dashboard, auditoría, documentos e
+  integraciones.
+- **Escrituras**: solo dos, `POST /clientes/empresas` y `POST /clientes/contactos`.
+  Faltan personas, y todos los `PATCH`/`DELETE` — que son un contrato distinto
+  (campos parciales, `actualizado_por`, baja lógica) y merecen su propio diseño.
+- Paginación y filtros: hechos en las colecciones publicadas. Falta el mapeo
+  completo de errores de dominio.
 
 ### Qué falta para cerrar la fase 6 (autenticación y autorización)
 
@@ -84,10 +131,11 @@ Y en el backend, lo hecho y lo que falta:
 | | Estado |
 |---|---|
 | `require_permission()`, `require_any_permission()`, `require_all_permissions()` | ✅ **fase 6B** (29-sep-2026), 16 pruebas |
-| DTO con lista blanca (H-02) | ⏳ |
-| `/api/v1` — hoy el router monta en `/auth`, sin versión | ⏳ |
-| Mapeo de errores de dominio completo | ⏳ |
-| `/docs` condicionado al entorno | ⏳ |
+| **Barreras** de H-02: `EntradaWrite` + `resolver_public_id()` + DTO tipados | ✅ **fase 7H.1**, 40 pruebas. ⚠ tenerlas NO cierra H-02: ver abajo |
+| `SinParametros` en los endpoints sin parámetros de consulta | ✅ **fase 7F**, 25 pruebas |
+| `/api/v1` para los recursos de negocio | ✅ desde 7B. `/auth` sigue sin versión (ver §5) |
+| Mapeo de errores de dominio completo | 🔶 23503/23505/23514/23001/22P02/P0002 mapeados; faltan los de cotizaciones |
+| `/docs` condicionado al entorno | ⏳ (G-4) |
 | Límite de intentos en el login (H-08) | ⏳ |
 
 ### Gaps de seguridad abiertos
@@ -114,7 +162,22 @@ que lo necesita.
 **G-4 — la API no tiene CORS, ni cabeceras de seguridad, ni límite de peticiones,
 y `/docs` se publica sin condición.** Fase de hardening.
 
-Y siguen abiertos de la auditoría pre-API: **H-02** (mass assignment), **H-08**
+**H-02 — mass assignment. NO está cerrado globalmente.** Está cerrado, endpoint por
+endpoint, solo donde se ha implementado y probado:
+
+| Endpoint | Estado |
+|---|---|
+| `POST /api/v1/clientes/empresas` | ✅ cerrado (7I), 44 pruebas |
+| `POST /api/v1/clientes/contactos` | ✅ cerrado (7I.1), 58 pruebas |
+| Cualquier escritura futura | ⏳ **debe demostrarlo individualmente** |
+
+Las barreras existen desde 7H.1 —`EntradaWrite`, `resolver_public_id()` y los DTO
+tipados— pero tenerlas no cierra nada: **H-02 se cierra cuando un endpoint las usa y
+sus pruebas lo demuestran.** Es la misma lección de H-01, que no se cerró al
+implementar `require_permission()` sino al aplicarlo. Publicar una escritura sin
+ellas reabre H-02 para ese recurso.
+
+Y siguen abiertos de la auditoría pre-API: **H-08**
 (sin límite de intentos en el login) y **H-12** (los PDF de `insumos/` versionados).
 
 **H-11 — cerrado en la fase 6B.3.** La credencial histórica de desarrollo —la
@@ -161,10 +224,28 @@ backend/                   API FastAPI. Fase 5-6. Ver backend/.env.example
                            y vw_catalogo_disponible ocultaría las categorías vacías
     api/v1/acreditacion.py GET /api/v1/catalogo/{public_id}/acreditacion. Router
                            APARTE del de catálogo: exige acreditacion.read
+    api/v1/clientes.py     6 GET: empresas, sus contactos y personas naturales.
+                           clientes.read. Paginación y ordenación de lista blanca
+    api/v1/clientes_escritura.py
+                           POST /clientes/empresas (7I) y /clientes/contactos
+                           (7I.1). Router APARTE: exige clientes.manage, NO
+                           clientes.read
+    api/v1/usuarios.py     GET /api/v1/usuarios y /{public_id}. usuarios.read.
+                           Los roles salen de usuario_roles, no de rol_id
+    api/v1/plantillas.py   GET /api/v1/plantillas y /{public_id}.
+                           cotizaciones.read (ver §5). RLS híbrida: es_base
+    api/query.py           SinParametros, Paginacion y `componer()`: las consultas
+                           de ordenación se arman AL IMPORTAR, no por petición
+    api/escritura.py       BARRERAS DE ESCRITURA: EntradaWrite y el punto ÚNICO
+                           de traducción public_id → id, bajo RLS
+    api/dto_negocio.py     DTO de escritura. Los tres que van delante de los
+                           `jsonb`, más CrearEmpresa y CrearContacto
     security/              passwords (Argon2id), jwt, autenticacion, tenant
-  tests/                   194 pruebas (90 + 31 catálogo + 4 D-3 + 36 categorías
-                           y acreditación + 33 componentes). Clúster
-                           APARTE, y PG_PASSWORD obligatoria: sin valor por defecto
+  tests/                   506 pruebas. Clúster APARTE, y PG_PASSWORD obligatoria:
+                           sin valor por defecto
+                           194 previas + 76 clientes + 68 usuarios/plantillas
+                           + 25 SinParametros + 40 barreras + 44 empresas
+                           + 58 contactos + 1 guarda de escritura
 database/
   00_schema.sql            tablas, dominios, PK/FK/UNIQUE/CHECK
   01_functions.sql         contexto de sesión, correlativos, casos de uso, dashboard
@@ -460,13 +541,55 @@ cliente podía creer que había consultado otro laboratorio mientras recibía el
 `SinParametros` —modelo vacío con `extra="forbid"`, que no añade nada al esquema
 OpenAPI— cierra esa puerta en `/catalogo/{public_id}/componentes`.
 
-⚠ **Deuda técnica abierta (7D.2):** los otros tres endpoints de detalle —
-`GET /catalogo/{public_id}`, `GET /categorias/{public_id}` y
-`GET /catalogo/{public_id}/acreditacion`— **siguen sin modelo de query** y por tanto
-siguen ignorando parámetros desconocidos. **No es un fallo de aislamiento
-multi-tenant**: el tenant sigue viniendo del contexto autenticado y nunca del
-cliente. Es **validación / contrato HTTP**, y se corrige en una tarea de hardening
-aparte.
+**La deuda de `SinParametros` se cerró en la fase 7F.** Eran **seis** endpoints, no
+tres: los tres de detalle del catálogo, `/auth/yo` y los dos de `/salud`. Todos
+declaran ya su contrato de query, y `test_ninguna_ruta_nueva_queda_sin_modelo_de_query`
+compara el esquema OpenAPI contra tres categorías declaradas —colecciones con
+filtros, escrituras y rutas sin parámetros—, así que **una ruta nueva sin contrato
+falla en las pruebas y no en producción**.
+
+**El cliente NUNCA controla un campo de seguridad, de identidad, de autoría, de
+estado ni de importe.** La regla la impone `EntradaWrite` (`api/escritura.py`) y no
+es una lista negra: los campos protegidos **no existen en el DTO**, así que
+`extra="forbid"` los rechaza con 422 sin que nadie tenga que acordarse de filtrarlos.
+Cuatro opciones, y cada una cierra algo distinto: `extra="forbid"` (un campo no
+previsto no se ignora), `frozen=True` (nadie añade un atributo DESPUÉS de validar,
+que convertiría la validación en una sugerencia), `str_strip_whitespace` (`"  "` pasa
+a `""` y choca con los CHECK) y `strict=False` (un formulario HTML manda cadenas).
+
+**La traducción `public_id → id` vive en UN solo punto**, `resolver_public_id()`, y
+ocurre dentro de la transacción ya contextualizada. Es la barrera que
+`extra="forbid"` no da: las funciones de caso de uso reciben ids **internos** y la
+API recibe `public_id`, así que traducir sin pasar por RLS sería un IDOR con el DTO
+perfecto. Lo que no es visible para la sesión no existe: **404**, el mismo que un
+UUID inexistente. El nombre de la tabla nunca viene del cliente — el recurso es un
+`Literal` que sirve de clave a un diccionario de consultas literales.
+
+Hay **dos** sitios donde se traduce, y el segundo es legítimo: `autenticacion.py`
+resuelve el `sub` del JWT con `fn_sesion_resolver_usuario()`, y **no puede pasar por
+`escritura.py`** porque ocurre antes de que exista contexto de tenant — es lo que lo
+establece. Un tercer sitio sí sería un problema, y un test lo vigila.
+
+**Una escritura nombra en su INSERT solo las columnas de negocio.** `tenant_id`
+(`DEFAULT fn_app_tenant()`), `creado_por` (`fn_tocar` con `fn_app_usuario()`),
+`public_id`, `activo` y `creado_en` los pone el motor: no se nombran, así que no hay
+nada que filtrar. Y si un bug los colara, la política `WITH CHECK (tenant_id =
+fn_app_tenant())` rechazaría la fila — comprobado como `sacgeo_app`. La BD es la
+última barrera, no la única.
+
+**Un permiso distinto exige un router distinto, también para escribir.**
+`clientes_escritura.py` comparte el prefijo `/clientes` con el de lectura pero exige
+`clientes.manage`: compartir router le habría dado `clientes.read`, y **quien puede
+consultar la cartera de clientes crearía empresas en ella**. Es el mismo patrón que
+separó `acreditacion.py` de `catalogo.py`.
+
+**Una referencia entre recursos viaja como `public_id`, nunca como id interno.**
+`CrearContacto` declara `empresa_public_id`; aceptar `empresa_id` sería invitar a
+recorrer enteros hasta dar con una empresa ajena. Y la pertenencia la respalda una
+clave, no la disciplina: la FK de `contactos` es **compuesta**
+`(tenant_id, empresa_id) → empresas (tenant_id, id)`, así que el par «mi tenant, su
+empresa» no existe ni aunque alguien saltara el resolutor. Verificado contra el
+motor.
 
 ### Decisión abierta, no técnica
 
@@ -528,7 +651,7 @@ docker run -d --name sac-geo-postgres-val -e POSTGRES_USER=sacgeo_dev \
   -e POSTGRES_PASSWORD=<elegir> -e POSTGRES_DB=postgres -p 5433:5432 postgres:16
 
 cd backend && PG_CONTENEDOR=sac-geo-postgres-val PG_PUERTO=5433 \
-  PG_PASSWORD=<la misma> ./.venv/Scripts/python.exe -m pytest -q   # 194 en verde
+  PG_PASSWORD=<la misma> ./.venv/Scripts/python.exe -m pytest -q   # 506 en verde
 
 # regenerar el diagrama ER
 python3 docs/gen_er_v3.py && node docs/render_er_v3.js

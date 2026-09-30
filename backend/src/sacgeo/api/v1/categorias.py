@@ -45,6 +45,7 @@ from psycopg.rows import dict_row
 from pydantic import BaseModel, ConfigDict, Field
 
 from sacgeo.api.deps import get_db_tx, require_permission
+from sacgeo.api.query import SinParametros
 
 log = logging.getLogger(__name__)
 
@@ -243,6 +244,7 @@ async def listar_categorias(
 )
 async def obtener_categoria(
     public_id: UUID,
+    _: Annotated[SinParametros, Query()],
     conn: Annotated[AsyncConnection, Depends(get_db_tx)],
 ) -> Categoria:
     """Devuelve una categoría por su `public_id`, con sus subcategorías.

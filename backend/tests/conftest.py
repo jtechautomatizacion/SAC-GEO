@@ -717,6 +717,255 @@ def ensayo_no_paquete(bd_auth_desechable):
     return {"public_id": str(fila[0]), "codigo": fila[1]}
 
 
+# -------------------------------------------------------- clientes --------
+
+@pytest.fixture(scope="session")
+def clientes_tenant_1(bd_auth_desechable):
+    """Clientes del tenant 1 en la BASE DESECHABLE.
+
+    Hacen falta y no estaban: `empresas`, `contactos` y `personas` NO forman
+    parte de `04_seeds.sql` ni de `05_seed_ensayos.sql`. Los que tiene
+    `sacgeo_dev` los creó `98_pruebas.sql` al ejecutarse, y la base desechable
+    no corre esa suite — así que empezaba vacía y los tests de clientes pasaban
+    sobre el conjunto vacío, que es pasar por la razón equivocada.
+
+    Se reproducen los mismos datos que usa 98 para que las pruebas hablen del
+    dominio real: dos empresas, tres contactos (uno con DNI y dos sin él) y una
+    persona natural.
+    """
+    with psycopg.connect(_url(BD_AUTH)) as conn, conn.cursor() as cur:
+        cur.execute("SELECT set_config('app.tenant_id', '1', false)")
+        cur.execute("SELECT set_config('app.usuario_id', '1', false)")
+        cur.execute(
+            """
+            INSERT INTO empresas (ruc, razon_social, telefono, email, creado_por)
+            VALUES ('20123456789', 'Constructora ALDEM S.A.C.', '987654321',
+                    'obras@aldem.pe', 1)
+            RETURNING id, public_id
+            """
+        )
+        id_emp1, pub_emp1 = cur.fetchone()
+        cur.execute(
+            """
+            INSERT INTO empresas (ruc, razon_social, creado_por)
+            VALUES ('20987654321', 'Minera Cerro Pasco S.A.', 1)
+            RETURNING id, public_id
+            """
+        )
+        id_emp2, pub_emp2 = cur.fetchone()
+        cur.execute(
+            """
+            INSERT INTO contactos (empresa_id, dni, nombres, apellidos, cargo,
+                                   email, creado_por)
+            VALUES (%s, '45678912', 'Luis', 'Ramirez', 'Jefe de obra',
+                    'lramirez@aldem.pe', 1)
+            """,
+            (id_emp1,),
+        )
+        cur.execute(
+            "INSERT INTO contactos (empresa_id, nombres, apellidos, creado_por)"
+            " VALUES (%s, 'Marta', 'Flores', 1)",
+            (id_emp1,),
+        )
+        cur.execute(
+            "INSERT INTO contactos (empresa_id, nombres, apellidos, creado_por)"
+            " VALUES (%s, 'Jorge', 'Nunez', 1)",
+            (id_emp2,),
+        )
+        cur.execute(
+            """
+            INSERT INTO personas (dni, nombres, apellidos, celular, creado_por)
+            VALUES ('10203040', 'Carmen', 'Aliaga', '955443322', 1)
+            RETURNING public_id
+            """
+        )
+        (pub_persona,) = cur.fetchone()
+        conn.commit()
+
+    return {
+        "empresa_1_id": id_emp1,
+        "empresa_1_public_id": str(pub_emp1),
+        "empresa_1_ruc": "20123456789",
+        "empresa_2_public_id": str(pub_emp2),
+        "empresa_2_ruc": "20987654321",
+        "persona_public_id": str(pub_persona),
+        "empresas": 2,
+        "contactos_empresa_1": 2,
+    }
+
+
+
+@pytest.fixture(scope="session")
+def clientes_tenant_2(usuarios_prueba):
+    """Empresa, contacto y persona en el OTRO laboratorio.
+
+    Sin esto no se puede probar aislamiento de clientes: el seed adjudica los
+    suyos al tenant 1, y un test de "no veo lo ajeno" pasaría por no haber nada
+    ajeno que ver — que es pasar por la razón equivocada.
+
+    Se insertan directo porque este dominio NO tiene funciones de caso de uso
+    (no existe fn_crear_empresa). Es preparación, no es lo que se prueba: los
+    tests consultan después como `sacgeo_app`, sujeto a las políticas.
+    """
+    id_tenant_2 = usuarios_prueba["tenant_2"]
+    with psycopg.connect(_url(BD_AUTH)) as conn, conn.cursor() as cur:
+        cur.execute("SELECT set_config('app.tenant_id', %s, false)", (str(id_tenant_2),))
+        cur.execute("SELECT set_config('app.usuario_id', '1', false)")
+        cur.execute(
+            """
+            INSERT INTO empresas (ruc, razon_social, direccion, telefono, email,
+                                  tenant_id, creado_por)
+            VALUES ('20555555555', 'Cliente Secreto del Otro Lab S.A.C.',
+                    'Av. Ajena 123', '999888777', 'secreto@otrolab.test', %s, 1)
+            RETURNING id, public_id
+            """,
+            (id_tenant_2,),
+        )
+        id_empresa, empresa_public_id = cur.fetchone()
+        cur.execute(
+            """
+            INSERT INTO contactos (empresa_id, dni, nombres, apellidos, cargo,
+                                   email, tenant_id, creado_por)
+            VALUES (%s, '99887766', 'Contacto', 'Ajeno', 'Gerente',
+                    'contacto@otrolab.test', %s, 1)
+            RETURNING public_id
+            """,
+            (id_empresa, id_tenant_2),
+        )
+        (contacto_public_id,) = cur.fetchone()
+        cur.execute(
+            """
+            INSERT INTO personas (dni, nombres, apellidos, celular, email,
+                                  tenant_id, creado_por)
+            VALUES ('99001122', 'Persona', 'Ajena', '900111222',
+                    'persona@otrolab.test', %s, 1)
+            RETURNING public_id
+            """,
+            (id_tenant_2,),
+        )
+        (persona_public_id,) = cur.fetchone()
+
+        # Una empresa DESACTIVADA, también en el tenant 2, para probar
+        # `solo_activas` sin tocar los datos del tenant 1 que usan los demás
+        # tests.
+        cur.execute(
+            """
+            INSERT INTO empresas (ruc, razon_social, activo, tenant_id, creado_por)
+            VALUES ('20444444444', 'Empresa Desactivada del Otro Lab', FALSE, %s, 1)
+            RETURNING public_id
+            """,
+            (id_tenant_2,),
+        )
+        (inactiva_public_id,) = cur.fetchone()
+        conn.commit()
+
+    return {
+        "tenant_2": id_tenant_2,
+        "empresa_id": id_empresa,
+        "empresa_public_id": str(empresa_public_id),
+        "empresa_ruc": "20555555555",
+        "empresa_razon_social": "Cliente Secreto del Otro Lab S.A.C.",
+        "contacto_public_id": str(contacto_public_id),
+        "persona_public_id": str(persona_public_id),
+        "persona_dni": "99001122",
+        "inactiva_public_id": str(inactiva_public_id),
+    }
+
+
+# ----------------------------------------- usuarios y plantillas (7G) ------
+
+@pytest.fixture(scope="session")
+def admin_prueba(usuarios_prueba):
+    """Un usuario con el rol `admin`, que es el único que tiene usuarios.read.
+
+    Ninguna de las fixtures anteriores servía: `lectura`, `comercial`,
+    `aprobador` y `laboratorio` no lo llevan, y probar `GET /usuarios` con un
+    usuario sin el permiso solo habría comprobado el 403.
+    """
+    from sacgeo.security import passwords
+
+    h = passwords.hashear(PASSWORD_PRUEBA)
+    with psycopg.connect(_url(BD_AUTH)) as conn, conn.cursor() as cur:
+        cur.execute("SELECT set_config('app.tenant_id', '1', false)")
+        cur.execute("SELECT set_config('app.usuario_id', '1', false)")
+        cur.execute(
+            """
+            INSERT INTO usuarios (nombres, apellidos, email, rol_id,
+                                  password_hash, creado_por)
+            VALUES ('Ada', 'Administradora', 'admin@lab.test', 1, %s, 1)
+            RETURNING id, public_id
+            """,
+            (h,),
+        )
+        id_admin, public_id = cur.fetchone()
+        conn.commit()
+
+    _asignar_rol(1, id_admin, "admin")
+    return {"id": id_admin, "public_id": str(public_id),
+            "email": "admin@lab.test"}
+
+
+@pytest.fixture(scope="session")
+def admin_tenant_2(usuarios_prueba):
+    """El mismo rol, en el OTRO laboratorio. Para probar aislamiento.
+
+    Sin él no se puede comprobar que un administrador del tenant 2 no ve a los
+    usuarios del tenant 1: haría falta alguien con `usuarios.read` allí.
+    """
+    from sacgeo.security import passwords
+
+    h = passwords.hashear(PASSWORD_PRUEBA)
+    id_tenant_2 = usuarios_prueba["tenant_2"]
+    with psycopg.connect(_url(BD_AUTH)) as conn, conn.cursor() as cur:
+        cur.execute("SELECT set_config('app.tenant_id', %s, false)", (str(id_tenant_2),))
+        cur.execute("SELECT set_config('app.usuario_id', '1', false)")
+        cur.execute(
+            """
+            INSERT INTO usuarios (nombres, apellidos, email, rol_id,
+                                  password_hash, tenant_id, creado_por)
+            VALUES ('Otto', 'Ajeno', 'admin@otrolab.test', 1, %s, %s, 1)
+            RETURNING id, public_id
+            """,
+            (h, id_tenant_2),
+        )
+        id_admin, public_id = cur.fetchone()
+        conn.commit()
+
+    _asignar_rol(id_tenant_2, id_admin, "admin")
+    return {"id": id_admin, "public_id": str(public_id),
+            "email": "admin@otrolab.test", "tenant_2": id_tenant_2}
+
+
+@pytest.fixture(scope="session")
+def plantilla_tenant_2(usuarios_prueba):
+    """Una plantilla PROPIA del tenant 2.
+
+    Las tres del seed son GLOBALES (`tenant_id IS NULL`) y las ve todo el
+    mundo por diseño de `p_hibrida`, así que con ellas no se puede probar
+    aislamiento: hace falta una que pertenezca a un laboratorio concreto.
+    """
+    id_tenant_2 = usuarios_prueba["tenant_2"]
+    with psycopg.connect(_url(BD_AUTH)) as conn, conn.cursor() as cur:
+        cur.execute("SELECT set_config('app.tenant_id', %s, false)", (str(id_tenant_2),))
+        cur.execute("SELECT set_config('app.usuario_id', '1', false)")
+        cur.execute(
+            """
+            INSERT INTO plantillas_cotizacion
+                   (slug, nombre, validez_dias_sugerida, terminos_condiciones,
+                    tenant_id, creado_por)
+            VALUES ('secreta_otro_lab', 'Plantilla Secreta del Otro Lab', 45,
+                    'Condiciones confidenciales del otro laboratorio.', %s, 1)
+            RETURNING public_id
+            """,
+            (id_tenant_2,),
+        )
+        (public_id,) = cur.fetchone()
+        conn.commit()
+
+    return {"public_id": str(public_id), "slug": "secreta_otro_lab",
+            "nombre": "Plantilla Secreta del Otro Lab", "tenant_2": id_tenant_2}
+
+
 # ------------------------------------------------- modo RLS seguro ---------
 
 # Roles DESECHABLES para probar el fail-closed. Cada uno encarna exactamente

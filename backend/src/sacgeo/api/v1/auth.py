@@ -6,11 +6,13 @@ No hay endpoints de negocio aquí ni en ninguna otra parte todavía.
 from __future__ import annotations
 
 import logging
+from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, ConfigDict, Field
 
 from sacgeo.api.deps import get_current_user
+from sacgeo.api.query import SinParametros
 from sacgeo.db.pool import obtener_pool
 from sacgeo.security import jwt as jwt_mod
 from sacgeo.security.autenticacion import (
@@ -93,7 +95,10 @@ async def login(datos: LoginRequest) -> TokenResponse:
 
 
 @router.get("/yo", response_model=UsuarioResponse)
-async def yo(usuario: UsuarioAutenticado = Depends(get_current_user)) -> UsuarioResponse:
+async def yo(
+    _: Annotated[SinParametros, Query()],
+    usuario: UsuarioAutenticado = Depends(get_current_user),
+) -> UsuarioResponse:
     """Devuelve la identidad de la sesión actual.
 
     Sirve para que el frontend sepa quién es sin decodificar el token — y para

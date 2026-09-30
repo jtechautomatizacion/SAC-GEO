@@ -46,6 +46,7 @@ from psycopg import AsyncConnection
 from psycopg.rows import dict_row
 
 from sacgeo.api.deps import get_db_tx, require_permission
+from sacgeo.api.query import SinParametros
 
 log = logging.getLogger(__name__)
 
@@ -275,6 +276,7 @@ async def listar_catalogo(
 )
 async def obtener_ensayo(
     public_id: UUID,
+    _: Annotated[SinParametros, Query()],
     conn: Annotated[AsyncConnection, Depends(get_db_tx)],
 ) -> CatalogoItem:
     """Devuelve un ensayo por su `public_id`.
@@ -367,21 +369,6 @@ _SQL_COMPONENTES = """
      WHERE p.public_id = %(public_id)s
      ORDER BY pc.orden
 """
-
-
-class SinParametros(BaseModel):
-    """Este endpoint no acepta NINGÚN parámetro de consulta, y hay que decirlo.
-
-    Sin un modelo de query, FastAPI ignora en silencio lo que no espera: una
-    petición con `?tenant_id=2` devolvía 200 y el cliente podía creer que había
-    consultado otro laboratorio mientras recibía el suyo. El silencio esconde
-    el intento; el 422 lo hace visible.
-
-    Es un modelo vacío a propósito: no declara campos, así que no añade
-    parámetros al esquema OpenAPI — solo cierra la puerta a los que no existen.
-    """
-
-    model_config = ConfigDict(extra="forbid")
 
 
 class Componente(BaseModel):

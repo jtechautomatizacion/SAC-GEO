@@ -41,12 +41,13 @@ from datetime import date, datetime
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from psycopg import AsyncConnection
 from psycopg.rows import dict_row
 from pydantic import BaseModel, Field
 
 from sacgeo.api.deps import get_db_tx, require_permission
+from sacgeo.api.query import SinParametros
 
 log = logging.getLogger(__name__)
 
@@ -141,6 +142,7 @@ _NO_ENCONTRADO = HTTPException(
 )
 async def obtener_acreditacion(
     public_id: UUID,
+    _: Annotated[SinParametros, Query()],
     conn: Annotated[AsyncConnection, Depends(get_db_tx)],
 ) -> AcreditacionResponse:
     """Estado de acreditación vigente de un ensayo y su historial completo.

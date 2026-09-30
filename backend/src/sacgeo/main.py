@@ -9,10 +9,22 @@ from __future__ import annotations
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from typing import Annotated
+
+from fastapi import FastAPI, Query
 
 from sacgeo.api import errors
-from sacgeo.api.v1 import acreditacion, auth, catalogo, categorias
+from sacgeo.api.query import SinParametros
+from sacgeo.api.v1 import (
+    acreditacion,
+    auth,
+    catalogo,
+    categorias,
+    clientes,
+    clientes_escritura,
+    plantillas,
+    usuarios,
+)
 from sacgeo.config import settings
 from sacgeo.db.pool import (
     RolInseguro,
@@ -68,9 +80,22 @@ app.include_router(categorias.router, prefix="/api/v1")
 # cualquiera con catalogo.read leería el historial ISO 17025.
 app.include_router(acreditacion.router, prefix="/api/v1")
 
+# Clientes: empresas, sus contactos y personas naturales. Solo lectura.
+app.include_router(clientes.router, prefix="/api/v1")
+
+# Usuarios y plantillas, SOLO LECTURA (fase 7G). G-2 bloquea la escritura de
+# roles, no la consulta; N-2 afecta a la FK de cotizaciones, no a leer plantillas.
+app.include_router(usuarios.router, prefix="/api/v1")
+app.include_router(plantillas.router, prefix="/api/v1")
+
+# PRIMER WRITE de negocio (fase 7I). Router APARTE del de lectura porque
+# exige `clientes.manage`, no `clientes.read`: si compartieran router, quien
+# pudiera consultar la cartera de clientes podría crear empresas en ella.
+app.include_router(clientes_escritura.router, prefix="/api/v1")
+
 
 @app.get("/salud")
-async def salud() -> dict[str, object]:
+async def salud(_: Annotated[SinParametros, Query()]) -> dict[str, object]:
     """Comprueba que la API responde y que PostgreSQL contesta."""
     pool = obtener_pool()
     async with pool.connection() as conn, conn.cursor() as cur:
@@ -84,5 +109,5 @@ if settings.es_desarrollo:
     # usuario de PostgreSQL y sus atributos de privilegio, que es justo el mapa
     # que un atacante querría para saber si RLS le afecta.
     @app.get("/salud/rol", include_in_schema=False)
-    async def salud_rol() -> dict[str, object]:
+    async def salud_rol(_: Annotated[SinParametros, Query()]) -> dict[str, object]:
         return await verificar_rol_seguro()
